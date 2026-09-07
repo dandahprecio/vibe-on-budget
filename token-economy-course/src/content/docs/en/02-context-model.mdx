@@ -131,7 +131,7 @@ flowchart TD
 ```
 
 :::note[Cache economics]
-Cached tokens are dramatically cheaper than fresh tokens. A useful mental model is **~10% of fresh cost on Anthropic** (about a 90% discount) and **~50% on OpenAI**, though exact pricing depends on model and tier. That means a **10K-token session with 60% cache hits can be cheaper than a 5K-token session with zero hits**.
+Cached tokens are dramatically cheaper than fresh tokens. A useful mental model is **~10% of fresh cost on Anthropic** (about a 90% discount). OpenAI also offers automatic prefix caching but does not publish a specific discount percentage — savings vary by workload and prefix stability. That means a **10K-token session with 60% cache hits can be cheaper than a 5K-token session with zero hits**.
 :::
 
 :::caution[What breaks the cache]
@@ -234,18 +234,14 @@ Different model providers implement caching differently — and the differences 
 
 | Provider | Cache Type | Explicit Control? | Write Cost | Hit Cost | Default TTL |
 |----------|-----------|-------------------|------------|----------|-------------|
-| OpenAI (GPT-5.x) | Auto + Manual | Yes — `prompt_cache_breakpoint` | 1.25x | 0.1x (90% off) | Configurable |
+| OpenAI (GPT-5.x) | Auto + Manual | Yes — `prompt_cache_breakpoint` | 1.25x | Not publicly specified | Configurable |
 | Anthropic (Claude) | Manual | Yes — `cache_control` | 1.25x–2.0x | 0.1x (90% off) | 5 min |
 | DeepSeek (V4 Pro) | Disk-based | No (implicit) | None | 0.5x (50% off) | N/A |
 | Google (Gemini 3.5) | Context-based | No (implicit) | None | Varied | Session |
 
 For the day-to-day mistakes that break the cache, see the Common Cache-Busting Mistakes section above.
 
-OpenAI GPT-5.x supports extended caching with `prompt_cache_retention: "24h"`. VS Code Copilot measured a **+919% hit-rate improvement after 40–60 minute gaps** and **+338% after 30–40 minute gaps**. This is especially valuable for async workflows where turns are minutes apart.
-
-### Extended TTL Changes the Economics of Async Work
-
-OpenAI's 24-hour retention window can keep the expensive prefix alive across normal developer pauses instead of losing the cache between asynchronous turns. For workflows with longer gaps between requests, that means fewer cold starts and lower effective token cost.
+OpenAI GPT-5.x supports configurable cache retention (24h default for non-ZDR orgs on GPT-5 series models). Cache is best-effort, not guaranteed — a call can occasionally land on a server without your prefix, paying full price. GPT-5.6 and later models removed the 24-hour cache in favor of explicit cache controls. For highly async workflows, this gives more control than Anthropic's fixed 5-minute window.
 
 :::caution[The Anthropic TTL controversy]
 In March 2026, Anthropic silently changed their default cache TTL from **1 hour to 5 minutes**. This caused massive, silent cost spikes for async systems — caches expired between requests, and every turn paid full price.
@@ -257,7 +253,7 @@ If you're on Anthropic-backed models (Claude in Copilot), keep sessions active a
 
 - **Don't modify system instructions mid-session.** If you must, accept the one-time cache miss and keep going.
 - **Monitor for silent cache failures.** Use Copilot debug logging (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) to check actual token counts.
-- **Choose providers for async workflows.** OpenAI's configurable TTL gives highly asynchronous workflows more control than Anthropic's fixed 5-minute window.
+- **Choose providers for async workflows.** OpenAI's configurable cache retention (GPT-5.x series) gives highly asynchronous workflows more control than Anthropic's fixed 5-minute window — though cache is best-effort, not guaranteed.
 
 :::tip[Continue Learning]
 Understanding the context model makes [The Hidden Tax](/vibe-on-budget/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/vibe-on-budget/en/04-quick-wins).

@@ -129,23 +129,23 @@ Varför kostade ett komprimeringsverktyg mer?
 Det billigaste LLM-anropet är det du inte gör. Förbered deterministiska data utanför agentloopen.
 :::
 
-## Engelska vs svenska: 1,7x tokenskillnad
+## Engelska vs svenska: 1,4–1,7× tokenskillnad
 
-Svenska tokeniseras **~1,7x mindre effektivt** än engelska med de flesta tokenizer. Detta beror på att engelska har kortare genomsnittlig ordlängd och vanligare delordsmönster.
+Svenska tokeniseras **~1,4–1,7× mindre effektivt** än engelska, beroende på tokenizer. Äldre tokenizers (GPT-4, Mistral) visar en större skillnad (~1,7×); nyare tokenizers (GPT-5 o200k) minskar den till ~1,4–1,5×. Detta beror på att engelska har kortare genomsnittlig ordlängd och vanligare delordsmönster.
 
 ```
 Engelska: "Create login validation. Handle empty fields."
 → ~7 tokens
 
 Svenska: "Skapa inloggningsvalidering. Hantera tomma fält."
-→ ~12 tokens (1,7x fler)
+→ ~12 tokens (~1.5x more)
 ```
 
-Den praktiska effekten: **skriv promptar på engelska även om du chattar på svenska**. Svaret kommer korrekt tillbaka, och du sparar ~40% tokenkostnad.
+Den praktiska effekten: **skriv promptar på engelska även om du chattar på svenska**. Svaret kommer korrekt tillbaka, och du sparar ~30–40% tokenkostnad, beroende på tokenizer.
 
 ```mermaid
 flowchart LR
-    A[Svensk prompt] -->|1,7x tokens| B[Copilot API]
+    A[Svensk prompt] -->|1,4–1,7x tokens| B[Copilot API]
     C[Engelsk prompt] -->|1,0x tokens| B
     B -->|Samma svarskvalitet| D[Båda får giltig kod]
     
@@ -215,7 +215,7 @@ Kombinera prompttekniker med [Projektinställningar](/vibe-on-budget/sv/06-proje
 - **Grottmännisko-språk** ger en liten men verklig vinst — ungefär ~10% besparing av output-tokens i oberoende tester
 - **Metapromptar** kontrollerar output-utförlighet (där den verkliga kostnaden är)
 - **Benchmarka verktyg oberoende** — en proxy kan minska tokens och ändå höja din faktura
-- **Skriv på engelska** även om du tänker på svenska — 1,7x tokenbesparing
+- **Skriv på engelska** även om du tänker på svenska — ~30–40% tokenbesparing, beroende på tokenizer
 - **Överkomprimera inte** — att spara 20 tokens som orsakar ett felaktigt svar kostar mer
 
 *Beräknad lästid: 10 minuter*

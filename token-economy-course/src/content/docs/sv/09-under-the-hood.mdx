@@ -66,7 +66,7 @@ Modelloutput är där kostnadsmultiplikatorn gör mest ont (4–8x inputkostnad 
 
 ### Siffrorna
 
-VS Code-teamet fann att outputkomprimering ensam minskar fakturerbara output-tokens med **8–12%** i genomsnitt, med högre besparingar för uppgifter som involverar stora diffar. I kombination med code-only-instruktioner (Modul 4) kan output-tokens minska med 70%+.
+VS Code-teamet fann att outputkomprimering ensam minskar fakturerbara output-tokens med **~5,5%** i genomsnitt. Tool Search (att skjuta upp verktygsscheman) sparar ytterligare **~9–11%** genom att läsa in fullständiga verktygsdefinitioner endast när de behövs. I kombination med code-only-instruktioner (Modul 4) kan output-tokens minska med 70%+.
 
 ---
 
@@ -109,7 +109,7 @@ Effekten är mest synlig i längre sessioner (5+ steg). Utan batchning bär de f
 
 Agentiska sessioner använde traditionellt kortlivade HTTP-anslutningar — varje steg etablerade en ny anslutning, skickade begäran, tog emot svar och stängde.
 
-Under 2026 flyttade GitHub Copilot i VS Code till **beständiga WebSocket-anslutningar** för agentiska sessioner. Detta minskar inte direkt tokenantalet, men det minskar **inaktiv latens med 19%** och eliminerar TLS-handskakningsomkostnaden vid varje steg.
+Under 2026 flyttade GitHub Copilot i VS Code till **beständiga WebSocket-anslutningar** för agentiska sessioner. Detta minskar inte direkt tokenantalet, men det minskar **tiden till första token med ~19%** (median-TTFT) och eliminerar TLS-handskakningsomkostnaden vid varje steg.
 
 För tokenekonomin innebär snabbare svar:
 - **Färre övergivna sessioner** — användare väntar mindre, så de är mindre benägna att starta en ny tråd
@@ -199,7 +199,7 @@ Batchstorleken förstärker detta: inferens med en enda förfrågan (batch-1) ka
 
 ```mermaid
 pie title Where Token Savings Come From<br/>(Remaining harness optimizations, per session)
-    "Output compression" : 30
+    "Tool search + output compression" : 30
     "Background batching" : 25
     "WebSocket improvements" : 20
     "A/B validation" : 15

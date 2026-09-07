@@ -127,7 +127,7 @@ flowchart TD
 ```
 
 :::note[Cacheekonomi]
-Cachade tokens är dramatiskt billigare än nya tokens. En användbar tumregel är **~10 % av kostnaden för nya tokens hos Anthropic** (ungefär 90 % rabatt) och **~50 % hos OpenAI**, även om exakt prissättning beror på modell och nivå. Det innebär att en **session på 10 000 tokens med 60 % cacheträffar kan vara billigare än en session på 5 000 tokens utan träffar**.
+Cachade tokens är dramatiskt billigare än nya tokens. En användbar tumregel är **~10 % av kostnaden för nya tokens hos Anthropic** (ungefär 90 % rabatt). OpenAI erbjuder också automatisk prefix-cachning men publicerar ingen specifik rabattprocent — besparingarna varierar beroende på arbetsbelastning och prefixets stabilitet. Det innebär att en **session på 10 000 tokens med 60 % cacheträffar kan vara billigare än en session på 5 000 tokens utan träffar**.
 :::
 
 :::caution[Vad bryter cachen]
@@ -230,18 +230,14 @@ Olika modellleverantörer implementerar cachning på olika sätt — och skillna
 
 | Leverantör | Cachningstyp | Explicit kontroll? | Skrivkostnad | Träffkostnad | Standard-TTL |
 |----------|-------------|--------------------|--------------|--------------|--------------|
-| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | 0,1x (90 % rabatt) | Konfigurerbar |
+| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | Ej offentligt specificerad | Konfigurerbar |
 | Anthropic (Claude) | Manuell | Ja — `cache_control` | 1,25x–2,0x | 0,1x (90 % rabatt) | 5 min |
 | DeepSeek (V4 Pro) | Diskbaserad | Nej (implicit) | Ingen | 0,5x (50 % rabatt) | Ej tillämpligt |
 | Google (Gemini 3.5) | Kontextbaserad | Nej (implicit) | Ingen | Varierar | Session |
 
 För de dagliga misstagen som bryter cachen, se avsnittet Vanliga misstag som bryter cachen ovan.
 
-OpenAI GPT-5.x stöder utökad cachning med `prompt_cache_retention: "24h"`. VS Code Copilot uppmätte en **919 % förbättring av träfffrekvensen efter pauser på 40–60 minuter** och **338 % efter pauser på 30–40 minuter**. Det är särskilt värdefullt för asynkrona arbetsflöden där stegen ligger flera minuter från varandra.
-
-### Förlängd TTL förändrar ekonomin för asynkront arbete
-
-OpenAI:s 24-timmarsfönster för lagring kan hålla det dyra prefixet aktivt under normala utvecklingspauser i stället för att cachen försvinner mellan asynkrona steg. För arbetsflöden med längre mellanrum mellan förfrågningar innebär det färre kalla starter och lägre effektiv tokenkostnad.
+OpenAI GPT-5.x stöder konfigurerbar cacheretention (24 timmar som standard för organisationer utan ZDR på GPT-5-seriens modeller). Cachning sker efter bästa förmåga och är inte garanterad — ett anrop kan ibland hamna på en server utan ditt prefix och då betala fullt pris. GPT-5.6 och senare modeller tog bort 24-timmarscachen till förmån för uttrycklig cachekontroll. För mycket asynkrona arbetsflöden ger detta mer kontroll än Anthropics fasta femminutersfönster.
 
 :::caution[Kontroversen kring Anthropic TTL]
 I mars 2026 ändrade Anthropic i tysthet sin standard-TTL för cache från **1 timme till 5 minuter**. Det orsakade stora, tysta kostnadsökningar för asynkrona system — cacherna löpte ut mellan förfrågningarna och varje steg betalade fullt pris.
@@ -253,7 +249,7 @@ Om du använder Anthropic-baserade modeller (Claude i Copilot), håll sessionern
 
 - **Ändra inte systeminstruktioner under sessionen.** Om du måste göra det, acceptera cachemissen som sker en gång och fortsätt.
 - **Övervaka tysta cachefel.** Använd Copilots felsökningsloggning (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) för att kontrollera faktiska tokenantal.
-- **Välj leverantör utifrån asynkrona arbetsflöden.** OpenAI:s konfigurerbara TTL ger mycket asynkrona arbetsflöden mer kontroll än Anthropics fasta femminutersfönster.
+- **Välj leverantör utifrån asynkrona arbetsflöden.** OpenAI:s konfigurerbara cacheretention (GPT-5.x-serien) ger mycket asynkrona arbetsflöden mer kontroll än Anthropics fasta femminutersfönster — men cachning sker efter bästa förmåga och är inte garanterad.
 
 För en genomgång av de dagliga misstagen som bryter cachen, se tabellen [Vanliga misstag som bryter cachen](#vanliga-misstag-som-bryter-cachen) ovan.
 

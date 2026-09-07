@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Agenter, verktyg och MCP-hygien
 
-Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och det snabbaste sättet att bränna AI Credits. En ooptimerad agentloop kan förbruka **10x fler tokens** än samma uppgift i Edit-läge.
+Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och det snabbaste sättet att bränna AI Credits. En ooptimerad agentloop kan förbruka **10x fler tokens** än samma uppgift i Edit-läge (författarens uppskattning baserad på typiskt djup i agentloopar).
 
 Denna modul lär dig när du ska använda agenter, hur du avgränsar dem och hur du hindrar MCP-servrar från att tyst dränera din budget.
 
@@ -44,7 +44,7 @@ flowchart LR
 | **Testa** | Agenten kör tester och kontrollerar resultat | Verktygsanrop (terminal) + input (testutdata) |
 | **Iterera** | Agenten åtgärdar fel och förfinar | Hela loopen startar om — sammansatt kostnad |
 
-Att förstå loopen förklarar varför agentläge kostar **5–50K tokens** per uppgift: hela cykeln körs flera gånger. Varje iteration adderar kostnaden för alla tidigare steg.
+Att förstå loopen förklarar varför agentläge kostar **5–50K tokens** per uppgift (författarens uppskattning baserad på typiskt loopdjup och kontextstorlek): hela cykeln körs flera gånger. Varje iteration adderar kostnaden för alla tidigare steg.
 
 :::tip[Var du ska bryta loopen]
 Det mest tokeneffektiva stället att bryta loopen är efter **Testa**. Om testerna går igenom, stoppa agenten — låt den inte iterera för att "förbättra" fungerande kod. Använd stoppvillkor: "När testerna går igenom, stoppa och vänta på granskning."
@@ -162,7 +162,7 @@ flowchart TD
 
 Verktygssökning är särskilt värdefull i MCP-tunga uppsättningar: typiska sessioner skickar bara 5–8 scheman i stället för 20–30, stora uppsättningar skickar omkring 10 i stället för 30, och enkla redigeringsuppgifter kan skicka inga scheman alls. Det minskar verktygsrelaterad kontext med ungefär **60–75 %**, medan varje verktyg modellen faktiskt använder fortfarande medför kostnaden för sitt schema.
 
-Till Claude Sonnet-priset för input ($3/M) kostar en enda tung agentuppgift på 10 steg cirka $0,30 — enbart från verktygsregistrets omkostnad.
+Till Claude Sonnet-priset för input ($3/M) kostar en enda tung agentuppgift på 10 steg cirka $0,30 — enbart från verktygsregistrets omkostnad (illustrativ uppskattning baserad på tabellen ovan).
 
 :::tip[Kontrollera din baslinje med /context]
 I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/Tools-tokens. I VS Code kan du uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
@@ -243,7 +243,7 @@ I stället för att be agenten köra och inspektera många liknande databasfråg
 
 ### 5. Bygg en modellrouterstrategi
 
-Alla uppgifter kräver inte samma modell. En systematisk router sparar **73 % av de dagliga API-kostnaderna** — från 15 dollar per dag till 4 dollar — genom att matcha uppgiftens komplexitet mot rätt modellnivå.
+Alla uppgifter kräver inte samma modell. En systematisk router kan spara **73 % av de dagliga API-kostnaderna** — från 15 dollar per dag till 4 dollar — genom att matcha uppgiftens komplexitet mot rätt modellnivå (författarens uppskattning baserad på en illustrativ arbetsbelastning).
 
 | Uppgiftstyp | Primär (smart) | Reserv (billig) | Maxkostnad/uppgift |
 |-------------|----------------|-----------------|--------------------|
@@ -255,13 +255,13 @@ Alla uppgifter kräver inte samma modell. En systematisk router sparar **73 % av
 
 **Så tillämpar du detta i Copilot:**
 
-1. **Låt modellväljaren stå på Auto** — Copilot dirigerar enkla förfrågningar till billigare modeller automatiskt och sparar cirka 60–70 % på berättigade turer.
+1. **Låt modellväljaren stå på Auto** — Copilot dirigerar enkla förfrågningar till billigare modeller automatiskt och sparar cirka 60–70 % på berättigade turer (Copilot-teamets interna uppskattning — oberoende verifiering ej tillgänglig; individuella resultat varierar beroende på arbetsbelastning).
 2. **Byt manuellt för kända nivåer:** Haiku för regex, strängmanipulation, docstrings och boilerplate; Sonnet för generell utveckling och ändringar över flera filer; Opus för arkitekturgranskning, säkerhetsrevisioner och komplex felsökning.
 3. **Byt inte modell mitt i en session för en enstaka billig fråga** — cache-ombyggnaden kostar mer än besparingen.
 4. **Betala inte premium för enkelt arbete** — Opus för en strängdelning kostar 15 gånger mer än Haiku för samma resultat.
 
 :::tip[80/20-regeln för modellval]
-Ungefär 80 % av chattförfrågningarna är tillräckligt enkla för en lättviktsmodell. Om du låter väljaren stå på en premiummodell "för säkerhets skull" betalar du för mycket för 4 av 5 förfrågningar.
+Ungefär 80 % av chattförfrågningarna är tillräckligt enkla för en lättviktsmodell (författarens uppskattning baserad på typisk förfrågningsmix). Om du låter väljaren stå på en premiummodell "för säkerhets skull" betalar du för mycket för 4 av 5 förfrågningar.
 :::
 
 ### Så fungerar automatiskt modellval
@@ -274,7 +274,7 @@ Automatiskt modellval klassificerar varje förfrågan med hjälp av uppgiftsinb�
 | Redigering i en fil eller liten refaktorering | Mellanklassmodell |
 | Redigering i flera filer, komplex planering eller verktygsorkestrering | Mest kapabla modell |
 
-Eftersom ungefär **60–70 % av förfrågningarna** är tillräckligt enkla för en billigare modell kan Auto minska modellrelaterade kostnader med cirka **60–70 %** för berättigade uppgifter, samtidigt som modeller med högre kapacitet används när de behövs.
+Eftersom ungefär **60–70 % av förfrågningarna** är tillräckligt enkla för en billigare modell (Copilot-teamets interna uppskattning — oberoende verifiering ej tillgänglig; individuella resultat varierar beroende på arbetsbelastning) kan Auto minska modellrelaterade kostnader med cirka **60–70 %** för berättigade uppgifter, samtidigt som modeller med högre kapacitet används när de behövs.
 
 ### 6. Fem subagentmönster som sparar tokens
 
@@ -289,7 +289,7 @@ Forskning från Anthropic identifierar fem organisatoriska mönster för att str
 | **Utvärderare–optimerare** | En generator producerar, en utvärderare granskar och generatorn rättar | Vanligen 2–3 cykler, fångar fel tidigt | Kvalitetskritiskt och säkerhetskänsligt arbete |
 
 :::tip[Det mest tokeneffektiva mönstret]
-**Utvärderare–optimerare** sparar mest tokens i praktiken. Att fånga ett fel i granskning kostar 2 000 tokens. Att rätta samma fel efter produktion kostar 50 000+ tokens genom felsökning, refaktorering och ny granskning.
+**Utvärderare–optimerare** sparar mest tokens i praktiken (författarens uppskattning). Att fånga ett fel i granskning kostar 2 000 tokens. Att rätta samma fel efter produktion kostar 50 000+ tokens genom felsökning, refaktorering och ny granskning.
 :::
 
 **Praktisk slutsats:** Att namnge dessa mönster hjälper dig att välja rätt medvetet. För en komplex funktion över flera filer sparar Orkestrerare–arbetare tokens; för en säkerhetsrevision är Utvärderare–optimerare avgörande.

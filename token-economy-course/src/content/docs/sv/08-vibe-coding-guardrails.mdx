@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe coding utan skulden
 
-Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — är det snabbaste sättet att bygga mjukvara 2026. Men det finns en hake: **studier antyder att teknisk skuld kan öka 30–41% efter att AI-kodverktyg införts (mätt i flera organisationer)**, kodduplicering kan öka 48% (studier antyder) och refaktorering kan minska 60% (studier antyder). Varför spelar det roll för din tokenbudget? Därför att dålig kod skapar omarbete. Omarbete skapar fler promptar, fler agentloopar och fler tokens.
+Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — är det snabbaste sättet att bygga mjukvara 2026. Men det finns en hake: **statiska analysvarningar ökar ~30% och kodkomplexiteten ~41% efter att AI-kodverktyg införts (CMU-studie, arXiv:2511.04427)**, kodduplicering kan öka 81% (GitClear 2026) och refaktorering kan minska ~60% (GitClear 2025). Varför spelar det roll för din tokenbudget? Därför att dålig kod skapar omarbete. Omarbete skapar fler promptar, fler agentloopar och fler tokens.
 
 Det snabbaste sättet att bränna credits är inte en dålig prompt — det är att åtgärda buggar som aldrig borde ha funnits. Lösningen är inte att sluta vibe-coda, utan att bygga skyddsräcken som hindrar små kvalitetsgenvägar från att bli återkommande tokenkostnader.
 
@@ -409,7 +409,7 @@ Skyddsräcken fungerar bäst med [Projektsetup](/vibe-on-budget/sv/06-project-se
 
 ## Viktiga slutsatser
 
-- Studier antyder att teknisk skuld kan öka **30–41%** med AI-kodningsverktyg (mätt i flera organisationer) — skyddsräcken är nödvändiga
+- CMU-studien (arXiv:2511.04427) visade att statiska analysvarningar ökar ~30% och kodkomplexiteten ~41% efter att AI-kodverktyg införts — skyddsräcken är nödvändiga
 - Kodkvalitet är tokenekonomi: att förhindra omarbete kostar färre tokens än att felsöka och refaktorera senare
 - Skriv en **lättviktsspec** innan du ber agenten bygga en funktion
 - Använd **TDD** — tester definierar beteende, AI implementerar

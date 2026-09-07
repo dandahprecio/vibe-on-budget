@@ -81,7 +81,9 @@ Every line you add to `copilot-instructions.md` is paid on **every single reques
 
 ### The 200-Line Ceiling
 
-Research suggests instruction files do not stay small for long. Chakrabarti et al. (arXiv:2608.11095, August 2026) found that instructions grew by **+226%** over their lifetime as teams kept adding one more exception, caveat, or "temporary" rule.
+Research suggests instruction files do not stay small for long. Chakrabarti et al. (arXiv:2608.11095, August 2026) found that instructions grew by **+226%** over their lifetime as teams kept adding one more exception, caveat, or "temporary" rule. Daniel Vaughan, interpreting the paper, recommends a practical ceiling: if output exceeds a few hundred lines, it is time to prune.
+
+> The 200-line figure is practical guidance from Vaughan's analysis, not a finding from the original paper, which reports a median of 39 instructions and a 90th percentile of 131.
 
 - **200 lines ≈ 1,500–2,000 tokens** — small enough to stay in foreground attention, large enough for identity, 2–3 hard rules, and pointers to deeper docs.
 - **Above 200 lines**, the model starts under-attending to early content. The file becomes invisible accretion: expensive, familiar-looking, and rarely reread end to end.

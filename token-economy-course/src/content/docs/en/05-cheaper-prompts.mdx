@@ -151,23 +151,23 @@ The cheapest LLM call is the one you don't make. Pre-compute deterministic data 
 
 ---
 
-## English vs Swedish: A 1.7x Token Difference
+## English vs Swedish: A 1.4–1.7× Token Difference
 
-Swedish tokenizes **~1.7x less efficiently** than English with most tokenizers. This is because English has shorter average word length and more common subword patterns.
+Swedish tokenizes **~1.4–1.7× less efficiently** than English, depending on the tokenizer. Older tokenizers (GPT-4, Mistral) show a wider gap (~1.7×); newer tokenizers (GPT-5 o200k) narrow it to ~1.4–1.5×. This is because English has shorter average word length and more common subword patterns.
 
 ```
 English: "Create login validation. Handle empty fields."
 → ~7 tokens
 
 Swedish: "Skapa inloggningsvalidering. Hantera tomma fält."
-→ ~12 tokens (1.7x more)
+→ ~12 tokens (~1.5x more)
 ```
 
-The practical impact: **prompt in English even if you chat in Swedish**. The response will come back correctly, and you save ~40% token cost.
+The practical impact: **prompt in English even if you chat in Swedish**. The response will come back correctly, and you save ~30–40% token cost, depending on the tokenizer.
 
 ```mermaid
 flowchart LR
-    A[Swedish prompt] -->|1.7x tokens| B[Copilot API]
+    A[Swedish prompt] -->|1.4–1.7x tokens| B[Copilot API]
     C[English prompt] -->|1.0x tokens| B
     B -->|Same response quality| D[Both get valid code]
     
@@ -235,7 +235,7 @@ The first prompt is short but forces discovery, clarification, or a risky guess.
 - **Caveman-speak** is a small but real win — roughly ~10% output savings in independent tests
 - **Meta-prompts** control output verbosity (where the real cost is)
 - **Benchmark tools independently** — a proxy can reduce tokens and still raise your bill
-- **Prompt in English** even if you think in Swedish — 1.7x token savings
+- **Prompt in English** even if you think in Swedish — ~30–40% token savings, depending on the tokenizer
 - **Don't over-compress** — saving 20 tokens that causes a wrong answer costs more
 
 *Estimated reading time: 10 minutes*

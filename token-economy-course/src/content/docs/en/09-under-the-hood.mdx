@@ -66,7 +66,7 @@ Model output is where the cost multiplier hurts most (4–8x input cost per toke
 
 ### The Numbers
 
-The VS Code team found that output compression alone reduces billable output tokens by **8–12%** on average, with higher savings on tasks involving large diffs. Combined with code-only instructions (Module 4), output tokens can drop by 70%+.
+The VS Code team found that output compression alone reduces billable output tokens by **~5.5%** on average. Tool search (deferring tool schemas) saves an additional **~9–11%** by loading full tool definitions only when needed. Combined with code-only instructions (Module 4), output tokens can drop by 70%+.
 
 ---
 
@@ -109,7 +109,7 @@ The effect is most visible in longer sessions (5+ turns). Without batching, the 
 
 Agentic sessions traditionally used short-lived HTTP connections — each turn established a new connection, sent the request, received the response, and closed.
 
-In 2026, GitHub Copilot in VS Code moved to **persistent WebSocket connections** for agentic sessions. This doesn't directly reduce token count, but it reduces **idle latency by 19%** and eliminates the TLS handshake overhead on every turn.
+In 2026, GitHub Copilot in VS Code moved to **persistent WebSocket connections** for agentic sessions. This doesn't directly reduce token count, but it reduces **time-to-first-token by ~19%** (median TTFT) and eliminates the TLS handshake overhead on every turn.
 
 For the token economy, faster turn-around means:
 - **Fewer abandoned sessions** — users wait less, so they're less likely to start a new thread
@@ -201,7 +201,7 @@ Batch size compounds this: single-request inference (batch-1) can cost up to $20
 
 ```mermaid
 pie title Where Token Savings Come From<br/>(Remaining harness optimizations, per session)
-    "Output compression" : 30
+    "Tool search + output compression" : 30
     "Background batching" : 25
     "WebSocket improvements" : 20
     "A/B validation" : 15
@@ -264,7 +264,7 @@ These are research-stage technologies — not yet in Copilot. But they signal wh
 - Copilot's harness ships **continuous token-efficiency improvements** — no action needed on your part
 - **Output compression** reduces billable output tokens while preserving the meaning and fidelity of responses
 - **Background batching** combines setup work during idle time, reducing overhead in longer sessions
-- **WebSocket connections** reduce idle latency by 19%, making sessions faster and less likely to be abandoned
+- **WebSocket connections** reduce time-to-first-token by ~19% (median TTFT), making sessions faster and less likely to be abandoned
 - All optimizations are validated with **A/B experiments** — savings never come at the cost of task quality
 - For self-hosted models, **serverless usually beats dedicated GPUs** unless utilization stays consistently high
 - Combine Copilot's automatic stack with the user-side techniques from **Modules 4–8** for the best results

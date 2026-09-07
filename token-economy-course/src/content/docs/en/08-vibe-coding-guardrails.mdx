@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe Coding Without the Debt
 
-Vibe coding — letting AI write your code while you focus on intent — is the fastest way to build software in 2026. But there's a catch: **technical debt can increase 30–41% after AI coding tool adoption (studies suggest, measured across multiple orgs)**, code duplication can rise 48% (studies suggest), and refactoring can drop 60% (studies suggest). Why does this matter for your token budget? Because bad code creates rework. Rework creates more prompts, more agent loops, and more tokens.
+Vibe coding — letting AI write your code while you focus on intent — is the fastest way to build software in 2026. But there's a catch: **static analysis warnings increase ~30% and code complexity ~41% after AI coding tool adoption (CMU study, arXiv:2511.04427)**, code duplication can rise 81% (GitClear 2026), and refactoring can drop ~60% (GitClear 2025). Why does this matter for your token budget? Because bad code creates rework. Rework creates more prompts, more agent loops, and more tokens.
 
 The fastest way to burn credits isn't a bad prompt — it's fixing bugs that shouldn't exist. The solution isn't to stop vibe coding; it's to build guardrails that prevent small quality shortcuts from becoming recurring token costs.
 
@@ -409,7 +409,7 @@ Guardrails work best with [Project Setup](/vibe-on-budget/en/06-project-setup) a
 
 ## Key Takeaways
 
-- Studies suggest technical debt can increase **30–41%** with AI coding tools (measured across multiple orgs) — guardrails are essential
+- CMU study (arXiv:2511.04427) found static analysis warnings increase ~30% and code complexity ~41% after AI coding tool adoption — guardrails are essential
 - Code quality is token economics: preventing rework costs fewer tokens than debugging and refactoring it later
 - Write a **lightweight spec** before asking the agent to build a feature
 - Use **TDD** — tests define behavior, AI implements it

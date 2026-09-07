@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Agents, Tools & MCP Hygiene
 
-Agent mode and MCP servers are Copilot's most powerful features — and the fastest way to burn through AI Credits. An unoptimized agent loop can consume **10x more tokens** than the same task done in Edit mode.
+Agent mode and MCP servers are Copilot's most powerful features — and the fastest way to burn through AI Credits. An unoptimized agent loop can consume **10x more tokens** than the same task done in Edit mode (author estimate based on typical agent loop depth).
 
 This module teaches you when to use agents, how to scope them, and how to keep MCP servers from silently draining your budget.
 
@@ -44,7 +44,7 @@ flowchart LR
 | **Test** | Agent runs tests, checks results | Tool calls (terminal) + input (test output) |
 | **Iterate** | Agent fixes failures, refines | Full loop restart — compound cost |
 
-Understanding this loop explains why Agent mode costs **5–50K tokens** per task: it runs this entire cycle multiple times. Each iteration compounds the cost of every previous step.
+Understanding this loop explains why Agent mode costs **5–50K tokens** per task (author estimate based on typical loop depth and context size): it runs this entire cycle multiple times. Each iteration compounds the cost of every previous step.
 
 :::tip[Where to intervene]
 The most token-efficient place to break the loop is after **Test**. If the tests pass, stop the agent — don't let it iterate to "improve" working code. Use stop conditions: "After tests pass, stop and wait for review."
@@ -156,7 +156,7 @@ flowchart TD
 
 Tool Search is especially valuable in MCP-heavy setups: typical sessions send only 5–8 schemas instead of 20–30, large setups send about 10 instead of 30, and simple editing tasks may send no schemas at all. That reduces tool-related context by roughly **60–75%**, while every tool the model actually uses still incurs its schema cost.
 
-At Claude Sonnet input pricing ($3/M input), a single heavy 10-step agent task costs ~$0.30 — from tool registry overhead alone.
+At Claude Sonnet input pricing ($3/M input), a single heavy 10-step agent task costs ~$0.30 — from tool registry overhead alone (illustrative estimate based on the table above).
 
 :::tip[Check your baseline with /context]
 In Copilot CLI, run `/context` mid-session to see your System/Tools token consumption. In VS Code, estimate by counting active MCP servers × tools × ~200 tokens.
@@ -235,7 +235,7 @@ Instead of asking the agent to run and inspect many similar database queries one
 
 ### 5. Build a Model Router Strategy
 
-Not every task needs the same model. A systematic router saves **73% in daily API costs** — reducing average spend from $15/day to $4/day — by matching task complexity to model tier.
+Not every task needs the same model. A systematic router can save **73% in daily API costs** — reducing average spend from $15/day to $4/day — by matching task complexity to model tier (author estimate based on an illustrative workload mix).
 
 | Task Type | Primary (Smart) | Fallback (Cheap) | Max Cost/Task |
 |-----------|----------------|------------------|---------------|
@@ -262,7 +262,7 @@ flowchart TD
 
 **How to apply this in Copilot:**
 
-1. **Keep the model selector on Auto** — Copilot routes simple requests to cheaper models automatically, saving ~60-70% on eligible turns
+1. **Keep the model selector on Auto** — Copilot routes simple requests to cheaper models automatically, saving ~60-70% on eligible turns (Copilot team internal estimate — independent verification not available; individual results vary by workload)
 2. **Switch manually for known tiers:**
    - Haiku for: regex, string manipulation, docstrings, boilerplate
    - Sonnet for: general development, cross-file changes
@@ -271,7 +271,7 @@ flowchart TD
 4. **Don't pay premium for simple work** — using Opus for a string split costs 15x more than Haiku for the same result
 
 :::tip[The 80/20 rule of model selection]
-About 80% of chat requests are simple enough for a lightweight model. If you leave the selector on a premium model "just in case," you're overpaying on 4 out of 5 requests.
+About 80% of chat requests are simple enough for a lightweight model (author estimate based on typical request mix). If you leave the selector on a premium model "just in case," you're overpaying on 4 out of 5 requests.
 :::
 
 ### How Auto Model Selection Works
@@ -284,7 +284,7 @@ Auto Model Selection classifies each request using task embeddings before it rea
 | Single-file edit or small refactor | Mid-range model |
 | Multi-file edit, complex planning, or tool orchestration | Most capable model |
 
-Because roughly **60–70% of requests** are simple enough for a cheaper model, leaving the selector on Auto can reduce model-related costs by about **60–70%** on eligible work while preserving higher-capability models for tasks that need them.
+Because roughly **60–70% of requests** are simple enough for a cheaper model (Copilot team internal estimate — independent verification not available; individual results vary by workload), leaving the selector on Auto can reduce model-related costs by about **60–70%** on eligible work while preserving higher-capability models for tasks that need them.
 
 ### 6. Five Sub-Agent Patterns That Save Tokens
 
@@ -327,7 +327,7 @@ flowchart TD
 | **Evaluator-Optimizer** | Generator produces, Evaluator reviews, Generator fixes | 2-3 cycles typical, catches errors early | Quality-critical code, security-sensitive work |
 
 :::tip[Most token-efficient pattern]
-**Evaluator-Optimizer** saves the most tokens in practice. Catching an error in review costs 2,000 tokens. Fixing that same error after it reaches production costs 50,000+ tokens across debugging, refactoring, and re-review. The 2-3 cycle overhead pays for itself on the first caught bug.
+**Evaluator-Optimizer** saves the most tokens in practice (author estimate). Catching an error in review costs 2,000 tokens. Fixing that same error after it reaches production costs 50,000+ tokens across debugging, refactoring, and re-review. The 2-3 cycle overhead pays for itself on the first caught bug.
 :::
 
 **Practical takeaway:** You're already using these patterns implicitly. Naming them helps you choose the right one deliberately. For a complex multi-file feature, Orchestrator-Workers saves tokens vs one agent doing everything. For a security audit, Evaluator-Optimizer is essential.
