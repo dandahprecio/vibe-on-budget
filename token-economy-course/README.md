@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:4321/token-economy-course` in your browser.
+Open `http://localhost:4321/vibe-on-budget` in your browser.
 
 ## Build
 

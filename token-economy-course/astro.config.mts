@@ -6,8 +6,8 @@ import rehypeKatex from "rehype-katex";
 
 // https://astro.build/config
 export default defineConfig({
-	site: "https://dada-consulting.github.io",
-	base: "/token-economy-course",
+	site: "https://dandahprecio.github.io",
+	base: "/vibe-on-budget",
 	integrations: [
 		mermaid(),
 		starlight({
@@ -22,7 +22,7 @@ export default defineConfig({
 			},
 			editLink: {
 				baseUrl:
-					"https://github.com/dada-consulting/token-economy-course/edit/main/",
+					"https://github.com/dandahprecio/vibe-on-budget/edit/main/",
 			},
 			lastUpdated: true,
 			customCss: [
