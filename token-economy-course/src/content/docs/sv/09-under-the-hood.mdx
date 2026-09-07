@@ -1,5 +1,5 @@
 ---
-title: 8. Under huven
+title: 9. Under huven
 description: Hur Copilot sparar tokens internt — promptcachning, verktygssökning, outputkomprimering och mer
 ---
 
@@ -129,6 +129,8 @@ Om du använder Anthropic-baserade modeller (Claude i Copilot), håll sessionern
 - **Övervaka tysta cache-fel.** Modellen berättar inte när cachen missar. Använd Copilots felsökningsloggning (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) för att kontrollera faktiska tokenantal.
 - **Leverantören spelar roll.** Om arbetsflödet är mycket asynkront (förfrågningar med flera minuters mellanrum) ger OpenAIs konfigurerbara TTL dig mer kontroll än Anthropics fasta femminutersfönster.
 
+Använd vyn [Cache Explorer](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) i Agent Debug Logs för att se dina faktiska cacheträffar och hur många input-tokens som återanvändes. Då sluter du optimeringsslingan från kapitel 3: mät med Cache Explorer → ändra en variabel → mät igen.
+
 ---
 
 ## 2. Verktygssökning — On-Demand Verktygsladdning
@@ -168,10 +170,10 @@ flowchart TD
 
 Verktygssökning är särskilt värdefullt för MCP-tunga installationer. Om du har 15 MCP-servrar med 2–3 verktyg var kan du ha 40+ verktygsscheman. Med verktygssökning laddas bara de som modellen faktiskt använder — resten stannar utanför kontexten.
 
-:::note[Modul 6 täcker den praktiska kostnadsmodellen]
-Modul 6:s MCP-kostnadsuppskattningar representerar **baslinjen före verktygssökning** — de är fortfarande användbara som ett värsta-fall-scenario och för att förstå *varför* det är viktigt att rensa bort verktyg. Med verktygssökning är de faktiska kostnaderna ofta 60–75% lägre än dessa uppskattningar.
+:::note[Modul 7 täcker den praktiska kostnadsmodellen]
+Modul 7:s MCP-kostnadsuppskattningar representerar **baslinjen före verktygssökning** — de är fortfarande användbara som ett värsta-fall-scenario och för att förstå *varför* det är viktigt att rensa bort verktyg. Med verktygssökning är de faktiska kostnaderna ofta 60–75% lägre än dessa uppskattningar.
 
-Se [Modul 6 — Agenter, verktyg och MCP-hygien](/token-economy-course/sv/06-agents-mcp) för praktisk MCP-hantering.
+Se [Modul 7 — Agenter, verktyg och MCP-hygien](/token-economy-course/sv/07-agents-mcp) för praktisk MCP-hantering.
 :::
 
 ---
@@ -188,7 +190,7 @@ Modelloutput är där kostnadsmultiplikatorn gör mest ont (4–8x inputkostnad 
 
 ### Siffrorna
 
-VS Code-teamet fann att outputkomprimering ensam minskar fakturerbara output-tokens med **8–12%** i genomsnitt, med högre besparingar för uppgifter som involverar stora diffar. I kombination med code-only-instruktioner (Modul 3) kan output-tokens minska med 70%+.
+VS Code-teamet fann att outputkomprimering ensam minskar fakturerbara output-tokens med **8–12%** i genomsnitt, med högre besparingar för uppgifter som involverar stora diffar. I kombination med code-only-instruktioner (Modul 4) kan output-tokens minska med 70%+.
 
 ---
 

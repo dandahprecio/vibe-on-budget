@@ -1,5 +1,5 @@
 ---
-title: 8. Under the Hood
+title: 9. Under the Hood
 description: How Copilot saves tokens internally — prompt caching, tool search, output compression, and more
 ---
 
@@ -129,6 +129,8 @@ If you're on Anthropic-backed models (Claude in Copilot), keep sessions active a
 - **Monitor for silent cache failures.** The model doesn't tell you when the cache misses. Use Copilot debug logging (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) to check actual token counts.
 - **Provider matters.** If your workflow is highly async (requests spaced minutes apart), OpenAI's configurable TTL gives you more control than Anthropic's fixed 5-minute window.
 
+Use the [Cache Explorer view](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) in Agent Debug Logs to see your actual cache hit rates and how many input tokens were reused. This closes the optimization loop from Chapter 3: measure with Cache Explorer → adjust one variable → measure again.
+
 ---
 
 ## 2. Tool Search — On-Demand Tool Loading
@@ -168,10 +170,10 @@ flowchart TD
 
 Tool search is particularly valuable for MCP-heavy setups. If you have 15 MCP servers each with 2–3 tools, you might have 40+ tool schemas. With tool search, only the ones the model actually uses are loaded — the rest stay out of context.
 
-:::note[Module 6 covers the practical cost model]
-Module 6's MCP cost estimates represent the **pre-Tool Search baseline** — they're still useful as a worst-case scenario and for understanding *why* pruning matters. With Tool Search, actual costs are often 60–75% lower than those estimates.
+:::note[Module 7 covers the practical cost model]
+Module 7's MCP cost estimates represent the **pre-Tool Search baseline** — they're still useful as a worst-case scenario and for understanding *why* pruning matters. With Tool Search, actual costs are often 60–75% lower than those estimates.
 
-See [Module 6 — Agents, Tools & MCP Hygiene](/token-economy-course/en/06-agents-mcp) for practical MCP management.
+See [Module 7 — Agents, Tools & MCP Hygiene](/token-economy-course/en/07-agents-mcp) for practical MCP management.
 :::
 
 ---
@@ -188,7 +190,7 @@ Model output is where the cost multiplier hurts most (4–8x input cost per toke
 
 ### The Numbers
 
-The VS Code team found that output compression alone reduces billable output tokens by **8–12%** on average, with higher savings on tasks involving large diffs. Combined with code-only instructions (Module 3), output tokens can drop by 70%+.
+The VS Code team found that output compression alone reduces billable output tokens by **8–12%** on average, with higher savings on tasks involving large diffs. Combined with code-only instructions (Module 4), output tokens can drop by 70%+.
 
 ---
 
@@ -326,7 +328,7 @@ Prompt caching is the dominant driver, responsible for roughly 40% of harness-le
 ---
 
 :::tip[Continue Learning]
-Internal optimizations make the most sense after understanding the [context model](/token-economy-course/en/02-context-model) and [cost structure](/token-economy-course/en/01-hidden-tax). For practical ways to complement these savings, see [Agents, Tools & MCP Hygiene](/token-economy-course/en/06-agents-mcp).
+Internal optimizations make the most sense after understanding the [context model](/token-economy-course/en/02-context-model) and [cost structure](/token-economy-course/en/01-hidden-tax). For practical ways to complement these savings, see [Agents, Tools & MCP Hygiene](/token-economy-course/en/07-agents-mcp).
 :::
 
 ---

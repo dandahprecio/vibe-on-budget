@@ -1,5 +1,5 @@
 ---
-title: 6. Agenter, verktyg och MCP-hygien
+title: 7. Agenter, verktyg och MCP-hygien
 description: Använd agenter och MCP-servrar utan att slösa credits
 ---
 
@@ -75,6 +75,18 @@ flowchart LR
 
 ---
 
+## Thinking Effort
+
+Thinking effort styr hur mycket resonemang (thinking tokens) modellen använder för varje förfrågan. Högre effort innebär fler thinking tokens, vilket ökar latensen och förbrukningen av credits.
+
+VS Code sätter standardvärden baserat på utvärderingar och har adaptivt resonemang aktiverat. Modellen avgör dynamiskt hur mycket den ska tänka utifrån uppgiftens komplexitet. För de flesta uppgifter räcker standardvärdena.
+
+:::caution[Öka thinking effort bara när det ger verklig nytta]
+Öka thinking effort endast för genuint komplexa problem, till exempel arkitekturplanering eller felsökning i flera steg. Att höja nivån för rutinuppgifter ökar latensen och förbrukar fler credits utan att resultatet nödvändigtvis blir bättre. Se [Konfigurera thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort).
+:::
+
+---
+
 ## Den dolda kostnaden för MCP-servrar
 
 Varje MCP-server du har ansluten registrerar sina verktyg i agentens verktygsregister. Före verktygssökning (mitten av 2025) injicerades det fullständiga schemat för varje verktyg i varje agentstegs kontextfönster. Med verktygssökning är bara registret (namn + korta beskrivningar) alltid närvarande — fullständiga scheman laddas vid behov. Se notisen nedan för detaljer.
@@ -102,9 +114,9 @@ flowchart TD
 :::note[Verktygssökning minskar denna omkostnad]
 Verktygssökning behåller endast verktygsnamn + korta beskrivningar i det alltid närvarande registret. Fullständiga scheman laddas först när modellen begär ett verktyg. Varje verktyg modellen använder medför fortfarande kostnaden för dess schema (~200 tokens).
 
-Före mitten av 2025 laddades alla scheman vid varje steg. Med verktygssökning (modul 8) laddas bara nödvändiga verktyg. Det är fortfarande viktigt att rensa bort oanvända MCP-servrar — det gör registret mindre och minskar risken att modellen väljer dyra verktyg för enkla uppgifter.
+Före mitten av 2025 laddades alla scheman vid varje steg. Med verktygssökning (modul 9) laddas bara nödvändiga verktyg. Det är fortfarande viktigt att rensa bort oanvända MCP-servrar — det gör registret mindre och minskar risken att modellen väljer dyra verktyg för enkla uppgifter.
 
-Se [Modul 8 — Verktygssökning](/token-economy-course/sv/08-under-the-hood) för hur det fungerar internt.
+Se [Modul 9 — Verktygssökning](/token-economy-course/sv/09-under-the-hood) för hur det fungerar internt.
 :::
 
 ### MCP-server-matematiken
@@ -181,6 +193,18 @@ Gå igenom dina VS Code-inställningar och inaktivera MCP-servrar du inte aktivt
 - **Kodningsprofil**: filsystem + terminal endast
 - **DevOps-profil**: GitHub CLI + distributionsverktyg
 - **Databasprofil**: databas-MCP + schemaverktyg
+
+**Konfigurera verktyg för den aktuella förfrågan:** Använd knappen **Configure Tools** i chattens inmatningsfält för att välja enskilda verktyg eller MCP-servrar. Sök i verktygsväljaren och lägg till ett annat verktyg när uppgiften behöver det. Detta kompletterar anpassade agenter och VS Code-profiler genom att ge dig en snabb justering per förfrågan utan att byta profil eller konfiguration. Se [Verktyg](https://code.visualstudio.com/docs/agents/run/tools).
+
+---
+
+## Batcha upprepade operationer
+
+Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i modellens kontextfönster. För deterministiska flöden eller masskörningar: använd ett script eller kommandoradsverktyg för att köra loopen utanför agentkonversationen och returnera bara slutresultatet till agenten.
+
+:::tip[Flytta upprepade operationer utanför konversationen]
+I stället för att be agenten köra och inspektera många liknande databasfrågor en i taget, skriv ett granskat script som kör frågebatchen och producerar en koncis sammanfattning. Kör scriptet via terminalverktyget och ge sedan sammanfattningen till modellen för analys. Benchmarka den scriptade och den interaktiva versionen av arbetsflödet först — besparingen beror på verktygen, resultaten och uppgiften.
+:::
 
 ---
 
@@ -283,7 +307,7 @@ Varje agentsteg kör om verktygssökningen mot din prompt. Om uppgiften ändras 
 ---
 
 :::tip[Fortsätt lära]
-Agenthygien bygger vidare på [Projektinställningar](/token-economy-course/sv/05-project-setup). För ett bredare perspektiv på att hantera kvaliteten i AI-genererad kod, se [Vibe coding utan skuld](/token-economy-course/sv/07-vibe-coding-guardrails).
+Agenthygien bygger vidare på [Projektinställningar](/token-economy-course/sv/06-project-setup). För ett bredare perspektiv på att hantera kvaliteten i AI-genererad kod, se [Vibe coding utan skuld](/token-economy-course/sv/08-vibe-coding-guardrails).
 :::
 
 ## Viktiga slutsatser

@@ -28,12 +28,13 @@ src/content/docs/
 │   ├── index.mdx
 │   ├── 01-hidden-tax.mdx
 │   ├── 02-context-model.mdx
-│   ├── 03-quick-wins.mdx
-│   ├── 04-cheaper-prompts.mdx
-│   ├── 05-project-setup.mdx
-│   ├── 06-agents-mcp.mdx
-│   ├── 07-vibe-coding-guardrails.mdx
-│   └── 08-under-the-hood.mdx
+│   ├── 03-measure-before-you-cut.mdx
+│   ├── 04-quick-wins.mdx
+│   ├── 05-cheaper-prompts.mdx
+│   ├── 06-project-setup.mdx
+│   ├── 07-agents-mcp.mdx
+│   ├── 08-vibe-coding-guardrails.mdx
+│   └── 09-under-the-hood.mdx
 └── sv/          # Swedish translations
     └── ...
 ```

@@ -1,5 +1,5 @@
 ---
-title: 5. Projektinställningar för tokeneffektivitet
+title: 6. Projektinställningar för tokeneffektivitet
 description: Konfigurera instruktionsfiler, AGENTS.md och VS Code för maximal effektivitet
 ---
 
@@ -180,7 +180,39 @@ package-lock.json
 - **Binära/resursfiler** — bilder, ljud, typsnitt (kan inte bearbetas ändå)
 :::
 
+Din `.gitignore` påverkar också agenten: matchande filer exkluderas från arbetsytans index och från agentens textsökning/grep. Se den som ett första lager av exkludering.
+
 **Besparing:** 20–40% minskning av input-tokenförbrukning. Bonus: snabbare svar och färre hallucinationer från irrelevant kontext.
+
+### VS Code-inställningar för exkludering
+
+VS Code har två inställningar för mer finjusterad exkludering:
+
+| Inställning | Effekt |
+|---|---|
+| `files.exclude` | Döljer filer helt från Explorer, arbetsytans index och agentsökning |
+| `search.exclude` | Döljer filer från agentens textsökning/grep men behåller dem synliga i Explorer |
+
+```json
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/*.log": true
+  }
+}
+```
+
+Använd `files.exclude` för sådant du aldrig vill se. Använd `search.exclude` för loggfiler som du ibland vill öppna manuellt men inte vill ha i sökresultaten. Se [Förbättra agentsökning med exkluderingsinställningar](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).
+
+| Mekanism | Påverkar arbetsytans index | Påverkar agentsökning | Påverkar Explorer | Rekommenderas för |
+|---|---|---|---|---|
+| `.gitignore` | ✅ | ✅ | ❌ | Byggartefakter, dependencies |
+| `.copilotignore` | ✅ | ✅ | ❌ | Mockdata, stora JSON/CSV-filer |
+| `files.exclude` | ✅ | ✅ | ✅ | node_modules, dist |
+| `search.exclude` | ❌ | ✅ | ❌ | Loggfiler |
 
 ---
 
@@ -270,7 +302,7 @@ Forskning tyder på att LLM-genererade instruktionsfiler ofta försämrar agente
 ---
 
 :::tip[Fortsätt lära]
-En stabil projektuppsättning gör [Snabba vinster](/token-economy-course/sv/03-quick-wins) permanenta. Ta sedan nästa steg med [Agenter, verktyg och MCP-hygien](/token-economy-course/sv/06-agents-mcp) för att hantera kostnader i agentläge.
+En stabil projektuppsättning gör [Snabba vinster](/token-economy-course/sv/04-quick-wins) permanenta. Ta sedan nästa steg med [Agenter, verktyg och MCP-hygien](/token-economy-course/sv/07-agents-mcp) för att hantera kostnader i agentläge.
 :::
 
 ## Viktiga slutsatser

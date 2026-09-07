@@ -189,13 +189,28 @@ Om en ändring påverkar **verktyg**, **instruktioner på översta nivån** elle
 
 ---
 
+## Förgrena konversationer
+
+Skriv `/fork` i chattinmatningen för att skapa en ny session som **ärver hela konversationshistoriken**. Du kan också hovra över ett tidigare meddelande och välja **Fork Conversation** för att förgrena från just den kontrollpunkten.
+
+Använd förgrening när du vill utforska en alternativ lösning eller ställa en sidofråga utan att betala prefixkostnaden igen. Till skillnad från `/clear` och `/compact` är förgrening till för divergerande utforskning — parallella spår — inte för att fortsätta samma uppgift i en mindre kontext.
+
+Se [Fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) i VS Code-dokumentationen.
+
+:::tip[Praktisk slutsats]
+Förgrena innan du testar en riskfylld lösning: behåll originaltråden intakt och utforska alternativet i en gren som redan har den relevanta kontexten.
+:::
+
+---
+
 ## Vad det innebär för ditt arbetsflöde
 
-Att förstå kontextmodellen leder till tre praktiska regler:
+Att förstå kontextmodellen leder till fyra praktiska regler:
 
 1. **Håll prefixet stabilt** — undvik onödigt filbyte under en session
 2. **Återställ vid uppgiftsgränser** — rensa chatten när du byter uppgift. Inom en och samma uppgift, håll sessionen vid liv för att dra nytta av prefix-cachning.
 3. **Minimera alltid-på-instruktioner** — håll `copilot-instructions.md` smal, använd `.prompt.md`-filer för specialiserade regler
+4. **Grunda innan du utforskar** — se till att arbetsytans semantiska index är tillgängligt, använd `#codebase` för att uttryckligen grunda en förfrågan i den indexerade kodbasen och ta med relevanta filer, fel, begränsningar och kriterier för ett lyckat resultat i prompten. Använd symbolmedveten sökning och fokuserade MCP/CLI-verktyg för auktoritativa data, och lägg stabila projektkonventioner i anpassade instruktioner så att agenten slipper upptäcka dem på nytt i varje session. Se [Semantisk sökning](https://code.visualstudio.com/docs/agents/reference/workspace-context#_semantic-search).
 
 De här mönstren kan minska din kontext per förfrågan med 40–60 %, beroende på projekt och arbetsflöde.
 

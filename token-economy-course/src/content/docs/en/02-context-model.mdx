@@ -193,20 +193,35 @@ If a change affects **tools**, **top-level instructions**, or the **early shared
 
 ---
 
+## Fork Conversations
+
+Type `/fork` in the chat input to create a new session that **inherits the entire conversation history**. You can also hover over an earlier message and choose **Fork Conversation** to branch from that specific checkpoint.
+
+Use forking when you want to explore an alternative approach or ask a side question without paying the prefix cost again. Unlike `/clear` and `/compact`, forking is for divergent exploration — parallel tracks — not for continuing the same task in a smaller context.
+
+See [Fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) in the VS Code documentation.
+
+:::tip[Practical takeaway]
+Fork before experimenting with a risky approach: keep the original thread intact, and explore the alternative in a branch that already has the relevant context.
+:::
+
+---
+
 ## What It Means for Your Workflow
 
-Understanding the context model leads to three practical rules:
+Understanding the context model leads to four practical rules:
 
 1. **Keep the prefix stable** — avoid unnecessary file switching during a session
 2. **Reset at task boundaries** — clear chat when switching tasks. Within a single task, keep the session alive to benefit from prefix caching.
 3. **Minimize always-on instructions** — keep `copilot-instructions.md` lean, use `.prompt.md` files for specialized rules
+4. **Ground before exploration** — make sure the workspace semantic index is available, use `#codebase` to explicitly ground a request in the indexed codebase, and include relevant files, errors, constraints, and success criteria in your prompt. Use symbol-aware search and focused MCP/CLI tools for authoritative data, and put stable project conventions in custom instructions so the agent does not have to rediscover them every session. See [Semantic search](https://code.visualstudio.com/docs/agents/reference/workspace-context#_semantic-search).
 
 These patterns can reduce your per-request context by 40–60%, depending on the project and workflow.
 
 ---
 
 :::tip[Continue Learning]
-Understanding the context model makes [The Hidden Tax](/token-economy-course/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/token-economy-course/en/03-quick-wins) and [Writing Prompts That Cost Less](/token-economy-course/en/04-cheaper-prompts).
+Understanding the context model makes [The Hidden Tax](/token-economy-course/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/token-economy-course/en/04-quick-wins) and [Writing Prompts That Cost Less](/token-economy-course/en/05-cheaper-prompts).
 :::
 
 ---

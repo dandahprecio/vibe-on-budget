@@ -1,5 +1,5 @@
 ---
-title: 3. Quick Wins
+title: 4. Quick Wins
 description: Six things you can do tomorrow to start saving tokens immediately
 ---
 
@@ -38,14 +38,15 @@ Savings estimates are illustrative and vary by project size, model, and workflow
 
 **The action:**
 
-- **Same task, multiple steps?** Stay in the session. Caching compounds across turns (see [Module 8](/token-economy-course/en/08-under-the-hood)).
+- **Same task, multiple steps?** Stay in the session. Caching compounds across turns (see [Module 9](/token-economy-course/en/09-under-the-hood)).
 - **Task complete?** Start fresh. Stale history adds noise and wastes tokens.
-- **Thread past 10+ turns?** Compact it first:
+- **Thread past 10+ turns?** Use `/compact` to summarize older parts of the conversation and reclaim context-window space. You can focus the summary with an instruction such as:
 
 ```
-Summarize this session in 3 bullet points. I'll paste into a new thread.
+/compact focus on the API design decisions
 ```
-Copy the summary, run `/clear`, paste it in, continue. You keep the context without the token weight.
+
+- **Switching tasks?** Use the manual method instead: summarize the key context, start a new chat session, and paste the summary into it. Use `Ctrl+N` (Windows/Linux) or `⌘N` (Mac) to start a new chat session. This is for a new topic, not for compacting the same task. See [Compact conversation context](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context).
 
 **The savings:** 40–60% reduction in input tokens for sessions with accumulated history.
 
@@ -97,7 +98,9 @@ package-lock.json
 
 **The action:**
 
-1. In the chat model dropdown, switch to a lightweight model (Haiku or GPT-mini) for:
+For a maintenance-free default, use **auto model selection**. VS Code automatically routes each request to an efficient model based on task complexity, model health, and availability. For repeatable workflows, configure a preferred model in a custom agent.
+
+As an advanced option, manually select a lightweight model (Haiku or GPT-mini) for:
    - Regex patterns
    - Docstring generation
    - Simple code formatting
@@ -150,7 +153,7 @@ These are community tools, not official GitHub products.
 ---
 
 :::tip[Continue Learning]
-For deeper savings, see [Project Setup for Token Efficiency](/token-economy-course/en/05-project-setup) — it automates many of these quick wins. Also check [Writing Prompts That Cost Less](/token-economy-course/en/04-cheaper-prompts) for prompt-level optimization.
+For deeper savings, see [Project Setup for Token Efficiency](/token-economy-course/en/06-project-setup) — it automates many of these quick wins. Also check [Writing Prompts That Cost Less](/token-economy-course/en/05-cheaper-prompts) for prompt-level optimization.
 :::
 
 ---
@@ -160,10 +163,10 @@ For deeper savings, see [Project Setup for Token Efficiency](/token-economy-cour
 | # | Action | Setup Time | Token Savings |
 |---|--------|------------|---------------|
 | 1 | Code-only instruction | 2 min | 50–70% output ↓ |
-| 2 | Clear threads habit | 0 min | 40–60% input ↓ |
+| 2 | `/compact` and task-boundary sessions | 0 min | 40–60% input ↓ |
 | 3 | Close unused tabs | 0 min | 20–40% input ↓ |
 | 4 | `.copilotignore` file | 5 min | 20–40% input ↓ |
-| 5 | Model selection | 0 min | 5–15x cost/req ↓ |
+| 5 | Auto model selection | 0 min | 5–15x cost/req ↓ |
 | 6 | Unified diff output | 1 min | 70–80% output ↓ |
 
 Start with #1 and #4 — they're one-time setups with the highest ongoing return.
@@ -173,7 +176,7 @@ Start with #1 and #4 — they're one-time setups with the highest ongoing return
 ## Key Takeaways
 
 - **Code-only instructions** strip prose and wrappers, saving **50–70% output tokens**
-- **Fresh chat threads** prevent stale history from piling up, saving **40–60% input tokens** in longer sessions
+- **`/compact` and fresh chat threads** prevent stale history from piling up, saving **40–60% input tokens** in longer sessions
 - **Fewer open tabs** keep automatic context focused, saving **20–40% input tokens** per request
 - **A `.copilotignore` file** trims irrelevant workspace context, saving **20–40% input tokens**
 - **Lightweight models** reduce routine-task cost by **5–15x per request**

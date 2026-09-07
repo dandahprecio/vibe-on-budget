@@ -1,5 +1,5 @@
 ---
-title: 6. Agents, Tools & MCP Hygiene
+title: 7. Agents, Tools & MCP Hygiene
 description: Use agents and MCP servers without wasting credits
 ---
 
@@ -75,6 +75,18 @@ Even with Tool Search, agent mode loads system instructions, the tool registry, 
 
 ---
 
+## Thinking Effort
+
+Thinking effort controls how much reasoning (thinking tokens) a model applies to each request. Higher effort means more thinking tokens, which increases latency and credit consumption.
+
+VS Code sets defaults based on evaluations and has adaptive reasoning enabled. The model dynamically decides how much to think based on the complexity of the task. For most tasks, the defaults are enough.
+
+:::caution[Increase thinking effort only when it earns its cost]
+Increase thinking effort only for genuinely complex problems, such as architecture planning or multi-step debugging. Raising it for routine work adds latency and consumes more credits without necessarily improving the result. See [Configure thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort).
+:::
+
+---
+
 ## The Hidden Cost of MCP Servers
 
 Every MCP server you have connected registers its tools in the agent's tool registry. Before Tool Search (mid-2025), the full schema of every tool was injected into every agent step's context window. With Tool Search, only the registry (names + short descriptions) is always-present — full schemas load on demand. See the note below for details.
@@ -102,9 +114,9 @@ flowchart TD
 :::note[Tool Search reduces this overhead]
 Tool Search only keeps tool names + short descriptions in the always-present registry. Full schemas load only when the model requests a tool. Every tool the model uses still incurs its ~200 token schema cost.
 
-Before mid-2025, all schemas loaded every step. With Tool Search (Module 8), only needed tools load. Pruning unused MCP servers still matters — it shrinks the registry and reduces the chance of the model picking expensive tools for simple tasks.
+Before mid-2025, all schemas loaded every step. With Tool Search (Module 9), only needed tools load. Pruning unused MCP servers still matters — it shrinks the registry and reduces the chance of the model picking expensive tools for simple tasks.
 
-See [Module 8 — Tool Search](/token-economy-course/en/08-under-the-hood) for how it works internally.
+See [Module 9 — Tool Search](/token-economy-course/en/09-under-the-hood) for how it works internally.
 :::
 
 ### The MCP Server Math
@@ -181,6 +193,18 @@ Or better: create **VS Code profiles** with different MCP sets:
 - **Coding profile**: file system + terminal only
 - **DevOps profile**: GitHub CLI + deployment tools
 - **Database profile**: database MCP + schema tools
+
+**Configure tools for the current request:** Use the **Configure Tools** button in the chat input field to select individual tools or MCP servers. Search in the tool picker and add another tool when the task needs it. This complements custom agents and VS Code profiles by providing a quick per-request adjustment without changing profiles or configuration. See [Tools](https://code.visualstudio.com/docs/agents/run/tools).
+
+## Batch Repetitive Operations
+
+Repeated submit, poll, and retrieve tool calls add intermediate results to the model's context window. For deterministic or bulk workflows, use a script or command-line tool to run the loop outside the agent conversation and return only the final result to the agent.
+
+:::tip[Move repetitive work outside the conversation]
+Instead of asking the agent to run and inspect many similar database queries one at a time, write a reviewed script that runs the query batch and produces a concise summary. Run the script through the terminal tool, then give the summary to the model for analysis. Benchmark the scripted and interactive versions of your workflow first — the savings depend on the tools, results, and task.
+:::
+
+---
 
 ### 5. Build a Model Router Strategy
 
@@ -327,7 +351,7 @@ Every agent step re-runs the tool search against your prompt. If the task change
 ---
 
 :::tip[Continue Learning]
-Agent hygiene builds on [Project Setup](/token-economy-course/en/05-project-setup). For a broader view of managing AI-generated code quality, see [Vibe Coding Without the Debt](/token-economy-course/en/07-vibe-coding-guardrails).
+Agent hygiene builds on [Project Setup](/token-economy-course/en/06-project-setup). For a broader view of managing AI-generated code quality, see [Vibe Coding Without the Debt](/token-economy-course/en/08-vibe-coding-guardrails).
 :::
 
 ---

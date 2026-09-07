@@ -1,5 +1,5 @@
 ---
-title: 5. Project Setup for Token Efficiency
+title: 6. Project Setup for Token Efficiency
 description: Configure instruction files, AGENTS.md, and VS Code for maximum efficiency
 ---
 
@@ -180,7 +180,39 @@ package-lock.json
 - **Binary/asset files** — images, audio, fonts (can't be processed anyway)
 :::
 
+Your `.gitignore` also affects the agent: it excludes matching files from the workspace index and from agent text search/grep. Treat it as a first layer of exclusion.
+
 **Savings:** 20–40% reduction in input token consumption. Bonus: faster responses and fewer hallucinations from irrelevant context.
+
+### VS Code Exclusion Settings
+
+VS Code provides two settings for finer-grained exclusion:
+
+| Setting | Effect |
+|---|---|
+| `files.exclude` | Hides files completely from Explorer, the workspace index, and agent search |
+| `search.exclude` | Hides files from agent text search/grep but keeps them visible in Explorer |
+
+```json
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/*.log": true
+  }
+}
+```
+
+Use `files.exclude` for things you never want to see. Use `search.exclude` for log files you may open manually but do not want in search results. See [Improve agent search with exclusion settings](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).
+
+| Mechanism | Affects workspace index | Affects agent search | Affects Explorer | Recommended for |
+|---|---|---|---|---|
+| `.gitignore` | ✅ | ✅ | ❌ | Build artifacts, dependencies |
+| `.copilotignore` | ✅ | ✅ | ❌ | Mock data, large JSON/CSV |
+| `files.exclude` | ✅ | ✅ | ✅ | node_modules, dist |
+| `search.exclude` | ❌ | ✅ | ❌ | Log files |
 
 ---
 
@@ -270,7 +302,7 @@ Research suggests LLM-generated instruction files often hurt agent correctness w
 ---
 
 :::tip[Continue Learning]
-A solid project setup makes [Quick Wins](/token-economy-course/en/03-quick-wins) permanent. Then level up with [Agents, Tools & MCP Hygiene](/token-economy-course/en/06-agents-mcp) to manage agent-mode costs.
+A solid project setup makes [Quick Wins](/token-economy-course/en/04-quick-wins) permanent. Then level up with [Agents, Tools & MCP Hygiene](/token-economy-course/en/07-agents-mcp) to manage agent-mode costs.
 :::
 
 ---
