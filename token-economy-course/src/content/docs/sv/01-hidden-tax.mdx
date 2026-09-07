@@ -37,22 +37,40 @@ Huvudinsikten: **all användning kostar inte lika mycket**. Uppdelningen mellan 
 
 ## Var dina tokens tar vägen 🟢
 
-Varje Copilot-förfrågan har tre token-kategorier:
+Varje Copilot-förfrågan har tre token-kategorier. Men alla tokens kostar inte lika mycket. För att förstå vart dina credits faktiskt tar vägen behöver du tillämpa kostnadsvikterna från GitHubs Effective Tokens-formel.[^m1-5]
 
 ```mermaid
 pie showData
-    title Var dina credits tar vägen (typisk session)
+    title Kostnadsviktad creditförbrukning
+    "Output-tokens" : 140
     "Input-tokens" : 45
-    "Output-tokens" : 35
-    "Cachade tokens" : 20
+    "Cachade tokens" : 2
 ```
+
+:::note[Hur du läser diagrammet]
+Diagrammet tillämpar GitHubs Effective Tokens kostnadsvikter på exempelvolymer (45 input, 35 output, 20 cachade): output ×4,0, input ×1,0, cachade ×0,1. Den faktiska fördelningen beror på modell, projekt och arbetsflöde — men output dominerar i nästan varje verklig session.
+:::
 
 - **Input-tokens** — din prompt, öppna filer, konversationshistorik, systeminstruktioner
 - **Output-tokens** — modellens svar (kod, förklaringar, verktygsanrop)
 - **Cachade tokens** — återanvänds från tidigare förfrågningar när prefix matchar
 
+Kostnadsvikterna kommer från GitHubs **Effective Tokens (ET)**-formel, som normaliserar förbrukning över tokentyper:[^m1-5]
+
+$$
+ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
+$$
+
+Där:
+- **m** — modellmultiplikator (normaliserar prisskillnader när du byter modell under arbetsflödet; använd 1,0 för en enkelmodellsbaslinje)
+- **I** — nya input-tokens (vikt 1,0×)
+- **C** — cachade input-tokens (vikt 0,1× — upp till 90 % billigare)
+- **O** — output-tokens (vikt 4,0× — den verkliga kostnadsdrivaren)
+
+[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
+
 :::note[Varför output är den verkliga kostnadsdrivaren]
-Output-tokens kostar ungefär **4–8x mer** än input-tokens per miljon, beroende på modell. Ett utförligt modellsvar bränner credits långt snabbare än en lång prompt.
+Output-tokens kostar ungefär **4–8× mer** än input-tokens per miljon, beroende på modell. I kombination med 4,0× ET-vikten bränner ett utförligt modellsvar credits långt snabbare än en lång prompt.
 :::
 
 ---
@@ -110,21 +128,17 @@ Slutsatsen: **vad modellen säger tillbaka kostar 5x vad du skickar**. Långa, p
 
 ---
 
-## Mäta det som spelar roll: effektiva tokens 🟡
+## Effektiva tokens i praktiken 🟡
 
-Rått tokenantal är missvisande. En session på 10 000 tokens med 60 % cacheträffar är dramatiskt billigare än en session på 5 000 tokens utan cacheträffar. GitHub introducerade formeln **Effective Tokens (ET)** (se [Ordlista](/vibe-on-budget/sv/glossary)) för att normalisera detta i sin text om tokeneffektivitet från maj 2026:[^m1-5]
+Som introducerat [ovan](#var-dina-tokens-tar-vagen-) normaliserar Effective Tokens-formeln tokenförbrukning efter kostnadsvikt. Så här ser det ut i verkliga arbetsflöden:
 
-$$
-ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
-$$
-
-Där:
-- **m** — modellmultiplikator (normaliserar prisskillnader när du byter modell under arbetsflödet)
-- **I** — nya input-tokens (vikt 1,0x)
-- **C** — cachade input-tokens (vikt 0,1x — upp till 90 % billigare)
-- **O** — output-tokens (vikt 4,0x — den verkliga kostnadsdrivaren)
-
-[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
+```mermaid
+xychart-beta
+    title "Effective Token Cost by Component"
+    x-axis ["Input (I)", "Cached (C)", "Output (O)"]
+    y-axis "Cost Weight" 1 --> 5
+    bar [1.0, 0.1, 4.0]
+```
 
 :::tip[ET i praktiken]
 GitHub rapporterade en **62 % minskning** av effektiva tokens över 109 körningscykler i sitt arbetsflöde för automatisk ärendetria­ge — bara genom att strukturera om hur kontexten sattes samman. I alla analyserade arbetsflöden rapporterade GitHub ET-besparingar på mellan **19 % och 62 %**.

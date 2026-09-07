@@ -37,26 +37,40 @@ The key insight: **not all usage costs the same**. The split between input token
 
 ## Where Your Tokens Go 🟢
 
-Every Copilot request has three token categories:
+Every Copilot request has three token categories. But not all tokens cost the same. To understand where your credits actually go, you need to apply the cost weights from GitHub's Effective Tokens formula.[^m1-5]
 
 ```mermaid
 pie showData
-    title Where Your Credits Go (Typical Session)
+    title Cost-Weighted Credit Consumption
+    "Output Tokens" : 140
     "Input Tokens" : 45
-    "Output Tokens" : 35
-    "Cached Tokens" : 20
+    "Cached Tokens" : 2
 ```
 
-:::note[Illustrative proportions]
-These proportions are typical examples; the actual split varies by model, project, and workflow.
+:::note[How to read this chart]
+The chart applies GitHub's Effective Tokens cost weights to example volumes (45 input, 35 output, 20 cached): output ×4.0, input ×1.0, cached ×0.1. The actual split depends on model, project, and workflow — but output dominates almost every real session.
 :::
 
 - **Input tokens** — your prompt, open files, conversation history, system instructions
 - **Output tokens** — the model's response (code, explanations, tool calls)
 - **Cached tokens** — reused from previous requests when prefix matches
 
+The cost weights come from GitHub's **Effective Tokens (ET)** formula, which normalizes consumption across token types:[^m1-5]
+
+$$
+ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
+$$
+
+Where:
+- **m** — model multiplier (normalizes price differences when switching models mid-workflow; use 1.0 for a single-model baseline)
+- **I** — fresh input tokens (1.0× weight)
+- **C** — cached input tokens (0.1× weight — up to 90% cheaper)
+- **O** — output tokens (4.0× weight — the real cost driver)
+
+[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — published May 7, 2026 and updated May 13, 2026.
+
 :::note[Why output is the real cost driver]
-Output tokens can cost approximately **4–8x more** than input tokens per million, depending on the model. A verbose model response burns credits far faster than a lengthy prompt.
+Output tokens cost approximately **4–8× more** than input tokens per million, depending on the model. Combined with the 4.0× ET weight, a verbose model response burns credits far faster than a lengthy prompt.
 :::
 
 ---
@@ -114,21 +128,9 @@ The takeaway: **what the model says back to you costs 5x what you send it**. Lon
 
 ---
 
-## Measuring What Matters: Effective Tokens 🟡
+## Effective Tokens in Practice 🟡
 
-Raw token count is misleading. A 10K-token session with 60% cache hits is dramatically cheaper than a 5K-token session with zero cache hits. GitHub engineers introduced the **Effective Tokens (ET)** (see [Glossary](/vibe-on-budget/en/glossary)) formula to normalize this in their May 2026 write-up on token efficiency:[^m1-5]
-
-$$
-ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
-$$
-
-Where:
-- **m** — model multiplier (normalizes price differences when switching models mid-workflow)
-- **I** — fresh input tokens (1.0x weight)
-- **C** — cached input tokens (0.1x weight — up to 90% cheaper)
-- **O** — output tokens (4.0x weight — the real cost driver)
-
-[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — published May 7, 2026 and updated May 13, 2026.
+As introduced [above](#where-your-tokens-go-), the Effective Tokens formula normalizes token consumption by cost weight. Here's what that looks like in real workflows:
 
 ```mermaid
 xychart-beta
