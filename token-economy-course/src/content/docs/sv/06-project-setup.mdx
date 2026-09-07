@@ -44,7 +44,7 @@ De flesta team överfyller denna fil med arkitekturdokument, stilguider och team
 - Engelska för alla promptar och svar (1,7x tokenbesparing vs svenska)
 ```
 
-**Det är allt.** 18 rader, ~50 tokens. Täcker output-komprimering (den enskilt största besparingen) och språkval.
+**Det är allt.** 18 rader, ~50 tokens. Täcker output-komprimering (den enskilt största besparingen) och språkval.[^m6-1]
 
 ### Mall: Medium (balanserad)
 
@@ -81,10 +81,10 @@ Varje rad du lägger till i `copilot-instructions.md` betalas på **varje enskil
 
 Forskning visar att instruktionsfiler inte förblir små särskilt länge. Chakrabarti med flera (arXiv:2608.11095, augusti 2026) fann att instruktioner växte med **+226 %** under sin livstid när team fortsatte lägga till ytterligare ett undantag, en brasklapp eller en "tillfällig" regel. Daniel Vaughan, som tolkar artikeln, rekommenderar ett praktiskt tak: om filen överstiger några hundra rader är det dags att rensa.[^m6-3][^m6-4]
 
-> Siffran 200 rader är praktisk vägledning från Vaughans analys, inte ett resultat från originalartikeln, som rapporterar ett medianvärde på 39 instruktioner och 90:e percentilen på 131.
+> Siffran 200 rader är praktisk vägledning från Vaughans analys, inte ett resultat från originalartikeln, som rapporterar ett medianvärde på 39 instruktioner och 90:e percentilen på 131.[^m6-3][^m6-4]
 
 - **200 rader ≈ 1 500–2 000 tokens** — tillräckligt litet för att förbli synligt i förgrunden, men stort nog för identitet, 2–3 hårda regler och hänvisningar till djupare dokumentation.
-- **Över 200 rader** börjar modellen ägna mindre uppmärksamhet åt det tidiga innehållet. Filen blir osynlig ansamling: dyr, bekant och sällan omläst från början till slut.
+- **Över 200 rader** börjar modellen ägna mindre uppmärksamhet åt det tidiga innehållet. Filen blir osynlig ansamling: dyr, bekant och sällan omläst från början till slut.[^m6-4]
 - **Tokenmatematik:** En fil på 1 247 rader (~9 400 tokens) över 1 000 turer förbrukar **9,4 miljoner alltid-på-tokens**. Flytta samma vägledning till filsökvägsstyrda filer + skills, sänk alltid-på-lagret till 250 tokens och kostnaden sjunker till **250 000 tokens** — en **37× minskning** med identiska funktioner.[^m6-5]
 
 <Steps>
@@ -126,7 +126,7 @@ Istället för att svälla din alltid-på-fil, skapa specialiserade promptfiler 
 Applicera regler från #file:frontend-style.prompt.md på denna komponent.
 ```
 
-Modellen läser filen och tillämpar reglerna för denna förfrågan endast. Ingen alltid-på-skatt.
+Modellen läser filen och tillämpar reglerna för denna förfrågan endast. Ingen alltid-på-skatt.[^m6-7]
 
 ---
 
@@ -152,7 +152,7 @@ Modellen läser filen och tillämpar reglerna för denna förfrågan endast. Ing
 :::note[Arkitektur och specar hör hemma i `.prompt.md`-filer]
 Lägg arkitekturdokumentation, återkommande funktionsspecar och historiska "kända problem" i `.prompt.md`-filer — inte i `AGENTS.md`. Ladda dem vid behov med `#file:`-referenser. Då hålls `AGENTS.md` smal (~80 tokens) och du slipper betala alltid-på-skatten för innehåll du sällan behöver.
 
-Se [Lazy-loading med `.prompt.md`-filer](#2-lazy-loading-med-promptmd-filer) ovan.
+Se [Lazy-loading med `.prompt.md`-filer](#2-lazy-loading-med-promptmd-filer) ovan.[^m6-2][^m6-4]
 :::
 
 ~80 tokens. Täcker kritiska skyddsräcken utan arkitekturbrus.
@@ -190,7 +190,7 @@ Din `.gitignore` påverkar också agenten: matchande filer exkluderas från arbe
 
 ### VS Code-inställningar för exkludering
 
-VS Code har två inställningar för mer finjusterad exkludering:
+VS Code har två inställningar för mer finjusterad exkludering.[^m6-9]
 
 | Inställning | Effekt |
 |---|---|

@@ -131,7 +131,7 @@ En MCP-verktygsdefinition innehåller strukturerade metadata, bland annat namn, 
 
 ### 🔴 Så fungerar [verktygssökning](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) internt
 
-Harnessen har ett register över tillgängliga verktyg med korta beskrivningar och inbäddningsvektorer. I stället för att placera varje fullständigt schema i kontextfönstret använder den registret för att identifiera sannolika kandidater för den aktuella uppgiften. När modellen behöver ett verktyg hämtar harnessen verktygets fullständiga schema vid behov; verktyg som inte begärs förblir utanför kontexten.
+Harnessen har ett register över tillgängliga verktyg med korta beskrivningar och inbäddningsvektorer. I stället för att placera varje fullständigt schema i kontextfönstret använder den registret för att identifiera sannolika kandidater för den aktuella uppgiften. När modellen behöver ett verktyg hämtar harnessen verktygets fullständiga schema vid behov; verktyg som inte begärs förblir utanför kontexten.[^m7-5]
 
 ```mermaid
 flowchart TD
@@ -155,7 +155,7 @@ flowchart TD
 Verktygssökning är mest användbar när många verktyg är tillgängliga, eftersom relevansfiltrering kan minska irrelevant verktygskontext. Omvandla inte den kvalitativa nyttan till en fast besparingsprocent utan att mäta den egna arbetsbelastningen.[^m7-5]
 
 :::tip[Kontrollera din baslinje med /context]
-I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/Tools-tokens. I VS Code kan du uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
+I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/Tools-tokens. I VS Code kan du uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.[^m7-2]
 :::
 
 ---
@@ -188,7 +188,7 @@ Varje avgränsad agent laddar **långt färre verktygsdefinitioner** och ett **m
 
 ### 3. Sätt stoppvillkor
 
-Tala om för agenten när den ska sluta. Utan tydliga gränser itererar agenter tills kontextfönstret eller verktygsbudgeten tar slut.
+Tala om för agenten när den ska sluta. Utan tydliga gränser itererar agenter tills kontextfönstret eller verktygsbudgeten tar slut.[^m7-2]
 
 ```
 Lägg till paginering på användarendpunkten.

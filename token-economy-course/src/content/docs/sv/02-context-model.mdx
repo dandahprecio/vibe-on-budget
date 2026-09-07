@@ -133,11 +133,11 @@ flowchart TD
 ```
 
 :::note[Cacheekonomi]
-Cachade tokens är dramatiskt billigare än nya tokens. En användbar tumregel är **~10 % av kostnaden för nya tokens hos Anthropic** (ungefär 90 % rabatt). OpenAI erbjuder också automatisk prefix-cachning men publicerar ingen specifik rabattprocent — besparingarna varierar beroende på arbetsbelastning och prefixets stabilitet. Det innebär att en **session på 10 000 tokens med 60 % cacheträffar kan vara billigare än en session på 5 000 tokens utan träffar**.
+Cachade tokens är dramatiskt billigare än nya tokens. En användbar tumregel är **~10 % av kostnaden för nya tokens hos Anthropic** (ungefär 90 % rabatt). OpenAI erbjuder också automatisk prefix-cachning men publicerar ingen specifik rabattprocent — besparingarna varierar beroende på arbetsbelastning och prefixets stabilitet. Det innebär att en **session på 10 000 tokens med 60 % cacheträffar kan vara billigare än en session på 5 000 tokens utan träffar**.[^m2-7]
 :::
 
 :::caution[Vad bryter cachen]
-Varje ändring av promptprefixet ogiltigförklarar cachen: byte av modell, ändring av anpassade instruktioner, öppning/stängning av en fil, eller till och med att konversationshistoriken växer förbi cachegränsen.
+Varje ändring av promptprefixet ogiltigförklarar cachen: byte av modell, ändring av anpassade instruktioner, öppning/stängning av en fil, eller till och med att konversationshistoriken växer förbi cachegränsen.[^m2-1][^m2-3]
 :::
 
 :::tip[När ska du rensa chatten och när ska du stanna kvar?]
@@ -155,7 +155,7 @@ Varje ändring av promptprefixet ogiltigförklarar cachen: byte av modell, ändr
 
 ## Fällan med "lokala mätvärden" 🟢
 
-Här är en farlig missuppfattning: **du kan inte se den verkliga kostnaden från din lokala miljö**.
+Här är en farlig missuppfattning: **du kan inte se den verkliga kostnaden från din lokala miljö**.[^m2-8]
 
 Vad du observerar lokalt:
 - Svarstid
@@ -175,7 +175,7 @@ Använd felsökningsvyn och leverantörens användningsdata i stället för att 
 // VS Code settings.json
 "github.copilot.chat.agentDebugLog.fileLogging.enabled": true
 ```
-Öppna sedan Chatt-vyn → **...** → **[Show Agent Debug Logs](https://code.visualstudio.com/docs/agents/agent-troubleshooting)** → fliken **Summary** för att se tokenantal per förfrågan.
+Öppna sedan Chatt-vyn → **...** → **[Show Agent Debug Logs](https://code.visualstudio.com/docs/agents/agent-troubleshooting)** → fliken **Summary** för att se tokenantal per förfrågan.[^m2-8]
 :::
 
 ---
@@ -228,7 +228,7 @@ Mät effekten i den egna arbetsytan: den användbara baslinjen är den förfråg
 
 ## Så fungerar promptcachning
 
-Promptcachning är den enskilt största drivkraften bakom tokenbesparingar i Copilot. När det gemensamma promptprefixet förblir stabilt kan leverantörer återanvända modellens redan beräknade tillstånd för systeminstruktioner, verktyg, repository-kontext och konversationshistorik i stället för att behandla dessa tokens från början varje gång.
+Promptcachning är den enskilt största drivkraften bakom tokenbesparingar i Copilot. När det gemensamma promptprefixet förblir stabilt kan leverantörer återanvända modellens redan beräknade tillstånd för systeminstruktioner, verktyg, repository-kontext och konversationshistorik i stället för att behandla dessa tokens från början varje gång.[^m2-1]
 
 ### Cachemekanik hos olika leverantörer
 
@@ -236,10 +236,10 @@ Olika modellleverantörer implementerar cachning på olika sätt — och skillna
 
 | Leverantör | Cachningstyp | Explicit kontroll? | Skrivkostnad | Träffkostnad | Standard-TTL |
 |----------|-------------|--------------------|--------------|--------------|--------------|
-| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | Ej offentligt specificerad | Konfigurerbar |
-| Anthropic (Claude) | Manuell | Ja — `cache_control` | 1,25x–2,0x | 0,1x (90 % rabatt) | 5 min |
-| DeepSeek (V4 Pro) | Diskbaserad | Nej (implicit) | Ingen | 0,5x (50 % rabatt) | Ej tillämpligt |
-| Google (Gemini 3.5) | Kontextbaserad | Nej (implicit) | Ingen | Varierar | Session |
+| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | Ej offentligt specificerad | Konfigurerbar[^m2-1] |
+| Anthropic (Claude) | Manuell | Ja — `cache_control` | 1,25x–2,0x | 0,1x (90 % rabatt) | 5 min[^m2-9] |
+| DeepSeek (V4 Pro) | Diskbaserad | Nej (implicit) | Ingen | 0,5x (50 % rabatt) | Ej tillämpligt[^m2-10] |
+| Google (Gemini 3.5) | Kontextbaserad | Nej (implicit) | Ingen | Varierar | Session[^m2-11] |
 
 För de dagliga misstagen som bryter cachen, se avsnittet Vanliga misstag som bryter cachen ovan.
 
@@ -255,7 +255,7 @@ Om du använder Anthropic-baserade modeller, ange dokumenterad TTL uttryckligen 
 
 - **Ändra inte systeminstruktioner under sessionen.** Om du måste göra det, acceptera cachemissen som sker en gång och fortsätt.
 - **Övervaka tysta cachefel.** Använd Copilots felsökningsloggning (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) för att kontrollera faktiska tokenantal.
-- **Välj leverantör utifrån asynkrona arbetsflöden.** OpenAI:s konfigurerbara cacheretention (GPT-5.x-serien) ger mycket asynkrona arbetsflöden mer kontroll än Anthropics fasta femminutersfönster — men cachning sker efter bästa förmåga och är inte garanterad.
+- **Välj leverantör utifrån asynkrona arbetsflöden.** OpenAI:s konfigurerbara cacheretention (GPT-5.x-serien) ger mycket asynkrona arbetsflöden mer kontroll än Anthropics fasta femminutersfönster — men cachning sker efter bästa förmåga och är inte garanterad.[^m2-9][^m2-12]
 
 För en genomgång av de dagliga misstagen som bryter cachen, se tabellen [Vanliga misstag som bryter cachen](#vanliga-misstag-som-bryter-cachen) ovan.
 
@@ -275,11 +275,11 @@ Att förstå kontextmodellen gör siffrorna i [Den dolda skatten](/vibe-on-budge
 
 ## Viktiga slutsatser
 
-- Varje förfrågan inkluderar ett **fast prefix** (systeminstruktioner, verktyg, historik) plus ditt meddelande
-- **Promptprefixet** är cachebart — men lätt ogiltigförklarat
-- Anthropic använder **cache breakpoints** (manuellt), OpenAI använder **automatisk prefixmatchning**
-- **Konversationshistorik** är den snabbast växande delen av kontextfönstret
-- Du kan inte mäta vad du inte kan se — **aktivera felsökningsloggning** för att förstå din verkliga kostnad
+- Varje förfrågan inkluderar ett **fast prefix** (systeminstruktioner, verktyg, historik) plus ditt meddelande[^m2-1]
+- **Promptprefixet** är cachebart — men lätt ogiltigförklarat[^m2-1][^m2-9]
+- Anthropic använder **cache breakpoints** (manuellt), OpenAI använder **automatisk prefixmatchning**[^m2-1][^m2-9]
+- **Konversationshistorik** är den snabbast växande delen av kontextfönstret[^m2-1][^m2-4][^m2-5][^m2-6]
+- Du kan inte mäta vad du inte kan se — **aktivera felsökningsloggning** för att förstå din verkliga kostnad[^m2-8]
 
 *Beräknad lästid: 10 minuter*
 

@@ -11,7 +11,6 @@ The files you create (or don't create) in your project affect what an agent can 
 
 ---
 
-:::
 ## The Always-On Tax 🟢
 
 These files can be applied automatically or included as workspace context, depending on the tool and configuration:[^m6-1][^m6-2]
@@ -107,7 +106,7 @@ The fix is simple: annotate important rules with an HTML comment that records th
   OUTCOME: 62% reduction in output tokens, no quality loss. Keep. -->
 ```
 
-Do not assume that HTML comments are stripped before injection. Daniel Vaughan reports comment stripping for Codex CLI, while a Claude Code issue reports that `CLAUDE.md` comments are sent verbatim.[^m6-4][^m6-6] Chakrabarti's study reports that prompt comments reduced excess instruction growth by **99.3%** in its evaluated setting.[^m6-3]
+Do not assume that HTML comments are stripped before injection. Daniel Vaughan reports comment stripping for [Codex CLI](https://github.com/openai/codex), while a [Claude Code](https://docs.anthropic.com/en/docs/claude-code) issue reports that `CLAUDE.md` comments are sent verbatim.[^m6-4][^m6-6] Chakrabarti's study reports that prompt comments reduced excess instruction growth by **99.3%** in its evaluated setting.[^m6-3]
 
 ---
 
