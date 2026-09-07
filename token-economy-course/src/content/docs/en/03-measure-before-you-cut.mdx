@@ -18,6 +18,10 @@ This chapter gives you a small measurement toolkit inside VS Code. Use it to ans
 
 ---
 
+:::note[Case Study: Team Alpha]
+Team Alpha turned on debug logging and found their most expensive pattern: a 22-turn agent session that cost 1,100 credits fixing a bug that should have taken 3 turns. Measurement revealed what intuition missed: 12,500 → 11,800 credits.
+:::
+
 ## Per-request credit hover
 
 The fastest way to inspect a request is to hover over the Copilot response in Chat. VS Code shows the **credit consumption** for that turn. This is the cost of one request, not the total cost of the conversation.
@@ -196,6 +200,12 @@ Define “good enough” before comparing costs: tests pass, required files chan
 
 ---
 
+## Practice
+
+1. Pick one task you do regularly (e.g., "add a validation function"). Record: the prompt you used, the model, credits consumed (hover), and whether the result needed a retry. This is your baseline.
+2. Open Agent Debug Logs → Summary for your last session. Write down: total tokens, tool calls, errors, and duration. Which number surprised you most?
+3. Run `/chronicle:cost-tips` in any chat. Pick ONE recommendation and test it on your next task.
+
 ## Key Takeaways
 
 - Hover over a response to see the credit consumption for one request.
@@ -206,4 +216,10 @@ Define “good enough” before comparing costs: tests pass, required files chan
 - Use Cache Explorer to understand cache hits and reused input tokens.
 - Change one variable at a time and keep the lowest-cost configuration that meets your quality threshold.
 
-*Estimated reading time: 7 minutes*
+:::tip[Continue Learning]
+Turn your baseline into action with [Quick Wins](/vibe-on-budget/en/04-quick-wins), then improve your prompts with [Writing Prompts That Cost Less](/vibe-on-budget/en/05-cheaper-prompts).
+:::
+
+---
+
+*Estimated reading time: 8 minutes*

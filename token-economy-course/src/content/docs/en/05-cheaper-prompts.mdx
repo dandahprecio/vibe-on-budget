@@ -7,9 +7,15 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Writing Prompts That Cost Less
 
-Prompt engineering is usually taught for *quality*. This module teaches it for *cost*. Same concepts, different priority — results need to be *good enough* while spending as few tokens as possible.
+Module 4 gave you one-time configuration changes — instructions and settings you set once and forget. This module teaches the ongoing skill of writing every prompt efficiently. Same goal (fewer tokens), different timeframe (every time you type).
+
+Prompt engineering is usually taught for *quality*. This module teaches it for *cost*: keep the intent and constraints that improve the result, while removing words that do not.
 
 ---
+
+:::note[Case Study: Team Alpha]
+Team Alpha's standups had been in Swedish. Switching prompt language to English and using bullet format saved ~1,700 tokens/day across the team. Combined with intent comments: 8,900 → 8,200 credits.
+:::
 
 ## The Token Cost of Vagueness
 
@@ -27,7 +33,7 @@ The second version is 70% fewer input tokens (8 words vs 24) and produces ~90% f
 
 ## Structure Your Prompt: Bullets > Prose
 
-Prose prompts with full sentences and polite greetings waste tokens on grammar. Bullet points convey the same intent at half the size.
+Prose prompts with full sentences and polite greetings waste tokens on grammar. Bullet points make the task, constraints, and output format scannable without removing useful intent.
 
 **Prose (expensive):**
 ```
@@ -45,6 +51,26 @@ sure there's a domain name present. Thank you!
 ```
 
 **The difference:** 38 tokens → 18 tokens. Over 100 prompts, that's 2,000 tokens saved on input alone, plus the output tokens from shorter responses.
+
+The bigger win is avoiding a vague answer that needs a follow-up. Put the acceptance criteria beside the task:
+
+**Before (polite but underspecified):**
+```
+Could you take a look at the checkout code and improve it? It would be great
+if you could make it more reliable and perhaps add some tests. Please explain
+what you changed.
+```
+
+**After (scoped and actionable):**
+```
+- Inspect #file:checkout.ts and #file:checkout.test.ts
+- Fix duplicate order submission on network retry
+- Add one regression test for retry after 503
+- Preserve public API
+- Return unified diff and 3-bullet summary
+```
+
+The second prompt spends tokens on information that changes the implementation, not on politeness or a broad request to "improve" something.
 
 ---
 
@@ -87,19 +113,6 @@ Caveman-speak strips articles, prepositions, politeness, and grammar — keeping
 Independent testing by JetBrains (July 2026) measured ~8.5% output token savings across 82 paired tasks. This is less than advertised claims but genuine and safe — round to ~10% as a practical rule-of-thumb.
 :::
 
-### The Caveman Execution Prompt
-
-Use this as a meta-prompt at the start of a session or in your `copilot-instructions.md`:
-
-```
-# Output format
-- Code blocks only. Strip all prose, greetings, explanations.
-- No markdown outside the codeblock.
-- Unchanged code → // ... existing code ...
-```
-
-This single instruction can cut **~10% of output tokens (independent benchmark)** per response.
-
 ---
 
 ## Meta-Prompts for Output Control
@@ -113,7 +126,7 @@ Control output verbosity with explicit constraints:
 | State sync | "Summarize in dense 3-line state-sync for new thread." |
 | Boilerplate | "Exclude imports, setup, config. Core algorithm only." |
 | Lazy mode | "Ask 2 targeted questions before generating any code." |
-| Diff output | "Use unified diff. Only changed lines +/- with 3 context lines. No full file output." |
+| Test generation | "Generate Vitest test. Include happy path + 2 edge cases. AAA pattern." |
 
 ---
 
@@ -137,8 +150,6 @@ The cheapest LLM call is the one you don't make. Pre-compute deterministic data 
 :::
 
 ---
-
-See [Module 4 — Quick Win #6](/vibe-on-budget/en/04-quick-wins#6-force-unified-diff-output) for how unified diffs eliminate LLM-laziness and reduce output tokens by 70–80%.
 
 ## English vs Swedish: A 1.7x Token Difference
 
@@ -172,15 +183,13 @@ For a team sending 10,000 prompts/month, the English-vs-Swedish difference alone
 
 :::tip[Continue Learning]
 Pair prompt techniques with [Project Setup](/vibe-on-budget/en/06-project-setup) for full-stack token efficiency. For advanced patterns, see [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp).
-
-For output format optimization, see [Module 4 — Quick Win #6: Force Unified Diff Output](/vibe-on-budget/en/04-quick-wins).
 :::
 
 ---
 
 ## When Compression Backfires
 
-Not all prompts should be compressed. Here's when verbosity is worth the cost:
+Not all prompts should be compressed. Compression is useful only when it preserves the information the model needs to make the right decision. Here's when verbosity is worth the cost:
 
 | Situation | Why Be Verbose | Recommendation |
 |---|---|---|
@@ -189,9 +198,35 @@ Not all prompts should be compressed. Here's when verbosity is worth the cost:
 | First interaction with a new codebase | Model needs thorough orientation | Include all relevant files |
 | Cross-file refactoring | Sparse instructions → wrong implementation | Be explicit about scope |
 
-The rule: **compress output, not intent**. Don't save 20 tokens if it costs you 500 tokens of wrong output and a redo.
+The rule: **compress output, not intent**. Keep names, constraints, edge cases, and success criteria. Remove greetings, repeated context, and explanations of code the model can inspect directly.
+
+Compare the trade-off:
+
+**Too compressed:**
+```
+- Fix auth
+- Make secure
+- Code only
+```
+
+**Compressed without losing intent:**
+```
+- Inspect #file:auth.ts and #file:auth.test.ts
+- Fix session fixation after login
+- Preserve refresh-token rotation
+- Add regression test for reused session ID
+- Return changed lines only
+```
+
+The first prompt is short but forces discovery, clarification, or a risky guess. The second removes filler while keeping the security boundary and verification target. A few extra input tokens are cheaper than a failed implementation and its follow-up turns.
 
 ---
+
+## Practice
+
+1. Take your last 3 Copilot prompts. Rewrite each in bullet format. Count the approximate token difference (1 token ≈ 4 chars in English).
+2. Add an `// AI:` comment to a function you frequently ask Copilot about. Next time, reference the file with `#file:` instead of describing it.
+3. If you usually prompt in Swedish, write your next 5 prompts in English. Check if the response quality is the same.
 
 ## Key Takeaways
 

@@ -11,6 +11,10 @@ The files you create (or don't create) in your project determine how many tokens
 
 ---
 
+:::note[Case Study: Team Alpha]
+Team Alpha audited their copilot-instructions.md — 847 lines accumulated over 18 months. They trimmed it to 18 lines using the minimal template, moved architecture docs to .prompt.md files, and added .copilotignore. Always-on tax eliminated: 8,200 → 7,500 credits.
+:::
+
 ## The Always-On Tax
 
 These files are loaded on **every chat interaction**:
@@ -302,10 +306,16 @@ Research suggests LLM-generated instruction files often hurt agent correctness w
 ---
 
 :::tip[Continue Learning]
-A solid project setup makes [Quick Wins](/vibe-on-budget/en/04-quick-wins) permanent. Then level up with [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp) to manage agent-mode costs.
+A solid project setup makes [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp) more effective. Revisit [Quick Wins](/vibe-on-budget/en/04-quick-wins) for the fastest savings.
 :::
 
 ---
+
+## Practice
+
+1. Open your `.github/copilot-instructions.md`. Count the lines. If over 200, identify which sections can move to `.prompt.md` files. If you don't have one, create it using the minimal template.
+2. Create a `docs/architecture.prompt.md` file with 5-10 lines about your project's key conventions. Test it: start a new chat and use `#file:docs/architecture.prompt.md`.
+3. Run the token counting script (PowerShell or Node.js) from this module against your instruction files. What's your always-on baseline?
 
 ## Key Takeaways
 

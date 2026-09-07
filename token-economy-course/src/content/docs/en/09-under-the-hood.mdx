@@ -1,17 +1,23 @@
 ---
-title: 9. Under the Hood
-description: How Copilot saves tokens internally — prompt caching, tool search, output compression, and more
+title: "9. The Big Picture: How Copilot Saves Tokens For You"
+description: A summary of how Copilot saves tokens automatically and what the full optimization stack looks like
 ---
 
 import { Steps } from "@astrojs/starlight/components";
 
-# Under the Hood
+# The Big Picture: How Copilot Saves Tokens For You
 
 Every module so far has been about **what you can do** — write shorter prompts, prune MCP servers, configure instruction files. This module is about **what Copilot does for you automatically**.
+
+In Modules 2 and 7, you learned about prompt caching, Tool Search, and auto model selection — Copilot's three biggest internal optimizations. This module covers the remaining pieces of the stack: output compression, connection improvements, batching, and the engineering culture that makes all of it safe to rely on.
 
 While you're optimizing your side, the VS Code and GitHub engineering teams ship infrastructure-level improvements that cut token consumption and latency without any user action. These optimizations are invisible — but they save more tokens daily than all the prompt tricks combined.
 
 ---
+
+:::note[Case Study: Team Alpha]
+Team Alpha aligned their workflow with Copilot's internal optimizations: long sessions for complex tasks, fresh sessions at task boundaries, Auto model selection. With caching compounding across turns: 6,300 → 5,900 credits. Final result: 14,200 → 5,900 — a 58% reduction. They're now 3,600 credits UNDER their 9,500 pool allocation.
+:::
 
 ## The Invisible Optimizations
 
@@ -22,21 +28,19 @@ The result is a steady stream of small wins that compound:
 ```mermaid
 flowchart LR
     subgraph Harness["VS Code Agentic Harness"]
-        Caching[Extended Prompt Caching<br/>Illustrative ~94% cache hit rate]
-        ToolSearch[Tool Search<br/>On-demand tool loading]
         Batching[Background Work Batching]
         Output[Output Compression<br/>+ line-number removal]
+        Transport[Persistent connections]
     end
     
     subgraph Provider["Model Provider"]
-        Prefix[Prefix caching<br/>KV tensor reuse]
-        Auto[Auto model selection]
+        Reliability[Quality validation]
     end
     
-    Caching --> Prefix
-    ToolSearch --> Prefix
     Batching --> Provider
     Output --> Provider
+    Transport --> Provider
+    Reliability --> Provider
     
     style Harness stroke:#61afef,stroke-width:2px
     style Provider stroke:#bd93f9,stroke-width:2px
@@ -44,141 +48,13 @@ flowchart LR
 
 The optimizations split into two categories:
 - **Harness-level** (VS Code team): how context is prepared, batched, and delivered
-- **Provider-level** (OpenAI/Anthropic): how model state is cached and computed
+- **Provider-level** (OpenAI/Anthropic): how model state is computed
 
-Together, they form a stack that makes every agentic turn cheaper than it was three months ago — with no change to the code you write.
-
----
-
-## 1. Extended Prompt Caching
-
-The single most impactful optimization. Every agentic request has a **prompt prefix** — the repeated beginning shared across turns: system instructions, tool definitions, repository context, and conversation history.
-
-**Before caching**: every request recomputed the full prefix from scratch. Processing the same instructions on turn 2 cost the same as turn 1.
-
-**After caching**: the model provider stores the key/value tensors computed while processing the prefix. On the next turn, it reuses that cached state instead of recomputing.
-
-### The Impact
-
-| Metric | Before | After |
-|--------|--------|-------|
-| Cache hit rate (Anthropic, VS Code) | N/A | Illustrative ~94% |
-| Cache hit rate (OpenAI) | Partial | Extended prefix matches |
-| Cost of cached tokens vs uncached | Same | Up to 90% cheaper |
-| Agentic session tokens | Baseline | Illustrative ~28% reduction |
-
-In this illustrative ~94% hit-rate scenario, nearly every request after the first benefits from cached prefix state. This is the biggest single driver of token savings in the entire Copilot stack — bigger than any prompt-writing technique you can apply.
-
-:::note[How caching works]
-The cached artifact is not a human-readable copy of the prompt. It's the **internal model state** — key/value tensors computed while processing that prefix. Different providers expose it differently: Anthropic calls it "prompt caching," OpenAI uses "prompt prefix matching" under the hood. Both achieve similar results through different mechanisms.
-:::
-
-### Why It Matters for Your Workflow
-
-Caching rewards **continuity**. A single long session with the same agent is dramatically more efficient than starting ten short sessions for the same task:
-
-| Session Pattern | Cache Benefit | Relative Cost |
-|-----------------|--------------|---------------|
-| One long session, 10 turns | Illustrative ~94% hit rate after turn 1 | **Lowest** |
-| Ten single-turn sessions | 0% hit rate — each starts cold | ~3x more tokens |
-| Frequent `/clear` resets | Cache invalidated | Wasted savings |
-
-This doesn't mean you should avoid `/clear` after a task is done — just be aware that each fresh start pays the full prefix cost once.
-
-### Cache Mechanics Across Providers
-
-Different model providers implement caching differently — and the differences affect your costs.
-
-| Provider | Cache Type | Explicit Control? | Write Cost | Hit Cost | Default TTL |
-|----------|-----------|-------------------|------------|----------|-------------|
-| OpenAI (GPT-5.x) | Auto + Manual | Yes — `prompt_cache_breakpoint` | 1.25x | 0.1x (90% off) | Configurable |
-| Anthropic (Claude) | Manual | Yes — `cache_control` | 1.25x–2.0x | 0.1x (90% off) | 5 min |
-| DeepSeek (V4 Pro) | Disk-based | No (implicit) | None | 0.5x (50% off) | N/A |
-| Google (Gemini 3.5) | Context-based | No (implicit) | None | Varied | Session |
-
-OpenAI GPT-5.x supports extended caching with `prompt_cache_retention: "24h"`. VS Code Copilot measured a **+919% hit-rate improvement after 40–60 minute gaps** and **+338% after 30–40 minute gaps**. This is a game-changer for async workflows where turns are minutes apart. For Anthropic's 5-minute TTL limitation, see the cache-busting section below. *(Source: VS Code engineering blog, June 2026.)*
-
-### Extended TTL Changes the Economics of Async Work
-
-OpenAI's 24-hour retention window changes the economics of async work: instead of losing the cache during normal developer pauses, you can keep the expensive prefix alive across longer gaps.
-
-### What Breaks the Cache
-
-Cache invalidation — called **cache busting** — happens instantly when the prompt prefix changes. A single character edit early in the prompt invalidates the entire cached history, and both the computation and billing start from zero.
-
-Common causes of cache busting:
-- Switching models mid-session
-- Modifying `copilot-instructions.md` or `AGENTS.md`
-- Opening or closing editor tabs
-- Conversation history growing past the cache boundary
-- Tool definitions changing (new MCP server added)
-
-:::tip[See Module 2 for the day-to-day failure modes]
-For common cache-busting mistakes and how to avoid them, see [Module 2 — Common Cache-Busting Mistakes](/vibe-on-budget/en/02-context-model#common-cache-busting-mistakes).
-:::
-
-:::caution[The Anthropic TTL controversy]
-In March 2026, Anthropic silently changed their default cache TTL from **1 hour to 5 minutes**. This caused massive, silent cost spikes for async systems — caches expired between requests, and every turn paid full price.
-
-If you're on Anthropic-backed models (Claude in Copilot), keep sessions active and continuous. Long pauses between turns can cost you the cache. If your workflow is highly async, OpenAI's configurable retention window on GPT-5.x gives you more control.
-:::
-
-### What This Means for You
-
-- **Don't modify system instructions mid-session.** If you must, accept the one-time cache miss and keep going — it's still cheaper than starting a new session.
-- **Monitor for silent cache failures.** The model doesn't tell you when the cache misses. Use Copilot debug logging (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) to check actual token counts.
-- **Provider matters.** If your workflow is highly async (requests spaced minutes apart), OpenAI's configurable TTL gives you more control than Anthropic's fixed 5-minute window.
-
-Use the [Cache Explorer view](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) in Agent Debug Logs to see your actual cache hit rates and how many input tokens were reused. This closes the optimization loop from Chapter 3: measure with Cache Explorer → adjust one variable → measure again.
+Together, they form a stack that makes every agentic turn cheaper, faster, and safer than it was before — with no change to the code you write.
 
 ---
 
-## 2. Tool Search — On-Demand Tool Loading
-
-A modern Copilot session may have access to 20–50 tools: file operations, terminal commands, MCP servers, workspace search, linters, debuggers, and product-specific actions.
-
-**Before tool search**: every full tool schema was loaded into context on every single turn. A SingleFile MCP server with a large schema could add 10–15 KB of JSON tool definitions per turn — and most of those tools were irrelevant to the current task.
-
-**After tool search**: the model loads tool definitions **on demand**. The harness maintains a registry of available tools with short descriptions and embedding vectors. When the model decides it needs a tool, the harness retrieves that tool's full schema. Tools that aren't referenced stay out of context.
-
-```mermaid
-flowchart TD
-    subgraph Before["Before Tool Search"]
-        A1[Turn 1] --> B1[All 30 tool schemas<br/>loaded into context]
-        B1 --> C1[Model processes<br/>unused schemas]
-        C1 --> A1
-    end
-    
-    subgraph After["After Tool Search"]
-        A2[Turn 1] --> B2[Only tool names +<br/>descriptions in context]
-        B2 --> C2{Model requests<br/>a tool?}
-        C2 -->|Yes| D2[Full schema loaded<br/>for that tool only]
-        C2 -->|No| E2[No tool overhead<br/>in this turn]
-    end
-    
-    style Before stroke:#ff5555,stroke-width:2px
-    style After stroke:#50fa7b,stroke-width:2px
-```
-
-### The Impact
-
-| Scenario | Tools sent per turn | Tool tokens saved |
-|----------|-------------------|-------------------|
-| Typical agent session, 10 MCP servers | 5–8 schemas (was 20–30) | ~60–75% |
-| Large MCP setup, 30 tool definitions | ~10 schemas (was 30) | ~65% |
-| Simple editing task, no tool needed | 0 schemas (was 20+) | ~100% |
-
-Tool search is particularly valuable for MCP-heavy setups. If you have 15 MCP servers each with 2–3 tools, you might have 40+ tool schemas. With tool search, only the ones the model actually uses are loaded — the rest stay out of context.
-
-:::note[Module 7 covers the practical cost model]
-Module 7's MCP cost estimates represent the **pre-Tool Search baseline** — they're still useful as a worst-case scenario and for understanding *why* pruning matters. With Tool Search, actual costs are often 60–75% lower than those estimates.
-
-See [Module 7 — Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp) for practical MCP management.
-:::
-
----
-
-## 3. Output Compression
+## 1. Output Compression
 
 Model output is where the cost multiplier hurts most (4–8x input cost per token). The harness applies several compression techniques to generated output.
 
@@ -194,7 +70,7 @@ The VS Code team found that output compression alone reduces billable output tok
 
 ---
 
-## 4. Background Work Batching
+## 2. Background Work Batching
 
 Agentic sessions generate a lot of background work: context fetching, embed computation, search indexing, and state maintenance. Each background operation was, until recently, an independent request.
 
@@ -229,7 +105,7 @@ The effect is most visible in longer sessions (5+ turns). Without batching, the 
 
 ---
 
-## 5. WebSocket Improvements
+## 3. WebSocket Improvements
 
 Agentic sessions traditionally used short-lived HTTP connections — each turn established a new connection, sent the request, received the response, and closed.
 
@@ -242,43 +118,22 @@ For the token economy, faster turn-around means:
 
 ---
 
-## 6. Auto Model Selection (Preview)
-
-Not all requests need the same model. A quick "what does this function do?" can be answered by a lightweight model. A complex multi-file refactor needs the most capable model available.
-
-**Auto model selection** lets Copilot pick the model that fits the work:
-
-| Task Type | Model Selected | Relative Cost |
-|-----------|---------------|---------------|
-| Simple Q&A, code explanation | Fast/cheap model | ~1x |
-| Single-file edit, small refactor | Mid-range model | ~2x |
-| Multi-file edit, complex planning, tool orchestration | Most capable model | ~4–8x |
-| Review, simple linting | Fast/cheap model | ~1x |
-
-The routing is based on task embeddings: each request is classified by complexity before it reaches the model. The classification happens in the harness and adds negligible overhead.
-
-:::note[When auto model selection matters]
-In a typical development session, 60–70% of requests are simple enough for a cheaper model. Auto selection captures those savings without requiring the user to manually switch models.
-:::
-
----
-
-## 7. A/B Experiment Culture
+## 4. A/B Experiment Culture
 
 Every optimization mentioned here was validated with the same process: **A/B experiments in production plus offline evaluations against task suites**.
 
 The VS Code team's rule: an optimization ships only if task success rate holds or improves while token usage drops. This prevents the common failure mode of optimizing for token count at the expense of quality.
 
-### Example: Tool Search Experiment (illustrative)
+### Example: Output Compression Experiment (illustrative)
 
-| Metric | Control (no tool search) | Treatment (tool search) |
-|--------|------------------------|------------------------|
-| Task success rate | 83% | 84% (+1%) |
-| Median tokens per turn | 12,400 | 8,900 (-28%) |
-| Median latency | 3.2s | 2.7s (-16%) |
-| Tool call accuracy | 94% | 96% (+2%) |
+| Metric | Control | Treatment (compression) |
+|--------|---------|------------------------|
+| Task success rate | 83% | 83% (unchanged) |
+| Median output tokens | 4,800 | 4,200 (-12%) |
+| Median latency | 3.2s | 3.0s (-6%) |
+| Output fidelity | 98% | 98% (unchanged) |
 
-Tool search not only saved tokens — it *improved* outcomes by reducing the noise of irrelevant tool schemas.
+Output compression saved tokens without changing task outcomes or output fidelity.
 
 This culture matters for you because it means these optimizations are **safe**. When Copilot saves tokens behind the scenes, it's not cutting corners. The same task gets done with fewer resources.
 
@@ -288,21 +143,18 @@ This culture matters for you because it means these optimizations are **safe**. 
 
 ## What These Optimizations Mean for Your Workflow
 
-The biggest insight from the under-the-hood changes: **the harness wants what you want** — fewer tokens per task completed. The optimizations work best when your workflow aligns with them.
+The biggest insight from these changes: **the harness wants what you want** — fewer tokens per task completed. The optimizations work best when your workflow aligns with them.
 
 ### Do
 
-- **Stay in long sessions** for complex tasks — caching compounds across turns
-- **Use the same agent** for related work — the cached prefix is agent-specific
-- **Let the model pick** — auto model selection saves tokens on simple requests
-- **Trust the harness** — output compression, tool search, and batching are automatic
+- **Give the agent uninterrupted time** for complex tasks — background work can batch during idle periods
+- **Use clear, focused prompts** — compression works best when the intended output is unambiguous
+- **Trust the harness** — output compression, batching, and connection improvements are automatic
 
 ### Don't
 
-- **Don't restart sessions unnecessarily** — each new session pays the full prefix cost once
-- **Don't keep sessions across unrelated tasks** — stale context pollutes answers and wastes tokens. The cache is per-session; a new task deserves a new session.
-- **Don't fight tool search** — MCP servers are loaded on demand; having many registered doesn't cost tokens unless they're used
-- **Don't worry about auto model selection** — it routes to cheaper models by default and upgrades only when needed
+- **Don't keep sessions across unrelated tasks** — stale context pollutes answers and wastes tokens. A new task deserves a new session.
+- **Don't optimize one metric in isolation** — lower token counts are not useful if task quality drops
 
 ### One Caveat: The Local Metric Trap
 
@@ -312,45 +164,7 @@ The harness-level optimizations are measured *holistically* — total cost per c
 
 ---
 
-## Putting It Together
-
-```mermaid
-pie title Where Token Savings Come From<br/>(Harness optimizations, per session)
-    "Extended prompt caching" : 40
-    "Tool search (on-demand loading)" : 20
-    "Auto model selection" : 15
-    "Output compression" : 10
-    "Background batching + WebSocket" : 15
-```
-
-Prompt caching is the dominant driver, responsible for roughly 40% of harness-level savings. Tool search and auto model selection add another 35%. The remaining 25% comes from compression, batching, and transport improvements.
-
----
-
-:::tip[Continue Learning]
-Internal optimizations make the most sense after understanding the [context model](/vibe-on-budget/en/02-context-model) and [cost structure](/vibe-on-budget/en/01-hidden-tax). For practical ways to complement these savings, see [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp).
-:::
-
----
-
-:::note[On the horizon: Token efficiency at the model level]
-<details>
-<summary>Click to expand — research-stage technologies</summary>
-
-Research is pushing token efficiency deeper into the stack:
-
-- **Context Pruning** — algorithms that strip non-informative tokens from training data, forcing models to focus on what matters.
-- **Sparse Mixture-of-Experts (MoE)** — models with 48B+ total parameters but only 2–3B active during inference, dramatically reducing per-token compute cost.
-- **Multi-Token Prediction** — generating several tokens per forward pass instead of one, improving throughput without larger models.
-
-These are research-stage technologies — not yet in Copilot. But they signal where the industry is heading: efficiency moving from your prompts all the way down to the silicon.
-
-</details>
-:::
-
----
-
-## 8. Infrastructure Economics (For Self-Hosted Models)
+## 5. Infrastructure Economics (For Self-Hosted Models)
 
 While most Copilot users rely on GitHub's managed infrastructure, teams running their own models face additional cost trade-offs. This section covers the serverless vs dedicated GPU decision.
 
@@ -383,16 +197,76 @@ Batch size compounds this: single-request inference (batch-1) can cost up to $20
 
 ---
 
+## Putting It Together: The Full Stack
+
+```mermaid
+pie title Where Token Savings Come From<br/>(Remaining harness optimizations, per session)
+    "Output compression" : 30
+    "Background batching" : 25
+    "WebSocket improvements" : 20
+    "A/B validation" : 15
+    "Infrastructure economics" : 10
+```
+
+The full optimization stack combines automatic harness improvements, provider capabilities, and the techniques you control directly. This module focused on the remaining harness pieces; the earlier modules cover the other layers. The stack works best when combined with the user-side techniques from Modules 4–8: focused prompts, lean project context, disciplined tool use, and guardrails that keep tasks on track.
+
+---
+
+## Team Alpha: The Full Journey
+
+| Milestone | Credits/Month | What Changed |
+|-----------|--------------|--------------|
+| Starting point | 14,200 | First UBB month, no optimization |
+| After Module 2 | 12,500 | Understood context model, closed tabs |
+| After Module 3 | 11,800 | Enabled debug logging, found worst pattern |
+| After Module 4 | 8,900 | Quick Wins #1, #4, #6 applied |
+| After Module 5 | 8,200 | English prompts, bullet format |
+| After Module 6 | 7,500 | Lean instructions, .copilotignore |
+| After Module 7 | 6,800 | MCP pruning, Auto model selection |
+| After Module 8 | 6,300 | Spec template, TDD, security audit |
+| Final (Module 9) | 5,900 | Workflow aligned with caching/optimizations |
+
+**Total savings: 8,300 credits/month ($83/month). Pool allocation: 9,500 credits. Now under budget.**
+
+---
+
+:::tip[Continue Learning]
+Revisit the [context model](/vibe-on-budget/en/02-context-model) and [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp) to apply the techniques that complement Copilot's automatic optimizations.
+:::
+
+---
+
+:::note[On the horizon: Token efficiency at the model level]
+<details>
+<summary>Click to expand — research-stage technologies</summary>
+
+Research is pushing token efficiency deeper into the stack:
+
+- **Context Pruning** — algorithms that strip non-informative tokens from training data, forcing models to focus on what matters.
+- **Sparse Mixture-of-Experts (MoE)** — models with 48B+ total parameters but only 2–3B active during inference, dramatically reducing per-token compute cost.
+- **Multi-Token Prediction** — generating several tokens per forward pass instead of one, improving throughput without larger models.
+
+These are research-stage technologies — not yet in Copilot. But they signal where the industry is heading: efficiency moving from your prompts all the way down to the silicon.
+
+</details>
+:::
+
+---
+
+## Practice
+
+1. Open Cache Explorer in Agent Debug Logs for your last long session. What was your cache hit rate? How many input tokens were reused?
+2. For your next complex task, stay in one long session instead of starting multiple short ones. Compare the session total credits vs. your Module 3 baseline.
+3. Review this course's Key Takeaways from all 9 modules. Pick the 3 techniques that would save YOU the most tokens. Apply them this week.
+
 ## Key Takeaways
 
 - Copilot's harness ships **continuous token-efficiency improvements** — no action needed on your part
-- **Extended prompt caching** can achieve illustrative ~94% cache hit rates for Anthropic models, cutting session tokens by ~28%
-- **OpenAI's extended cache TTL** changes the math for async workflows — longer pauses no longer have to mean cold starts
-- **Tool search** loads tool schemas on demand — having many MCP servers registered doesn't cost tokens unless they're used
-- **Auto model selection** routes simple requests to cheaper models automatically, saving 60–70% of requests
+- **Output compression** reduces billable output tokens while preserving the meaning and fidelity of responses
+- **Background batching** combines setup work during idle time, reducing overhead in longer sessions
 - **WebSocket connections** reduce idle latency by 19%, making sessions faster and less likely to be abandoned
 - All optimizations are validated with **A/B experiments** — savings never come at the cost of task quality
 - For self-hosted models, **serverless usually beats dedicated GPUs** unless utilization stays consistently high
-- Align your workflow: **stay in long sessions** (caching compounds), **don't restart unnecessarily**, and **trust the harness**
+- Combine Copilot's automatic stack with the user-side techniques from **Modules 4–8** for the best results
 
-*Estimated reading time: 12 minutes*
+*Estimated reading time: 7 minutes*

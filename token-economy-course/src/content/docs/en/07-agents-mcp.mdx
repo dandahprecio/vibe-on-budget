@@ -13,6 +13,10 @@ This module teaches you when to use agents, how to scope them, and how to keep M
 
 ---
 
+:::note[Case Study: Team Alpha]
+Team Alpha had 12 MCP servers connected — most installed 'just in case'. They pruned to 3 (filesystem, terminal, github), created VS Code profiles, and set model selector to Auto. Result: 7,500 → 6,800 credits. Their 'regex in Opus' days were over.
+:::
+
 ## The Agentic Loop
 
 Every agent task follows a continuous feedback cycle of five steps:
@@ -114,9 +118,7 @@ flowchart TD
 :::note[Tool Search reduces this overhead]
 Tool Search only keeps tool names + short descriptions in the always-present registry. Full schemas load only when the model requests a tool. Every tool the model uses still incurs its ~200 token schema cost.
 
-Before mid-2025, all schemas loaded every step. With Tool Search (Module 9), only needed tools load. Pruning unused MCP servers still matters — it shrinks the registry and reduces the chance of the model picking expensive tools for simple tasks.
-
-See [Module 9 — Tool Search](/vibe-on-budget/en/09-under-the-hood) for how it works internally.
+Before mid-2025, all schemas loaded every step. With Tool Search, only needed tools load. Pruning unused MCP servers still matters — it shrinks the registry and reduces the chance of the model picking expensive tools for simple tasks.
 :::
 
 ### The MCP Server Math
@@ -128,6 +130,31 @@ Each server adds roughly **tools × ~200 tokens per tool definition** in the **p
 | Minimal | 2 (file + terminal) | ~10 | ~2,000 | ~20,000 | ~500–800 | ~5,000–8,000 |
 | Moderate | 5 (git, db, file, terminal, browser) | ~25 | ~5,000 | ~50,000 | ~1,250–2,000 | ~12,500–20,000 |
 | Heavy | 10+ (everything installed) | ~50+ | ~10,000+ | ~100,000+ | ~2,500–4,000+ | ~25,000–40,000+ |
+
+### How Tool Search Works Internally
+
+The harness maintains a registry of available tools with short descriptions and embedding vectors. Instead of placing every full schema in the context window, it uses the registry to identify likely candidates for the current task. When the model needs a tool, the harness retrieves that tool's full schema on demand; tools that are not requested remain out of context.
+
+```mermaid
+flowchart TD
+    subgraph Before["Before Tool Search"]
+        A1[Turn 1] --> B1[All 30 tool schemas<br/>loaded into context]
+        B1 --> C1[Model processes<br/>unused schemas]
+        C1 --> A1
+    end
+    
+    subgraph After["After Tool Search"]
+        A2[Turn 1] --> B2[Only tool names +<br/>descriptions in context]
+        B2 --> C2{Model requests<br/>a tool?}
+        C2 -->|Yes| D2[Full schema loaded<br/>for that tool only]
+        C2 -->|No| E2[No tool overhead<br/>in this turn]
+    end
+    
+    style Before stroke:#ff5555,stroke-width:2px
+    style After stroke:#50fa7b,stroke-width:2px
+```
+
+Tool Search is especially valuable in MCP-heavy setups: typical sessions send only 5–8 schemas instead of 20–30, large setups send about 10 instead of 30, and simple editing tasks may send no schemas at all. That reduces tool-related context by roughly **60–75%**, while every tool the model actually uses still incurs its schema cost.
 
 At Claude Sonnet input pricing ($3/M input), a single heavy 10-step agent task costs ~$0.30 — from tool registry overhead alone.
 
@@ -247,6 +274,18 @@ flowchart TD
 About 80% of chat requests are simple enough for a lightweight model. If you leave the selector on a premium model "just in case," you're overpaying on 4 out of 5 requests.
 :::
 
+### How Auto Model Selection Works
+
+Auto Model Selection classifies each request using task embeddings before it reaches the model. Copilot uses that classification to route simple requests to cheaper models automatically, while more complex work receives a stronger model. The routing adds negligible overhead and avoids requiring manual model switching for every turn.
+
+| Task Type | Model Route |
+|-----------|-------------|
+| Simple Q&A or code explanation | Fast/cheap model |
+| Single-file edit or small refactor | Mid-range model |
+| Multi-file edit, complex planning, or tool orchestration | Most capable model |
+
+Because roughly **60–70% of requests** are simple enough for a cheaper model, leaving the selector on Auto can reduce model-related costs by about **60–70%** on eligible work while preserving higher-capability models for tasks that need them.
+
 ### 6. Five Sub-Agent Patterns That Save Tokens
 
 Research from Anthropic identifies five organizational patterns for structuring agent work. Each has different token implications.
@@ -351,10 +390,16 @@ Every agent step re-runs the tool search against your prompt. If the task change
 ---
 
 :::tip[Continue Learning]
-Agent hygiene builds on [Project Setup](/vibe-on-budget/en/06-project-setup). For a broader view of managing AI-generated code quality, see [Vibe Coding Without the Debt](/vibe-on-budget/en/08-vibe-coding-guardrails).
+Continue with [Vibe Coding Without the Debt](/vibe-on-budget/en/08-vibe-coding-guardrails), then explore [The Big Picture](/vibe-on-budget/en/09-under-the-hood) for Copilot's internal optimizations.
 :::
 
 ---
+
+## Practice
+
+1. Check your connected MCP servers (VS Code settings → `github.copilot.chat.agent.mcpServers`). Count them. Disable any you haven't used in the last week.
+2. The next time you need a simple answer, use Ask mode instead of Agent mode. Compare the credit hover between the two modes for a similar question.
+3. Create one custom agent (use the Configure Tools button in chat) scoped to a specific task domain. Use it for your next task in that domain.
 
 ## Key Takeaways
 

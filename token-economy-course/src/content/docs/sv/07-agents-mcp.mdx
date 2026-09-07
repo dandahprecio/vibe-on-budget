@@ -13,6 +13,10 @@ Denna modul lär dig när du ska använda agenter, hur du avgränsar dem och hur
 
 ---
 
+:::note[Fallstudie: Team Alpha]
+Team Alpha hade 12 anslutna MCP-servrar — de flesta installerade "för säkerhets skull". De bantade ner till 3 (filsystem, terminal, GitHub), skapade VS Code-profiler och ställde modellväljaren på Auto. Resultat: 7 500 → 6 800 credits. Deras dagar med "regex i Opus" var över.
+:::
+
 ## Agentloopen
 
 Varje agentuppgift följer en kontinuerlig återkopplingscykel med fem steg:
@@ -94,15 +98,15 @@ Varje MCP-server du har ansluten registrerar sina verktyg i agentens verktygsreg
 ```mermaid
 flowchart TD
     subgraph Session[Agent-session]
-        Step1["Steg 1: Planera<br/>System + Verktyg = 8K tokens"] --> Step2["Steg 2: Läs fil<br/>System + Verktyg = 8K tokens"]
-        Step2 --> Step3["Steg 3: Skriv fil<br/>System + Verktyg = 8K tokens"]
-        Step3 --> Step4["Steg 4: Kör tester<br/>System + Verktyg = 8K tokens"]
+        Step1["Steg 1: Planera<br/>System + Register"] --> Step2["Steg 2: Läs fil<br/>System + Register"]
+        Step2 --> Step3["Steg 3: Skriv fil<br/>System + Register + begärt schema"]
+        Step3 --> Step4["Steg 4: Kör tester<br/>System + Register + begärt schema"]
     end
-    
-    subgraph Overhead[Kostnad per steg]
-        T[Verktygsdefinitioner<br/>skickas varje steg]
+
+    subgraph Overhead[Omkostnad från verktygssökning]
+        T[Namn + korta beskrivningar<br/>alltid närvarande; fullständiga scheman vid behov]
     end
-    
+
     Step1 -.-> T
     Step2 -.-> T
     Step3 -.-> T
@@ -114,9 +118,7 @@ flowchart TD
 :::note[Verktygssökning minskar denna omkostnad]
 Verktygssökning behåller endast verktygsnamn + korta beskrivningar i det alltid närvarande registret. Fullständiga scheman laddas först när modellen begär ett verktyg. Varje verktyg modellen använder medför fortfarande kostnaden för dess schema (~200 tokens).
 
-Före mitten av 2025 laddades alla scheman vid varje steg. Med verktygssökning (modul 9) laddas bara nödvändiga verktyg. Det är fortfarande viktigt att rensa bort oanvända MCP-servrar — det gör registret mindre och minskar risken att modellen väljer dyra verktyg för enkla uppgifter.
-
-Se [Modul 9 — Verktygssökning](/vibe-on-budget/sv/09-under-the-hood) för hur det fungerar internt.
+Före mitten av 2025 laddades alla scheman vid varje steg. Med verktygssökning laddas bara nödvändiga verktyg. Det är fortfarande viktigt att rensa bort oanvända MCP-servrar — det gör registret mindre och minskar risken att modellen väljer dyra verktyg för enkla uppgifter.
 :::
 
 ### MCP-server-matematiken
@@ -133,6 +135,37 @@ Med Claude Sonnet-priser ($3/M input) kostar en enda tung 10-stegs agentuppgift 
 
 :::tip[Kontrollera din baslinje med /context]
 Kör `/context` i Copilot CLI mitt i en session för att se din System/Verktyg-förbrukning. I VS Code, uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
+:::
+
+### Så fungerar verktygssökning internt
+
+Harnessen har ett register över tillgängliga verktyg med korta beskrivningar och inbäddningsvektorer. I stället för att placera varje fullständigt schema i kontextfönstret använder den registret för att identifiera sannolika kandidater för den aktuella uppgiften. När modellen behöver ett verktyg hämtar harnessen verktygets fullständiga schema vid behov; verktyg som inte begärs förblir utanför kontexten.
+
+```mermaid
+flowchart TD
+    subgraph Before["Before Tool Search"]
+        A1[Turn 1] --> B1["All 30 tool schemas<br/>loaded into context"]
+        B1 --> C1["Model processes<br/>unused schemas"]
+        C1 --> A1
+    end
+
+    subgraph After["After Tool Search"]
+        A2[Turn 1] --> B2["Only tool names +<br/>descriptions in context"]
+        B2 --> C2{"Model requests<br/>a tool?"}
+        C2 -->|Yes| D2["Full schema loaded<br/>for that tool only"]
+        C2 -->|No| E2["No tool overhead<br/>in this turn"]
+    end
+
+    style Before stroke:#ff5555,stroke-width:2px
+    style After stroke:#50fa7b,stroke-width:2px
+```
+
+Verktygssökning är särskilt värdefull i MCP-tunga uppsättningar: typiska sessioner skickar bara 5–8 scheman i stället för 20–30, stora uppsättningar skickar omkring 10 i stället för 30, och enkla redigeringsuppgifter kan skicka inga scheman alls. Det minskar verktygsrelaterad kontext med ungefär **60–75 %**, medan varje verktyg modellen faktiskt använder fortfarande medför kostnaden för sitt schema.
+
+Till Claude Sonnet-priset för input ($3/M) kostar en enda tung agentuppgift på 10 steg cirka $0,30 — enbart från verktygsregistrets omkostnad.
+
+:::tip[Kontrollera din baslinje med /context]
+I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/Tools-tokens. I VS Code kan du uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
 :::
 
 ---
@@ -231,6 +264,18 @@ Alla uppgifter kräver inte samma modell. En systematisk router sparar **73 % av
 Ungefär 80 % av chattförfrågningarna är tillräckligt enkla för en lättviktsmodell. Om du låter väljaren stå på en premiummodell "för säkerhets skull" betalar du för mycket för 4 av 5 förfrågningar.
 :::
 
+### Så fungerar automatiskt modellval
+
+Automatiskt modellval klassificerar varje förfrågan med hjälp av uppgiftsinbäddningar innan den når modellen. Copilot använder klassificeringen för att automatiskt dirigera enkla förfrågningar till billigare modeller, medan mer komplexa uppgifter får en starkare modell. Routningen lägger till försumbar omkostnad och gör att du slipper byta modell manuellt inför varje tur.
+
+| Uppgiftstyp | Modellrutt |
+|---|---|
+| Enkel fråga eller kodförklaring | Snabb/billig modell |
+| Redigering i en fil eller liten refaktorering | Mellanklassmodell |
+| Redigering i flera filer, komplex planering eller verktygsorkestrering | Mest kapabla modell |
+
+Eftersom ungefär **60–70 % av förfrågningarna** är tillräckligt enkla för en billigare modell kan Auto minska modellrelaterade kostnader med cirka **60–70 %** för berättigade uppgifter, samtidigt som modeller med högre kapacitet används när de behövs.
+
 ### 6. Fem subagentmönster som sparar tokens
 
 Forskning från Anthropic identifierar fem organisatoriska mönster för att strukturera agentarbete. Varje mönster har olika tokenkonsekvenser.
@@ -307,8 +352,16 @@ Varje agentsteg kör om verktygssökningen mot din prompt. Om uppgiften ändras 
 ---
 
 :::tip[Fortsätt lära]
-Agenthygien bygger vidare på [Projektinställningar](/vibe-on-budget/sv/06-project-setup). För ett bredare perspektiv på att hantera kvaliteten i AI-genererad kod, se [Vibe coding utan skuld](/vibe-on-budget/sv/08-vibe-coding-guardrails).
+Fortsätt med [Vibe coding utan skuld](/vibe-on-budget/sv/08-vibe-coding-guardrails) och utforska sedan [Den stora bilden](/vibe-on-budget/sv/09-under-the-hood) för Copilots interna optimeringar.
 :::
+
+---
+
+## Övning
+
+1. Kontrollera dina anslutna MCP-servrar (VS Code-inställningar → `github.copilot.chat.agent.mcpServers`). Räkna dem. Inaktivera alla som du inte har använt den senaste veckan.
+2. Nästa gång du behöver ett enkelt svar, använd Ask-läge i stället för Agent-läge. Jämför credit-visningen mellan lägena för en liknande fråga.
+3. Skapa en anpassad agent (använd knappen **Configure Tools** i chatten) som är avgränsad till ett specifikt uppgiftsområde. Använd den för nästa uppgift inom området.
 
 ## Viktiga slutsatser
 

@@ -8,6 +8,11 @@ import { Steps } from "@astrojs/starlight/components";
 # Snabba vinster
 
 Sex saker du kan göra **imorgon bitti** för att börja spara tokens. Var och en tar 5 minuter eller mindre och har omedelbar effekt.
+Det här är engångskonfigurationer. För den löpande färdigheten att skriva effektiva prompter, se [Modul 5](/vibe-on-budget/sv/05-cheaper-prompts).
+
+:::note[Fallstudie: Team Alpha]
+Team Alpha tillämpade Snabb vinst #1 (endast kod som output), #4 (.copilotignore) och #6 (unified diff) en fredag eftermiddag. Måndagens rapport visade deras största minskning på en enda vecka: 11 800 → 8 900 credits.
+:::
 
 :::note[Besparingsuppskattningar]
 Besparingsuppskattningarna är illustrativa och varierar beroende på projektets storlek, modell och arbetsflöde.
@@ -101,6 +106,7 @@ package-lock.json
 För en underhållsfri standard, använd **auto modellval**. VS Code dirigerar automatiskt varje förfrågan till en effektiv modell baserat på uppgiftens komplexitet, modellens hälsa och tillgänglighet. För repeterbara arbetsflöden kan du konfigurera en föredragen modell i en anpassad agent.
 
 Som ett avancerat alternativ kan du manuellt välja en lätt modell (Haiku eller GPT-mini) för:
+1. Använd lätta modeller för:
    - Regex-mönster
    - Generering av dokumentationssträngar
    - Enkel kodformatering
@@ -153,7 +159,7 @@ Detta är community-verktyg, inte officiella GitHub-produkter.
 ---
 
 :::tip[Fortsätt lära dig]
-För större besparingar, se [Projektuppsättning för tokeneffektivitet](/vibe-on-budget/sv/06-project-setup) — den automatiserar många av dessa snabba vinster. Läs också [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts) för optimering på promptnivå.
+För större besparingar, se [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts) och [Projektuppsättning för tokeneffektivitet](/vibe-on-budget/sv/06-project-setup).
 :::
 
 ---
@@ -172,6 +178,12 @@ För större besparingar, se [Projektuppsättning för tokeneffektivitet](/vibe-
 Börja med #1 och #4 — de är engångsinstallationer med högsta löpande avkastning.
 
 ---
+
+## Övning
+
+1. Lägg till instruktionen om endast kod i `.github/copilot-instructions.md` (Snabb vinst #1). Skicka samma prompt som du använde för baslinjen i Modul 3. Jämför creditkostnaden.
+2. Skapa en `.copilotignore`-fil i ditt aktuella projekt (Snabb vinst #4). Använd mallen från den här modulen.
+3. Kontrollera modellväljaren. Är den inställd på Auto? Om inte, byt till Auto nu. (Snabb vinst #5)
 
 ## Viktiga slutsatser
 

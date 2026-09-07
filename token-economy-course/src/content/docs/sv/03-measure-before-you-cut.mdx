@@ -18,6 +18,10 @@ Det här kapitlet ger dig en liten verktygslåda för mätning i VS Code. Använ
 
 ---
 
+:::note[Fallstudie: Team Alpha]
+Team Alpha aktiverade felsökningsloggning och hittade sitt dyraste mönster: en agentsession på 22 steg som kostade 1 100 credits för att rätta en bugg som borde ha tagit 3 steg. Mätningen visade vad intuitionen missade: 12 500 → 11 800 credits.
+:::
+
 ## Credit hover per förfrågan
 
 Det snabbaste sättet att granska en förfrågan är att hovra över Copilot-svaret i Chat. VS Code visar **credit consumption** för just det steget. Det är kostnaden för en förfrågan, inte den totala kostnaden för konversationen.
@@ -196,6 +200,12 @@ Bestäm vad “tillräckligt bra” betyder innan du jämför kostnader: testern
 
 ---
 
+## Övning
+
+1. Välj en uppgift du gör regelbundet (till exempel "lägg till en valideringsfunktion"). Notera prompten du använde, modellen, förbrukade credits (hovra) och om resultatet krävde en omkörning. Detta är din baslinje.
+2. Öppna Agent Debug Logs → Summary för din senaste session. Skriv ner totala tokens, verktygsanrop, fel och tidsåtgång. Vilken siffra överraskade dig mest?
+3. Kör `/chronicle:cost-tips` i valfri chatt. Välj EN rekommendation och testa den på din nästa uppgift.
+
 ## Viktiga slutsatser
 
 - Hovra över ett svar för att se credit consumption för en enskild förfrågan.
@@ -206,4 +216,8 @@ Bestäm vad “tillräckligt bra” betyder innan du jämför kostnader: testern
 - Använd Cache Explorer för att förstå cacheträffar och återanvända input tokens.
 - Ändra en variabel i taget och behåll den billigaste konfigurationen som når kvalitetsgränsen.
 
-*Beräknad lästid: 7 minuter*
+:::tip[Fortsätt lära dig]
+Omsätt din baslinje i handling med [Snabba vinster](/vibe-on-budget/sv/04-quick-wins), och förbättra sedan dina prompter med [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts).
+:::
+
+*Beräknad lästid: 8 minuter*

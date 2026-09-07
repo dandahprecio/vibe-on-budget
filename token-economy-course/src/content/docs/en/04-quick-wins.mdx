@@ -8,6 +8,11 @@ import { Steps } from "@astrojs/starlight/components";
 # Quick Wins
 
 Six things you can do **tomorrow morning** to start saving tokens. Each one takes 5 minutes or less and has immediate impact.
+These are one-time configurations. For the ongoing skill of writing efficient prompts day-to-day, see [Module 5](/vibe-on-budget/en/05-cheaper-prompts).
+
+:::note[Case Study: Team Alpha]
+Team Alpha applied Quick Wins #1 (code-only output), #4 (.copilotignore), and #6 (unified diffs) on a Friday afternoon. Monday's report showed their biggest single-week drop: 11,800 → 8,900 credits.
+:::
 
 :::note[Savings estimates]
 Savings estimates are illustrative and vary by project size, model, and workflow.
@@ -101,6 +106,7 @@ package-lock.json
 For a maintenance-free default, use **auto model selection**. VS Code automatically routes each request to an efficient model based on task complexity, model health, and availability. For repeatable workflows, configure a preferred model in a custom agent.
 
 As an advanced option, manually select a lightweight model (Haiku or GPT-mini) for:
+1. Use lightweight models for:
    - Regex patterns
    - Docstring generation
    - Simple code formatting
@@ -153,7 +159,7 @@ These are community tools, not official GitHub products.
 ---
 
 :::tip[Continue Learning]
-For deeper savings, see [Project Setup for Token Efficiency](/vibe-on-budget/en/06-project-setup) — it automates many of these quick wins. Also check [Writing Prompts That Cost Less](/vibe-on-budget/en/05-cheaper-prompts) for prompt-level optimization.
+For deeper savings, see [Writing Prompts That Cost Less](/vibe-on-budget/en/05-cheaper-prompts) and [Project Setup for Token Efficiency](/vibe-on-budget/en/06-project-setup).
 :::
 
 ---
@@ -172,6 +178,12 @@ For deeper savings, see [Project Setup for Token Efficiency](/vibe-on-budget/en/
 Start with #1 and #4 — they're one-time setups with the highest ongoing return.
 
 ---
+
+## Practice
+
+1. Add the code-only instruction to your `.github/copilot-instructions.md` (Quick Win #1). Send the same prompt you used in Module 3's baseline. Compare the credit cost.
+2. Create a `.copilotignore` file in your current project (Quick Win #4). Use the template from this module.
+3. Check your model selector. Is it on Auto? If not, switch it now. (Quick Win #5)
 
 ## Key Takeaways
 

@@ -11,6 +11,10 @@ Filerna du skapar (eller inte skapar) i ditt projekt bestämmer hur många token
 
 ---
 
+:::note[Fallstudie: Team Alpha]
+Team Alpha granskade sin copilot-instructions.md — 847 rader hade samlats under 18 månader. De bantade den till 18 rader med den minimala mallen, flyttade arkitekturdokumentation till .prompt.md-filer och lade till .copilotignore. Skatten för alltid-på-kontext försvann: 8 200 → 7 500 credits.
+:::
+
 ## Alltid-på-skatten
 
 Dessa filer laddas vid **varje chattinteraktion**:
@@ -302,8 +306,16 @@ Forskning tyder på att LLM-genererade instruktionsfiler ofta försämrar agente
 ---
 
 :::tip[Fortsätt lära]
-En stabil projektuppsättning gör [Snabba vinster](/vibe-on-budget/sv/04-quick-wins) permanenta. Ta sedan nästa steg med [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) för att hantera kostnader i agentläge.
+En stabil projektuppsättning gör [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) mer effektiv. Gå tillbaka till [Snabba vinster](/vibe-on-budget/sv/04-quick-wins) för de snabbaste besparingarna.
 :::
+
+---
+
+## Övning
+
+1. Öppna din `.github/copilot-instructions.md`. Räkna raderna. Om den har fler än 200 rader, identifiera vilka avsnitt som kan flyttas till `.prompt.md`-filer. Om du inte har en sådan fil, skapa den med den minimala mallen.
+2. Skapa filen `docs/architecture.prompt.md` med 5–10 rader om projektets viktigaste konventioner. Testa den: starta en ny chatt och använd `#file:docs/architecture.prompt.md`.
+3. Kör tokenräkningsskriptet (PowerShell eller Node.js) från den här modulen mot dina instruktionsfiler. Hur stor är din alltid-på-baslinje?
 
 ## Viktiga slutsatser
 

@@ -11,6 +11,10 @@ Every time you press Enter in Copilot Chat, a surprisingly large payload leaves 
 
 ---
 
+:::note[Case Study: Team Alpha]
+Team Alpha discovered that their 'quick question about auth' was sending 15 open tabs as context — ~8,000 tokens of irrelevant files with every request. Understanding the context model cut their waste immediately: 14,200 → 12,500 credits.
+:::
+
 ## Anatomy of a Copilot Request
 
 Here's what gets packaged and sent with every chat message or agent step:
@@ -220,11 +224,52 @@ These patterns can reduce your per-request context by 40–60%, depending on the
 
 ---
 
+## How Prompt Caching Works
+
+Prompt caching is the single biggest driver of token savings in Copilot. When the shared prompt prefix stays stable, providers can reuse the model state already computed for system instructions, tools, repository context, and conversation history instead of processing those tokens from scratch.
+
+### Cache Mechanics Across Providers
+
+Different model providers implement caching differently — and the differences affect your costs.
+
+| Provider | Cache Type | Explicit Control? | Write Cost | Hit Cost | Default TTL |
+|----------|-----------|-------------------|------------|----------|-------------|
+| OpenAI (GPT-5.x) | Auto + Manual | Yes — `prompt_cache_breakpoint` | 1.25x | 0.1x (90% off) | Configurable |
+| Anthropic (Claude) | Manual | Yes — `cache_control` | 1.25x–2.0x | 0.1x (90% off) | 5 min |
+| DeepSeek (V4 Pro) | Disk-based | No (implicit) | None | 0.5x (50% off) | N/A |
+| Google (Gemini 3.5) | Context-based | No (implicit) | None | Varied | Session |
+
+For the day-to-day mistakes that break the cache, see the Common Cache-Busting Mistakes section above.
+
+OpenAI GPT-5.x supports extended caching with `prompt_cache_retention: "24h"`. VS Code Copilot measured a **+919% hit-rate improvement after 40–60 minute gaps** and **+338% after 30–40 minute gaps**. This is especially valuable for async workflows where turns are minutes apart.
+
+### Extended TTL Changes the Economics of Async Work
+
+OpenAI's 24-hour retention window can keep the expensive prefix alive across normal developer pauses instead of losing the cache between asynchronous turns. For workflows with longer gaps between requests, that means fewer cold starts and lower effective token cost.
+
+:::caution[The Anthropic TTL controversy]
+In March 2026, Anthropic silently changed their default cache TTL from **1 hour to 5 minutes**. This caused massive, silent cost spikes for async systems — caches expired between requests, and every turn paid full price.
+
+If you're on Anthropic-backed models (Claude in Copilot), keep sessions active and continuous. Long pauses between turns can cost you the cache. If your workflow is highly async, OpenAI's configurable retention window on GPT-5.x gives you more control.
+:::
+
+### What This Means for You
+
+- **Don't modify system instructions mid-session.** If you must, accept the one-time cache miss and keep going.
+- **Monitor for silent cache failures.** Use Copilot debug logging (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) to check actual token counts.
+- **Choose providers for async workflows.** OpenAI's configurable TTL gives highly asynchronous workflows more control than Anthropic's fixed 5-minute window.
+
 :::tip[Continue Learning]
-Understanding the context model makes [The Hidden Tax](/vibe-on-budget/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/vibe-on-budget/en/04-quick-wins) and [Writing Prompts That Cost Less](/vibe-on-budget/en/05-cheaper-prompts).
+Understanding the context model makes [The Hidden Tax](/vibe-on-budget/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/vibe-on-budget/en/04-quick-wins).
 :::
 
 ---
+
+## Practice
+
+1. Start a new chat session. Before sending any message, count how many editor tabs you have open. Close all but the 3 most relevant ones. This is your baseline.
+2. Enable debug logging: set `github.copilot.chat.agentDebugLog.fileLogging.enabled` to `true` in settings. After your next chat session, open Agent Debug Logs → Summary and note the input/output token split.
+3. In a single session, ask 3 related questions about the same file. Use Cache Explorer to check: did your cache hit rate improve after the first turn?
 
 ## Key Takeaways
 

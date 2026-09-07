@@ -1,17 +1,21 @@
 ---
-title: 8. Vibe coding utan teknisk skuld
+title: 8. Vibe coding utan skulden
 description: Behåll flowen utan att samla på dig teknisk skuld
 ---
 
 import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-# Vibe coding utan teknisk skuld
+# Vibe coding utan skulden
 
-Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — är det snabbaste sättet att bygga mjukvara 2026. Men det finns en hake: **studier antyder att teknisk skuld kan öka 30–41% efter att AI-kodverktyg införts (mätt i flera organisationer)**, kodduplicering kan öka 48% (studier antyder) och refaktorering kan minska 60% (studier antyder).
+Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — är det snabbaste sättet att bygga mjukvara 2026. Men det finns en hake: **studier antyder att teknisk skuld kan öka 30–41% efter att AI-kodverktyg införts (mätt i flera organisationer)**, kodduplicering kan öka 48% (studier antyder) och refaktorering kan minska 60% (studier antyder). Varför spelar det roll för din tokenbudget? Därför att dålig kod skapar omarbete. Omarbete skapar fler promptar, fler agentloopar och fler tokens.
 
-Lösningen är inte att sluta vibe-coda. Det är att bygga skyddsräcken som håller skulden i schack.
+Det snabbaste sättet att bränna credits är inte en dålig prompt — det är att åtgärda buggar som aldrig borde ha funnits. Lösningen är inte att sluta vibe-coda, utan att bygga skyddsräcken som hindrar små kvalitetsgenvägar från att bli återkommande tokenkostnader.
 
 ---
+
+:::note[Fallstudie: Team Alpha]
+Team Alpha lade till en 15-raders specmall, TDD för kritiska flöden och en säkerhetsgranskningsprompt före commit. Omarbetscyklerna minskade med ~40%: 6 800 → 6 300 credits. Den initiala kostnaden för skyddsräckena var ~500 tokens/dag; besparingen från färre omförsök var ~5 000 tokens/dag.
+:::
 
 ## Vibe coding eller agentiskt arbetsflöde? Ett beslutsramverk
 
@@ -21,17 +25,17 @@ Alla projekt behöver inte samma grad av noggrannhet. Nyckelfrågan är var proj
 |---|---|
 | Ska verksamheten förlita sig på den här mjukvarans resultat för beslut? | **Agentiskt arbetsflöde** |
 | Hanterar den finansiella transaktioner, kunddata eller autentisering? | **Agentiskt arbetsflöde** |
-| Är applikationen uttryckligen tillfällig eller avsedd för engångsbruk? | **Vibe coding** |
-| Är huvudmålet att testa en idé eller hypotes? | **Vibe coding** |
+| Är applikationen uttryckligen tillfällig eller avsedd för engångsbruk? | **Vibe Coding** |
+| Är huvudmålet att testa en idé eller hypotes? | **Vibe Coding** |
 
 ```mermaid
 flowchart LR
-    A[Nytt projekt] --> B{Verksamhetskritiskt?}
-    B -->|Ja| C[Agentiskt arbetsflöde<br/>Fulla skyddsräcken<br/>AGENTS.md + TDD + granskning]
-    B -->|Nej| D{Vibe coding<br/>Snabb iteration<br/>Lättviktig setup}
-    D --> E{Lyckas prototypen?}
-    E -->|Ja| C
-    E -->|Nej| F[Förkasta — noll skuld]
+    A[New Project] --> B{Business-critical?}
+    B -->|Yes| C[Agentic Workflow<br/>Full guardrails<br/>AGENTS.md + TDD + Review]
+    B -->|No| D{Vibe Coding<br/>Fast iteration<br/>Lightweight setup}
+    D --> E{Prototype succeeds?}
+    E -->|Yes| C
+    E -->|No| F[Discard — zero debt]
     
     style C stroke:#bd93f9,stroke-width:2px
     style D stroke:#50fa7b,stroke-width:2px
@@ -56,6 +60,8 @@ Att förstå var skuld ackumuleras hjälper dig att fånga den tidigt:
 
 En AI som löser en prompt genererar kod för just den prompten. Den söker inte igenom kodbasen efter befintliga hjälpfunktioner. Resultatet: fem filer har var sin `formatDate()` med små variationer.
 
+**Tokenkostnad:** Varje duplicerad funktion innebär att agenten läser, genererar och testar redundant kod i flera filer.
+
 **Tala om för agenten om befintliga hjälpfunktioner:**
 
 ```
@@ -65,30 +71,36 @@ Kolla src/utils/ efter befintliga hjälpare innan du skapar nya.
 
 ### 2. Oavsiktlig arkitektur
 
-AI är utmärkt på att fortsätta mönster men kämpar när inget mönster finns ännu. En vibe-codad app har ofta fem partiella mönster istället för ett konsekvent — olika felhantering i varje route, ad-hoc-loggnig och auth-kontroller på slumpmässiga ställen.
+AI är utmärkt på att fortsätta mönster men kämpar när inget mönster finns ännu. En vibe-codad app har ofta fem partiella mönster istället för ett konsekvent — olika felhantering i varje route, ad-hoc-loggning och auth-kontroller på slumpmässiga ställen.
+
+**Tokenkostnad:** Inkonsekventa mönster tvingar agenten att upptäcka kodbasens struktur på nytt i varje session.
 
 ### 3. Svällande funktioner
 
 Ett enda AI-svar som hanterar "lägg till användarflöde" kan producera en 300-raders funktion som gör formulärvalidering, databasskrivningar, e-postnotifieringar och affärslogik — allt på ett ställe. AI har inget koncept om SRP (Single Responsibility Principle).
 
+**Tokenkostnad:** 300-raders funktioner innebär att agenten läser hela filen som kontext för varje relaterad begäran.
+
 ### 4. Saknade gränsfall
 
 AI genererar glad pathen väl. Den glömmer rate limits, försök vid fel, idempotens, bakgrundsjobb och vad som händer när databasen inte är tillgänglig.
 
+**Tokenkostnad:** Glad-path-kod som går sönder i produktion utlöser dyra felsökningssessioner.
+
 ```mermaid
 flowchart LR
-    subgraph Happy["Vad AI genererar (glad pathen)"]
-        A[Användarbegäran] --> B[Validera]
-        B --> C[Spara i DB]
-        C --> D[Returnera OK]
+    subgraph Happy["What AI generates (happy path)"]
+        A[User request] --> B[Validate]
+        B --> C[Save to DB]
+        C --> D[Return success]
     end
     
-    subgraph Missing["Vad glöms bort"]
+    subgraph Missing["What gets forgotten"]
         E[Rate limiting] 
-        F[Försök vid fel]
-        G[Idempotenskontroll]
-        H[Revisionslogg]
-        I[Ägarskapsverifiering]
+        F[Retry on failure]
+        G[Idempotency check]
+        H[Audit log]
+        I[Ownership verification]
     end
     
     style Missing stroke:#ff5555,stroke-width:2px
@@ -97,23 +109,25 @@ flowchart LR
 
 ---
 
+### Varför oövervakade agenter bränner credits
+
 ## Problemet med Winchester Mystery House
 
 Det finns ett särskilt arkitektoniskt antimönster som uppstår när agenter itererar utan övervakning. Det har fått sitt namn efter den berömda herrgården som byggdes utan en sammanhängande ritning — och är en av de dyraste formerna av AI-genererad teknisk skuld.
 
 ```mermaid
 flowchart TD
-    A[Funktionsbegäran 1] --> B[Agent lägger till kodmönster A]
-    C[Funktionsbegäran 2] --> D[Agent lägger till kodmönster B]
-    E[Funktionsbegäran 3] --> F[Agent lägger till kodmönster C]
+    A[Feature Request 1] --> B[Agent adds code pattern A]
+    C[Feature Request 2] --> D[Agent adds code pattern B]
+    E[Feature Request 3] --> F[Agent adds code pattern C]
     
-    B --> G[Labyrintisk kodbas]
+    B --> G[Labyrinthine Codebase]
     D --> G
     F --> G
     
-    G --> H[Redundanta beroenden]
-    G --> I[Överlappande abstraktioner]
-    G --> J[Omöjlig mänsklig förvaltning]
+    G --> H[Redundant dependencies]
+    G --> I[Overlapping abstractions]
+    G --> J[Impossible human maintenance]
     
     style G stroke:#ff5555,stroke-width:3px
     style H stroke:#ff5555,stroke-width:2px
@@ -122,6 +136,8 @@ flowchart TD
 ```
 
 När agenter får iterera blint och patcha kodbasen funktion för funktion utan arkitektonisk tillsyn blir resultatet labyrintisk kod: redundanta beroenden, överlappande abstraktioner och fem konkurrerande mönster där ett hade räckt.
+
+Varje redundant abstraktion agenten hittar på är kod som måste läsas, felsökas och till slut refaktoriseras — varje steg förbrukar tokens.
 
 ### Metod i fyra steg för att förebygga problemet
 
@@ -194,6 +210,10 @@ Undantag:
 
 En spec behöver inte vara lång — 10–15 rader räcker för att förhindra de dyraste misstagen. Nyckelsektionerna: datamodell, API-beteende, gränsfall och vad som *inte* ska ändras.
 
+:::note[Tokenpåverkan]
+En spec på 15 rader kostar ~100 input-tokens. En felaktig implementation som kräver 3 revideringsrundor kostar ~15 000 tokens. **ROI: ~150x.**
+:::
+
 :::tip[Spara specar som `.prompt.md`-filer]
 Spara specar för återkommande funktioner i `.prompt.md`-filer (t.ex. `docs/user-profile-spec.prompt.md`). Referera till dem med `#file:` när du börjar arbeta med funktionen — agenten läser filen och följer mönstren du definierat.
 :::
@@ -214,14 +234,18 @@ Testdriven utveckling passar naturligt ihop med AI-kodning. Testet definierar f�
 
 Token-omkostnaden för TDD är liten (~3K input-tokens) och betalar sig själv när första testet misslyckas för att agenten glömde ett gränsfall.
 
+:::note[Tokenpåverkan]
+Tester lägger till ~1K input-tokens. Ett missat gränsfall som upptäcks i produktion kostar ~30K tokens i felsökning och fixar. **ROI: ~30x.**
+:::
+
 **Praktiskt arbetsflöde:**
 
 ```mermaid
 flowchart LR
-    A[Skriv test] --> B[Kör test → röd]
-    B --> C[Be Copilot<br/>implementera i Edit-läge]
-    C --> D[Kör test → grön]
-    D --> E[Be Copilot<br/>refaktorera]
+    A[Write test] --> B[Run test → red]
+    B --> C[Ask Copilot to<br/>implement in Edit mode]
+    C --> D[Run test → green]
+    D --> E[Ask Copilot to<br/>refactor]
     E --> B
     
     style A stroke:#bd93f9,stroke-width:2px
@@ -254,11 +278,11 @@ Olika modeller har olika blindfläckar. Det mest effektiva mönstret är att lå
 
 ```mermaid
 flowchart TD
-    A[Primär agent<br/>gör ändringar] --> B[Ocommittad diff]
-    B --> C[Andra agenten<br/>granskar diffen]
-    C --> D{Problem hittade?}
-    D -->|Ja| A
-    D -->|Nej| E[Redo att committa]
+    A[Primary Agent<br/>makes changes] --> B[Dirty diff generated]
+    B --> C[Second Agent<br/>reviews diff]
+    C --> D{Issues found?}
+    D -->|Yes| A
+    D -->|No| E[Ready to commit]
     
     style A stroke:#ff79c6,stroke-width:2px
     style C stroke:#bd93f9,stroke-width:2px
@@ -266,6 +290,10 @@ flowchart TD
 ```
 
 Granskningsloopen konvergerar vanligtvis på **2–3 cykler**. Olika modeller fångar olika saker — en kan flagga överkonstruerade lösningar, en annan upptäcker saknade gränsfall.
+
+:::note[Tokenpåverkan]
+En granskningsrunda kostar ~2K tokens. En bugg som når produktion kostar ~50K tokens. **ROI: ~25x.**
+:::
 
 ---
 
@@ -315,6 +343,10 @@ Before implementing, review #file:docs/known-issues.prompt.md. Do not repeat the
 `AGENTS.md` skickas vid **varje** agentinteraktion. `.prompt.md`-filer skickas endast när du uttryckligen refererar till dem. Att hålla projektminnet separat från beteenderegler sparar hundratals tokens per agentsteg.
 :::
 
+:::note[Tokenpåverkan]
+En fil med kända problem kostar ~100 tokens att läsa in. Att upprepa ett känt misstag kostar ~10K tokens i omarbete. **ROI: ~100x.**
+:::
+
 ---
 
 ## Skyddsräcke 5: Säkerhet som hård spärr
@@ -340,6 +372,10 @@ Säkerhetsgranska denna funktion. Kolla OWASP Top 10.
 Lista endast kritiska och allvarliga problem. Kod endast.
 ```
 
+:::note[Tokenpåverkan]
+En säkerhetsgranskningsprompt kostar ~500 tokens. Ett dataintrång kostar miljontals tokens i incidenthantering och arbete med regulatoriska sanktioner. **ROI: omätbar.**
+:::
+
 ---
 
 ## 90-dagarsgranskningen
@@ -353,19 +389,28 @@ Efter cirka tre månaders vibe-coding, gör en fokuserad granskning:
 5. **Kan appen distribueras från en ren checkout?** — Om inte, har du beroenderöta
 6. **Var lagras hemligheter?** — De ska aldrig finnas i frontend-kod eller publika env-variabler
 
----
-
----
-
-:::tip[Fortsätt lära dig]
-Skyddsräcken fungerar bäst med rätt setup — gå tillbaka till [Projektsetup](/vibe-on-budget/sv/06-project-setup) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp). För hela bilden av hur Copilot hanterar kostnader, se [Under huven](/vibe-on-budget/sv/09-under-the-hood).
+:::note[Tokenpåverkan]
+En 90-dagarsgranskning kostar ~2K tokens i granskningspromptar. Att hitta och åtgärda systemiska problem tidigt förhindrar att tokenspill byggs på under månader av agentsessioner.
 :::
 
 ---
 
+:::tip[Fortsätt lära dig]
+Skyddsräcken fungerar bäst med [Projektsetup](/vibe-on-budget/sv/06-project-setup) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp).
+:::
+
+---
+
+## Övning
+
+1. Skriv en spec på 10 rader för din nästa funktion. Ta med datamodell, API-beteende, gränsfall och undantag. Använd den som prompt i din Copilot-begäran.
+2. Skriv testet först för din nästa kodändring. Be sedan Copilot (i Edit-läge) att implementera den. Upptäckte testet något AI missade?
+3. Kör en säkerhetsgranskningsprompt på din senast AI-genererade funktion: "Säkerhetsgranska denna funktion. OWASP Top 10. Endast kritiska problem."
+
 ## Viktiga slutsatser
 
 - Studier antyder att teknisk skuld kan öka **30–41%** med AI-kodningsverktyg (mätt i flera organisationer) — skyddsräcken är nödvändiga
+- Kodkvalitet är tokenekonomi: att förhindra omarbete kostar färre tokens än att felsöka och refaktorera senare
 - Skriv en **lättviktsspec** innan du ber agenten bygga en funktion
 - Använd **TDD** — tester definierar beteende, AI implementerar
 - Automatisera granskning: **samma modell eller olika modeller** fångar vad första passet missar
@@ -373,4 +418,4 @@ Skyddsräcken fungerar bäst med rätt setup — gå tillbaka till [Projektsetup
 - **Säkerhetskontroller måste vara icke-förhandlingsbara** — verifiera auth, auktorisering, indatavalidering varje gång
 - Gör en **90-dagarsgranskning** för att fånga systemiska problem innan de växer
 
-*Beräknad lästid: 10 minuter*
+*Beräknad lästid: 10 minuter*---

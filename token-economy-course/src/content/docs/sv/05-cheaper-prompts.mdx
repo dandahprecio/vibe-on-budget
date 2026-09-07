@@ -7,7 +7,15 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Skriva promptar som kostar mindre
 
-Promptengineering undervisas vanligtvis för *kvalitet*. Denna modul lär ut det för *kostnad*. Samma koncept, annan prioritet — resultat behöver vara *tillräckligt bra* medan de spenderar så få tokens som möjligt.
+Modul 4 gav dig engångskonfiguration — instruktioner och inställningar som du sätter en gång och sedan glömmer. Den här modulen lär dig den löpande färdigheten att skriva varje prompt effektivt. Samma mål (färre tokens), en annan tidsram (varje gång du skriver).
+
+Promptengineering undervisas vanligtvis för *kvalitet*. Den här modulen lär ut det för *kostnad*: behåll avsikten och begränsningarna som förbättrar resultatet, men ta bort ord som inte gör det.
+
+---
+
+:::note[Fallstudie: Team Alpha]
+Team Alphas standups hade varit på svenska. Genom att byta promptspråk till engelska och använda punktformat sparade teamet ~1 700 tokens per dag. Tillsammans med avsiktskommentarer: 8 900 → 8 200 credits.
+:::
 
 ---
 
@@ -27,7 +35,7 @@ Den andra versionen är 70% färre input-tokens (8 ord vs 24) och producerar ~90
 
 ## Strukturera din prompt: Punkter > Prosa
 
-Prosaprompts med fullständiga meningar och artiga hälsningar slösar tokens på grammatik. Punktlistor förmedlar samma avsikt till halva storleken.
+Prosaprompts med fullständiga meningar och artiga hälsningar slösar tokens på grammatik. Punktlistor gör uppgiften, begränsningarna och outputformatet skanningsbara utan att ta bort användbar avsikt.
 
 **Prosa (dyrt):**
 ```
@@ -87,21 +95,6 @@ Grottmännisko-språk tar bort artiklar, prepositioner, artighet och grammatik �
 Oberoende tester av JetBrains (juli 2026) mätte ~8,5% besparing av output-tokens över 82 parade uppgifter. Det är mindre än marknadsförda påståenden men genuint och säkert — avrunda till ~10% som en praktisk tumregel.
 :::
 
-### Grottmännisko-exekveringsprompten
-
-Använd detta som en metaprompt i början av en session eller i din `copilot-instructions.md`:
-
-```
-# Output-format
-- Endast kodblock. Ta bort all text, hälsningar, förklaringar.
-- Ingen markdown utanför kodblocket.
-- Oförändrad kod → // ... existing code ...
-```
-
-Denna enda instruktion kan minska **~10% av output-tokens (oberoende benchmark)** per svar.
-
----
-
 ## Metapromptar för outputkontroll
 
 Styr output-utförlighet med explicita begränsningar:
@@ -113,7 +106,7 @@ Styr output-utförlighet med explicita begränsningar:
 | Tillståndssynk | "Sammanfatta i tät 3-rads tillståndssynk för ny tråd." |
 | Boilerplate | "Exkludera imports, setup, config. Endast kärnalgoritm." |
 | Lat läge | "Ställ 2 riktade frågor innan du genererar någon kod." |
-| Diff-utdata | "Use unified diff. Only changed lines +/- with 3 context lines. No full file output." |
+| Testgenerering | "Generate Vitest test. Include happy path + 2 edge cases. AAA pattern." |
 
 ---
 
@@ -135,12 +128,6 @@ Varför kostade ett komprimeringsverktyg mer?
 :::tip[Billigt slår smart]
 Det billigaste LLM-anropet är det du inte gör. Förbered deterministiska data utanför agentloopen.
 :::
-
----
-
-Se [Modul 4 — Quick Win #6](/vibe-on-budget/sv/04-quick-wins) för hur unified diffs eliminerar LLM-lathet och minskar output-tokens med 70–80%.
-
----
 
 ## Engelska vs svenska: 1,7x tokenskillnad
 
@@ -183,7 +170,41 @@ Alla promptar bör inte komprimeras. Här är när utförlighet är värt kostna
 | Första interaktion med ny kodbas | Modellen behöver grundlig orientering | Inkludera alla relevanta filer |
 | Refaktorering över flera filer | Glesa instruktioner → fel implementation | Var tydlig med omfattning |
 
-Regeln: **komprimera output, inte avsikt**. Spara inte 20 tokens om det kostar dig 500 tokens av felaktig output och en omstart.
+Regeln: **komprimera output, inte avsikt**. Behåll namn, begränsningar, edge cases och framgångskriterier. Ta bort hälsningar, upprepad kontext och förklaringar av kod som modellen kan inspektera direkt.
+
+Jämför avvägningen:
+
+**För komprimerat:**
+```
+- Fixa auth
+- Gör säkert
+- Kod endast
+```
+
+**Komprimerat utan att förlora avsikten:**
+```
+- Inspektera #file:auth.ts och #file:auth.test.ts
+- Åtgärda session fixation efter inloggning
+- Behåll rotation av refresh-token
+- Lägg till regressionstest för återanvänt sessions-ID
+- Returnera endast ändrade rader
+```
+
+Den första prompten är kort men tvingar fram upptäckt, förtydliganden eller en riskfylld gissning. Den andra tar bort utfyllnad men behåller säkerhetsgränsen och verifieringsmålet. Några extra input-tokens är billigare än en misslyckad implementation och dess uppföljning.
+
+---
+
+:::tip[Fortsätt lära]
+Kombinera prompttekniker med [Projektinställningar](/vibe-on-budget/sv/06-project-setup) för tokeneffektivitet i hela stacken. För avancerade mönster, se [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp).
+:::
+
+---
+
+## Övning
+
+1. Ta dina tre senaste Copilot-promptar. Skriv om var och en i punktformat. Räkna den ungefärliga tokenskillnaden (1 token ≈ 4 tecken på engelska).
+2. Lägg till en `// AI:`-kommentar i en funktion som du ofta frågar Copilot om. Nästa gång, referera till filen med `#file:` i stället för att beskriva den.
+3. Om du vanligtvis skriver promptar på svenska, skriv dina nästa fem promptar på engelska. Kontrollera om svarskvaliteten är densamma.
 
 ---
 

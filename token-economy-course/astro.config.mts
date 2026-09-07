@@ -76,8 +76,8 @@ export default defineConfig({
 							slug: "08-vibe-coding-guardrails",
 						},
 						{
-							label: "9. Under the Hood",
-							translations: { sv: "9. Under huven" },
+							label: "9. The Big Picture",
+							translations: { sv: "9. Helhetsbilden" },
 							slug: "09-under-the-hood",
 						},
 					],

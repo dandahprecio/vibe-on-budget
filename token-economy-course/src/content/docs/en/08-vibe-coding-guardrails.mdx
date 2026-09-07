@@ -7,11 +7,15 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe Coding Without the Debt
 
-Vibe coding — letting AI write your code while you focus on intent — is the fastest way to build software in 2026. But there's a catch: **technical debt can increase 30–41% after AI coding tool adoption (studies suggest, measured across multiple orgs)**, code duplication can rise 48% (studies suggest), and refactoring can drop 60% (studies suggest).
+Vibe coding — letting AI write your code while you focus on intent — is the fastest way to build software in 2026. But there's a catch: **technical debt can increase 30–41% after AI coding tool adoption (studies suggest, measured across multiple orgs)**, code duplication can rise 48% (studies suggest), and refactoring can drop 60% (studies suggest). Why does this matter for your token budget? Because bad code creates rework. Rework creates more prompts, more agent loops, and more tokens.
 
-The solution isn't to stop vibe coding. It's to build guardrails that keep the debt in check.
+The fastest way to burn credits isn't a bad prompt — it's fixing bugs that shouldn't exist. The solution isn't to stop vibe coding; it's to build guardrails that prevent small quality shortcuts from becoming recurring token costs.
 
 ---
+
+:::note[Case Study: Team Alpha]
+Team Alpha added a 15-line spec template, TDD for critical paths, and a pre-commit security audit prompt. Rework cycles dropped ~40%: 6,800 → 6,300 credits. The upfront cost of guardrails was ~500 tokens/day; the savings from fewer retries was ~5,000 tokens/day.
+:::
 
 ## Vibe Coding or Agentic Workflow? A Decision Framework
 
@@ -56,6 +60,8 @@ Understanding where debt accumulates helps you catch it early:
 
 An AI solving one prompt generates code for that prompt. It doesn't search the codebase for existing utilities. The result: five files each have their own `formatDate()` with slight variations.
 
+**Token Cost:** Every duplicate function means the agent reads, generates, and tests redundant code across multiple files.
+
 **Tell the agent about existing utilities:**
 
 ```
@@ -67,13 +73,19 @@ Check src/utils/ for existing helpers before creating new ones.
 
 AI excels at continuing patterns but struggles when no pattern exists yet. A vibe-coded app often has five partial patterns instead of one consistent one — different error handling in every route, ad-hoc logging, and auth checks in random places.
 
+**Token Cost:** Inconsistent patterns force the agent to re-discover the codebase structure on every session.
+
 ### 3. Bloated Functions
 
 A single AI response that handles "add user flow" may produce a 300-line function doing form validation, database writes, email notifications, and business logic — all in one place. The AI has no concept of SRP (Single Responsibility Principle).
 
+**Token Cost:** 300-line functions mean the agent reads the entire file as context for every related request.
+
 ### 4. Missing Edge Cases
 
 AI generates the happy path well. It forgets rate limits, retries, idempotency, background jobs, and what happens when the database is unreachable.
+
+**Token Cost:** Happy-path code that breaks in production triggers expensive debugging sessions.
 
 ```mermaid
 flowchart LR
@@ -96,6 +108,8 @@ flowchart LR
 ```
 
 ---
+
+### Why Unsupervised Agents Burn Credits
 
 ## The Winchester Mystery House Problem
 
@@ -122,6 +136,8 @@ flowchart TD
 ```
 
 When agents are allowed to iterate blindly, patching the codebase feature by feature without architectural oversight, the result is labyrinthine code: redundant dependencies, overlapping abstractions, and five competing patterns where one would suffice.
+
+Every redundant abstraction the agent invents is code that must be read, debugged, and eventually refactored — each step consuming tokens.
 
 ### The 4-Step Prevention Methodology
 
@@ -194,6 +210,10 @@ Exclusions:
 
 A spec doesn't need to be long — 10–15 lines is enough to prevent the most expensive mistakes. The key sections: data model, API behavior, edge cases, and what *not* to change.
 
+:::note[Token Impact]
+A 15-line spec costs ~100 input tokens. An incorrect implementation requiring 3 revision rounds costs ~15,000 tokens. **ROI: ~150x.**
+:::
+
 :::tip[Store specs as `.prompt.md` files]
 Store specs for recurring features in `.prompt.md` files (e.g., `docs/user-profile-spec.prompt.md`). Reference them with `#file:` when starting work on that feature — the agent reads the file and follows the patterns you've defined.
 :::
@@ -213,6 +233,10 @@ Test-Driven Development pairs naturally with AI coding. The test defines the exp
 | "Add tests after" | ~2K + ~5K output | Medium — tests biased by code |
 
 The token overhead of TDD is small (~3K input tokens) and pays for itself when the first test fails because the agent forgot an edge case.
+
+:::note[Token Impact]
+Tests add ~1K input tokens. A missed edge case caught in production costs ~30K tokens in debugging and fixes. **ROI: ~30x.**
+:::
 
 **Practical workflow:**
 
@@ -267,6 +291,10 @@ flowchart TD
 
 The review loop typically converges in **2–3 cycles**. Different models catch different things — one might flag over-engineered solutions, another spots missing edge cases.
 
+:::note[Token Impact]
+A review pass costs ~2K tokens. A bug reaching production costs ~50K tokens. **ROI: ~25x.**
+:::
+
 ---
 
 ## Guardrail 4: Project Memory with `.prompt.md` Files
@@ -315,6 +343,10 @@ Before implementing, review #file:docs/known-issues.prompt.md. Do not repeat the
 `AGENTS.md` is sent on **every** agent interaction. `.prompt.md` files are sent only when you explicitly reference them. Keeping project memory separate from behavioral rules saves hundreds of tokens per agent step.
 :::
 
+:::note[Token Impact]
+A known-issues file costs ~100 tokens to load. Repeating a known mistake costs ~10K tokens in rework. **ROI: ~100x.**
+:::
+
 ---
 
 ## Guardrail 5: Security as a Hard Gate
@@ -340,6 +372,10 @@ Security audit this function. Check for OWASP Top 10.
 List only critical and high severity issues. Code only.
 ```
 
+:::note[Token Impact]
+A security audit prompt costs ~500 tokens. A data breach costs millions of tokens in incident response and regulatory-penalty work. **ROI: immeasurable.**
+:::
+
 ---
 
 ## The 90-Day Audit
@@ -353,17 +389,28 @@ About three months after starting to vibe code, do a focused audit:
 5. **Can the app deploy from a clean checkout?** — If not, you have dependency rot
 6. **Where are secrets stored?** — They should never be in frontend code or public env vars
 
----
-
-:::tip[Continue Learning]
-Guardrails work best with the right setup — revisit [Project Setup](/vibe-on-budget/en/06-project-setup) and [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp). For the full picture on how Copilot manages costs, see [Under the Hood](/vibe-on-budget/en/09-under-the-hood).
+:::note[Token Impact]
+A 90-day audit costs ~2K tokens in review prompts. Finding and fixing systemic issues early prevents compounding token waste over months of agent sessions.
 :::
 
 ---
 
+:::tip[Continue Learning]
+Guardrails work best with [Project Setup](/vibe-on-budget/en/06-project-setup) and [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-agents-mcp).
+:::
+
+---
+
+## Practice
+
+1. Write a 10-line spec for your next feature. Include: data model, API behavior, edge cases, and exclusions. Use it as the prompt for your Copilot request.
+2. For your next code change, write the test first. Then ask Copilot (in Edit mode) to implement it. Did the test catch anything the AI missed?
+3. Run a security audit prompt on your most recent AI-generated function: "Security audit this function. OWASP Top 10. Critical only."
+
 ## Key Takeaways
 
 - Studies suggest technical debt can increase **30–41%** with AI coding tools (measured across multiple orgs) — guardrails are essential
+- Code quality is token economics: preventing rework costs fewer tokens than debugging and refactoring it later
 - Write a **lightweight spec** before asking the agent to build a feature
 - Use **TDD** — tests define behavior, AI implements it
 - Automate review: **same-model or cross-model** review catches what the first pass misses
