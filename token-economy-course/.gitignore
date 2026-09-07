@@ -1,0 +1,18 @@
+# build output
+dist/
+
+# dependencies
+node_modules/
+
+# logs
+*.log
+
+# dotenv
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/settings.json

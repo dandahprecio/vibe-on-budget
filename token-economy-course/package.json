@@ -1,0 +1,26 @@
+{
+  "name": "token-economy-course",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A course teaching developers how to save tokens when vibe coding with GitHub Copilot",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.0",
+    "@astrojs/mdx": "^8.0.0",
+    "@astrojs/sitemap": "^3.7.4",
+    "@astrojs/starlight": "^0.42.0",
+    "astro": "^7.3.1",
+    "astro-mermaid": "^2.1.0",
+    "katex": "^0.18.5",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sharp": "^0.35.4"
+  }
+}

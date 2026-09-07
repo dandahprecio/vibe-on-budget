@@ -1,0 +1,206 @@
+---
+title: 4. Writing Prompts That Cost Less
+description: Write focused prompts that get better results with fewer tokens
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+# Writing Prompts That Cost Less
+
+Prompt engineering is usually taught for *quality*. This module teaches it for *cost*. Same concepts, different priority — results need to be *good enough* while spending as few tokens as possible.
+
+---
+
+## The Token Cost of Vagueness
+
+Every ambiguous word in your prompt forces the model to generate more output tokens — reasoning chains, hedging language, clarifications, options. Output tokens cost 5x input, so vagueness is literally 5x more expensive than being specific.
+
+**Before (vague, expensive):**
+> "Can you look at this function and make it better? I think it might be a bit slow."
+
+**After (specific, cheap):**
+> "Refactor #file:calc.ts to use Map instead of nested for-loops. O(1) lookup. Code only."
+
+The second version is 70% fewer input tokens (8 words vs 24) and produces ~90% fewer output tokens because the model doesn't generate explanations.
+
+---
+
+## Structure Your Prompt: Bullets > Prose
+
+Prose prompts with full sentences and polite greetings waste tokens on grammar. Bullet points convey the same intent at half the size.
+
+**Prose (expensive):**
+```
+Hello! Could you please help me write a function that validates
+an email address? I'd like it to check for the @ symbol and make
+sure there's a domain name present. Thank you!
+```
+
+**Bullet points (cheap):**
+```
+- Write email validation function
+- Check: @ symbol present, domain after @
+- Return boolean
+- Code only, no explanation
+```
+
+**The difference:** 38 tokens → 18 tokens. Over 100 prompts, that's 2,000 tokens saved on input alone, plus the output tokens from shorter responses.
+
+---
+
+## Attach Intent to Code Instead of Explaining
+
+Instead of describing what your code does in natural language (wasting tokens on both descriptions and the model re-reading your code), reference the file and add a comment that captures your intent.
+
+**Before:**
+> "I have a function that processes user data. It takes a list of users and filters out inactive ones, then sorts by registration date..."
+
+**After:**
+```
+#file:processUsers.ts
+// TODO: Add pagination, limit 100 per page, sort by registrationDate desc
+```
+
+The model reads the code directly and uses your comment as the intent signal. No redundant description, no hallucinations about what the code does.
+
+:::tip[Intent comments]
+Add `// AI:` comments in your code as hooks:
+```typescript
+// AI: This function is called 10k times/sec. Prioritize speed over readability.
+```
+The model will read the comment together with the code, saving you a full explanation in chat.
+:::
+
+---
+
+## Caveman-Speak: Practical Token Compression
+
+Caveman-speak strips articles, prepositions, politeness, and grammar — keeping only semantic keywords. It's a safe, modest technique for token reduction.
+
+| Normal English | Caveman-Speak | Token Savings |
+|---|---|---|
+| "Can you please help me write a function that parses a CSV file?" | "Write CSV parser. Code only." | ~12% |
+| "What's the best way to handle errors in this async function?" | "Best error handling pattern for #file:fetch.ts async." | ~10% |
+| "Could you review my code and tell me if there are any security issues?" | "Security audit #file:auth.ts. OWASP Top 10. Critical only." | ~14% |
+
+:::note[Independent benchmark]
+Independent testing by JetBrains (July 2026) measured ~8.5% output token savings across 82 paired tasks. This is less than advertised claims but genuine and safe — round to ~10% as a practical rule-of-thumb.
+:::
+
+### The Caveman Execution Prompt
+
+Use this as a meta-prompt at the start of a session or in your `copilot-instructions.md`:
+
+```
+# Output format
+- Code blocks only. Strip all prose, greetings, explanations.
+- No markdown outside the codeblock.
+- Unchanged code → // ... existing code ...
+```
+
+This single instruction can cut **~10% of output tokens (independent benchmark)** per response.
+
+---
+
+## Meta-Prompts for Output Control
+
+Control output verbosity with explicit constraints:
+
+| Use Case | Meta-Prompt |
+|---|---|
+| Bug explanation | "Answer max 3 bullet points, 10 words each. Skip grammar." |
+| Code review | "Critical flaws only. No positive feedback, no suggestions." |
+| State sync | "Summarize in dense 3-line state-sync for new thread." |
+| Boilerplate | "Exclude imports, setup, config. Core algorithm only." |
+| Lazy mode | "Ask 2 targeted questions before generating any code." |
+| Diff output | "Use unified diff. Only changed lines +/- with 3 context lines. No full file output." |
+
+---
+
+## Tools That Don't Deliver: The RTK Case Study
+
+RTK (Rust Token Killer) is a CLI proxy that compresses shell output before the model reads it. The vendor advertises 60-90% token reduction.
+
+- **Advertised:** 60–90% token reduction
+- **JetBrains measured:** **+7.6% more expensive** in July 2026 across 80 paired tasks
+
+Why did a compression tool cost more?
+
+- Compressed output sometimes hid just enough detail to trigger extra exploration turns
+- Cache pricing means many “saved” input tokens were already close to free
+- When the agent needs a rerun, the extra round trip wipes out the initial win
+
+**Lesson:** A tool's self-reported savings measure its counterfactual, not your bill. Always look for independent benchmarks.
+
+:::tip[Cheap beats clever]
+The cheapest LLM call is the one you don't make. Pre-compute deterministic data outside the agent loop.
+:::
+
+---
+
+See [Module 3 — Quick Win #6](/token-economy-course/en/03-quick-wins#6-force-unified-diff-output) for how unified diffs eliminate LLM-laziness and reduce output tokens by 70–80%.
+
+## English vs Swedish: A 1.7x Token Difference
+
+Swedish tokenizes **~1.7x less efficiently** than English with most tokenizers. This is because English has shorter average word length and more common subword patterns.
+
+```
+English: "Create login validation. Handle empty fields."
+→ ~7 tokens
+
+Swedish: "Skapa inloggningsvalidering. Hantera tomma fält."
+→ ~12 tokens (1.7x more)
+```
+
+The practical impact: **prompt in English even if you chat in Swedish**. The response will come back correctly, and you save ~40% token cost.
+
+```mermaid
+flowchart LR
+    A[Swedish prompt] -->|1.7x tokens| B[Copilot API]
+    C[English prompt] -->|1.0x tokens| B
+    B -->|Same response quality| D[Both get valid code]
+    
+    style A stroke:#ff5555,stroke-width:2px
+    style C stroke:#50fa7b,stroke-width:2px
+```
+
+:::note[It adds up]
+For a team sending 10,000 prompts/month, the English-vs-Swedish difference alone could save ~30,000 tokens. At $5/M output tokens, 30K tokens = $0.15. The real savings from language choice come from compounding across thousands of requests.
+:::
+
+---
+
+:::tip[Continue Learning]
+Pair prompt techniques with [Project Setup](/token-economy-course/en/05-project-setup) for full-stack token efficiency. For advanced patterns, see [Agents, Tools & MCP Hygiene](/token-economy-course/en/06-agents-mcp).
+
+For output format optimization, see [Module 3 — Quick Win #6: Force Unified Diff Output](/token-economy-course/en/03-quick-wins).
+:::
+
+---
+
+## When Compression Backfires
+
+Not all prompts should be compressed. Here's when verbosity is worth the cost:
+
+| Situation | Why Be Verbose | Recommendation |
+|---|---|---|
+| Complex architecture | Full context needed for correct design | Don't compress |
+| Security audit | Missing nuance = missed vulnerability | Write complete prompts |
+| First interaction with a new codebase | Model needs thorough orientation | Include all relevant files |
+| Cross-file refactoring | Sparse instructions → wrong implementation | Be explicit about scope |
+
+The rule: **compress output, not intent**. Don't save 20 tokens if it costs you 500 tokens of wrong output and a redo.
+
+---
+
+## Key Takeaways
+
+- **Bullet points** use half the tokens of prose for the same intent
+- **Reference files directly** (#file:) — don't describe what's already in code
+- **Caveman-speak** is a small but real win — roughly ~10% output savings in independent tests
+- **Meta-prompts** control output verbosity (where the real cost is)
+- **Benchmark tools independently** — a proxy can reduce tokens and still raise your bill
+- **Prompt in English** even if you think in Swedish — 1.7x token savings
+- **Don't over-compress** — saving 20 tokens that causes a wrong answer costs more
+
+*Estimated reading time: 10 minutes*

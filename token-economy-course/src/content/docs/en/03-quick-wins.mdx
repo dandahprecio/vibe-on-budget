@@ -1,0 +1,182 @@
+---
+title: 3. Quick Wins
+description: Six things you can do tomorrow to start saving tokens immediately
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+# Quick Wins
+
+Six things you can do **tomorrow morning** to start saving tokens. Each one takes 5 minutes or less and has immediate impact.
+
+:::note[Savings estimates]
+Savings estimates are illustrative and vary by project size, model, and workflow.
+:::
+
+---
+
+## 1. Add a Code-Only Instruction
+
+**The problem:** Every chat response includes pleasantries, explanations, and markdown wrappers around unchanged code. Output tokens cost 5x input — this bloat is expensive.
+
+**The action:** Add this to your `.github/copilot-instructions.md`:
+
+```
+# Output format
+- Return code blocks only. Strip all prose, greetings, explanations.
+- No markdown text outside the codeblock.
+- Replace unchanged code with: // ... existing code ...
+```
+
+**The savings:** 50–70% reduction in output tokens per response.
+
+---
+
+## 2. Clear Your Chat Thread Regularly
+
+**The problem:** Every message in an ongoing thread sends the **entire** conversation history as input tokens. A thread with 10 messages sends all previous prompts and responses — potentially 10,000+ tokens — with every new question.
+
+**The action:**
+
+- **Same task, multiple steps?** Stay in the session. Caching compounds across turns (see [Module 8](/token-economy-course/en/08-under-the-hood)).
+- **Task complete?** Start fresh. Stale history adds noise and wastes tokens.
+- **Thread past 10+ turns?** Compact it first:
+
+```
+Summarize this session in 3 bullet points. I'll paste into a new thread.
+```
+Copy the summary, run `/clear`, paste it in, continue. You keep the context without the token weight.
+
+**The savings:** 40–60% reduction in input tokens for sessions with accumulated history.
+
+---
+
+## 3. Close Unnecessary Editor Tabs
+
+**The problem:** Copilot reads your open editor tabs as context. Having 15 files open when asking about one function sends 14 irrelevant files as input tokens with every request.
+
+**The action:**
+
+1. Before asking a question, close files you're not working on
+2. Only keep open the file(s) directly relevant to your task
+3. Use `#file:filename.mjs` for explicit references instead of relying on automatic context
+
+**The savings:** 20–40% reduction in input tokens per request. More importantly, you get **better answers** because the model sees less noise.
+
+---
+
+## 4. Create a `.copilotignore` File
+
+**The problem:** Copilot scans your workspace for context. Build artifacts, test fixtures, mock data, CSV files, and `node_modules` are all included as potential context — even though they're never useful for code generation.
+
+**The action:** Create `.copilotignore` in your project root:
+
+```
+# .copilotignore
+dist/
+build/
+node_modules/
+tests/mock-data/
+*.svg
+*.csv
+*.json
+package-lock.json
+```
+
+**The savings:** 20–40% less input token consumption. Bonus: faster response times.
+
+:::caution[Not a security boundary]
+`.copilotignore` is a token-saving tool, not a security measure. Don't assume it prevents data from leaving your machine.
+:::
+
+---
+
+## 5. Use Lightweight Models for Routine Tasks
+
+**The problem:** Every chat request defaults to the same model. Using Claude Opus (listed at $75/M output tokens at time of writing) for a regex generation question is like renting a truck to move a coffee cup.
+
+**The action:**
+
+1. In the chat model dropdown, switch to a lightweight model (Haiku or GPT-mini) for:
+   - Regex patterns
+   - Docstring generation
+   - Simple code formatting
+   - String manipulation
+   - Boilerplate generation
+2. Only use premium models for:
+   - Architecture decisions
+   - Complex refactoring
+   - Cross-file changes
+   - Security audits
+
+**The savings:** 5–15x cost reduction per request. A simple question costs $0.0001 on Haiku vs $0.0015 on Sonnet — and you probably won't notice the quality difference for routine tasks.
+
+---
+
+## 6. Force Unified Diff Output
+
+**The problem:** LLMs often return the entire file when you ask for edits — even when only a few lines changed. This is the "laziness problem": the model finds it easier to regenerate a full file than to compute a diff. The result is massive output token waste, since every unchanged line is sent back as output tokens at 5x input cost.
+
+**The action:** Add this meta-prompt to your `.github/copilot-instructions.md` or at the start of relevant sessions:
+
+```
+Use unified diff. Only changed lines +/- with 3 context lines. No full file output.
+```
+
+This forces the model to return only the lines that changed, with a few lines of context around each change for readability.
+
+**The savings:** 70–80% reduction in output tokens on code edit tasks.
+
+:::note[Maximum savings]
+Combine with code-only instructions from Quick Win #1 for maximum savings.
+:::
+
+---
+
+## Bonus: Measure Your Impact
+
+Turn on **Copilot debug logging** to see actual token counts:
+
+1. Enable the setting: `github.copilot.chat.agentDebugLog.fileLogging.enabled`
+2. Open Chat view → **...** → **Show Agent Debug Logs**
+3. Open the **Summary** tab to see token counts per request
+
+Use these numbers to validate your savings.
+
+If you want the numbers surfaced directly inside VS Code, community extensions can help: **Tokalator** for real-time BPE token counting, **Token-Track** for parsing local debug logs, and **Copilot Token Monitor** for a lightweight status bar indicator.
+
+These are community tools, not official GitHub products.
+
+---
+
+:::tip[Continue Learning]
+For deeper savings, see [Project Setup for Token Efficiency](/token-economy-course/en/05-project-setup) — it automates many of these quick wins. Also check [Writing Prompts That Cost Less](/token-economy-course/en/04-cheaper-prompts) for prompt-level optimization.
+:::
+
+---
+
+## Quick Reference Card
+
+| # | Action | Setup Time | Token Savings |
+|---|--------|------------|---------------|
+| 1 | Code-only instruction | 2 min | 50–70% output ↓ |
+| 2 | Clear threads habit | 0 min | 40–60% input ↓ |
+| 3 | Close unused tabs | 0 min | 20–40% input ↓ |
+| 4 | `.copilotignore` file | 5 min | 20–40% input ↓ |
+| 5 | Model selection | 0 min | 5–15x cost/req ↓ |
+| 6 | Unified diff output | 1 min | 70–80% output ↓ |
+
+Start with #1 and #4 — they're one-time setups with the highest ongoing return.
+
+---
+
+## Key Takeaways
+
+- **Code-only instructions** strip prose and wrappers, saving **50–70% output tokens**
+- **Fresh chat threads** prevent stale history from piling up, saving **40–60% input tokens** in longer sessions
+- **Fewer open tabs** keep automatic context focused, saving **20–40% input tokens** per request
+- **A `.copilotignore` file** trims irrelevant workspace context, saving **20–40% input tokens**
+- **Lightweight models** reduce routine-task cost by **5–15x per request**
+- **Unified diff output** stops full-file regeneration, saving **70–80% output tokens** on edit tasks
+
+*Estimated reading time: 8 minutes*

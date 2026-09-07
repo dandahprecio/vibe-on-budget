@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Astro and build output
+dist/
+.astro/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Local workflow state
+.conductor/
+**/.temp/
+**/.temp-*
+
+# Superseded local artifact
+token_economy-guide-old.html
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs, coverage, and caches
+*.log
+coverage/
+.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

@@ -1,0 +1,183 @@
+---
+title: 3. Snabba vinster
+description: Sex saker du kan göra imorgon för att börja spara tokens direkt
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+# Snabba vinster
+
+Sex saker du kan göra **imorgon bitti** för att börja spara tokens. Var och en tar 5 minuter eller mindre och har omedelbar effekt.
+
+:::note[Besparingsuppskattningar]
+Besparingsuppskattningarna är illustrativa och varierar beroende på projektets storlek, modell och arbetsflöde.
+:::
+
+---
+
+## 1. Lägg till en Code-Only-instruktion
+
+**Problemet:** Varje chatsvar inkluderar artighetsfraser, förklaringar och markdown-omslag kring oförändrad kod. Output-tokens kostar 5x input — denna svullnad är dyr.
+
+**Åtgärden:** Lägg till detta i din `.github/copilot-instructions.md`:
+
+```
+# Output-format
+- Returnera endast kodblock. Ta bort all text, hälsningar, förklaringar.
+- Ingen markdown-text utanför kodblocket.
+- Ersätt oförändrad kod med: // ... existing code ...
+```
+
+**Besparingen:** 50–70% minskning av output-tokens per svar.
+
+---
+
+## 2. Rensa din chattråd regelbundet
+
+**Problemet:** Varje meddelande i en pågående tråd skickar **hela** konversationshistoriken som input-tokens. En tråd med 10 meddelanden skickar alla tidigare promptar och svar — potentiellt 10 000+ tokens — med varje ny fråga.
+
+**Åtgärden:**
+
+- **Samma uppgift, flera steg?** Stanna i sessionen. Cachning ackumuleras mellan steg (se [Modul 8](/token-economy-course/sv/08-under-the-hood)).
+- **Uppgiften klar?** Börja om. Gammal historik lägger till brus och slösar tokens.
+- **Har tråden passerat 10+ steg?** Komprimera den först:
+
+```
+Sammanfatta denna session i 3 punkter. Jag klistrar in i en ny tråd.
+```
+Kopiera sammanfattningen, kör `/clear`, klistra in den, fortsätt. Du behåller kontexten utan tokenvikten.
+
+**Besparingen:** 40–60% minskning av input-tokens för sessioner med ackumulerad historik.
+
+---
+
+## 3. Stäng onödiga editorflikar
+
+**Problemet:** Copilot läser dina öppna editorflikar som kontext. Att ha 15 filer öppna när du frågar om en funktion skickar 14 irrelevanta filer som input-tokens med varje förfrågan.
+
+**Åtgärden:**
+
+1. Innan du ställer en fråga, stäng filer du inte arbetar med
+2. Håll bara filen/filerna direkt relevanta för din uppgift öppna
+3. Använd `#file:filnamn.mjs` för explicita referenser istället för att förlita dig på automatisk kontext
+
+**Besparingen:** 20–40% minskning av input-tokens per förfrågan. Än viktigare: du får **bättre svar** eftersom modellen ser mindre brus.
+
+---
+
+## 4. Skapa en `.copilotignore`-fil
+
+**Problemet:** Copilot skannar din arbetsyta efter kontext. Byggartefakter, testfixturer, mockdata, CSV-filer och `node_modules` inkluderas alla som potentiell kontext — trots att de aldrig är användbara för kodgenerering.
+
+**Åtgärden:** Skapa `.copilotignore` i projektroten:
+
+```
+# .copilotignore
+dist/
+build/
+node_modules/
+tests/mock-data/
+*.svg
+*.csv
+*.json
+package-lock.json
+```
+
+**Besparingen:** 20–40% mindre input-tokenförbrukning. Bonus: snabbare svarstider.
+
+:::caution[Inte en säkerhetsgräns]
+`.copilotignore` är ett verktyg för att spara tokens, inte en säkerhetsåtgärd. Anta inte att det förhindrar data från att lämna din maskin.
+:::
+
+---
+
+## 5. Använd lätta modeller för rutinuppgifter
+
+**Problemet:** Varje chattförfrågan använder som standard samma modell. Att använda Claude Opus (output: $75/M tokens) för en regex-genereringsfråga är som att hyra en lastbil för att flytta en kaffekopp.
+
+**Åtgärden:**
+
+1. I chat-modell-rullgardinsmenyn, välj en lätt modell (Haiku eller GPT-mini) för:
+   - Regex-mönster
+   - Generering av dokumentationssträngar
+   - Enkel kodformatering
+   - Strängmanipulering
+   - Generering av boilerplate
+2. Använd endast premiummodeller för:
+   - Arkitekturbeslut
+   - Komplex refaktorering
+   - Ändringar över flera filer
+   - Säkerhetsgranskningar
+
+**Besparingen:** 5–15x kostnadsminskning per förfrågan. En enkel fråga kostar $0,0001 på Haiku vs $0,0015 på Sonnet — och du märker förmodligen inte kvalitetsskillnaden för rutinuppgifter.
+
+---
+
+## 6. Tvinga unified diff-utdata
+
+**Problemet:** LLM:er returnerar ofta hela filen när du ber om redigeringar — även om bara några få rader ändrats. Detta är "lathetsproblemet": modellen tycker det är enklare att regenerera en hel fil än att beräkna en diff. Resultatet är massivt slöseri med output-tokens, eftersom varje oförändrad rad skickas tillbaka som output-tokens till 5x input-kostnad.
+
+**Åtgärden:** Lägg till denna metaprompt i din `.github/copilot-instructions.md` eller i början av relevanta sessioner:
+
+```
+Use unified diff. Only changed lines +/- with 3 context lines. No full file output.
+```
+
+Detta tvingar modellen att endast returnera de rader som ändrats, med några få raders kontext runt varje ändring för läsbarhet.
+
+**Besparingen:** 70–80% minskning av output-tokens vid kodredigeringsuppgifter.
+
+:::note[Maximala besparingar]
+Kombinera med Code-Only-instruktionerna från Quick Win #1 för maximala besparingar.
+:::
+
+---
+
+## Bonus: Mät din påverkan
+
+Slå på **Copilot felsökningsloggning** för att se faktiska tokenantal:
+
+1. Aktivera inställningen: `github.copilot.chat.agentDebugLog.fileLogging.enabled`
+2. Öppna Chatt-vyn → **...** → **Show Agent Debug Logs**
+3. Öppna fliken **Summary** för att se tokenantal per förfrågan
+
+Använd dessa siffror för att validera dina besparingar.
+
+Om du vill se siffrorna direkt i VS Code kan community-tillägg hjälpa till: **Tokalator** för tokenräkning med BPE i realtid, **Token-Track** för att tolka lokala felsökningsloggar och **Copilot Token Monitor** som en lättviktig indikator i statusfältet.
+
+Detta är community-verktyg, inte officiella GitHub-produkter.
+
+---
+
+:::tip[Fortsätt lära dig]
+För större besparingar, se [Projektuppsättning för tokeneffektivitet](/token-economy-course/sv/05-project-setup) — den automatiserar många av dessa snabba vinster. Läs också [Skriva promptar som kostar mindre](/token-economy-course/sv/04-cheaper-prompts) för optimering på promptnivå.
+:::
+
+---
+
+## Snabbreferenskort
+
+| # | Åtgärd | Installationstid | Tokenbesparing |
+|---|--------|-----------------|----------------|
+| 1 | Code-only-instruktion | 2 min | 50–70% output ↓ |
+| 2 | Vanan att rensa trådar | 0 min | 40–60% input ↓ |
+| 3 | Stäng oanvända flikar | 0 min | 20–40% input ↓ |
+| 4 | `.copilotignore`-fil | 5 min | 20–40% input ↓ |
+| 5 | Modellval | 0 min | 5–15x kostnad/fråga ↓ |
+| 6 | Unified diff-utdata | 1 min | 70–80% output ↓ |
+
+Börja med #1 och #4 — de är engångsinstallationer med högsta löpande avkastning.
+
+---
+
+## Viktiga slutsatser
+
+- **Code-only-instruktioner** tar bort text och omslag och sparar **50–70% output-tokens**
+- **Nya chattrådar** hindrar gammal historik från att byggas på och sparar **40–60% input-tokens** i längre sessioner
+- **Färre öppna flikar** håller den automatiska kontexten fokuserad och sparar **20–40% input-tokens** per förfrågan
+- En **`.copilotignore`-fil** tar bort irrelevant arbetsytekontext och sparar **20–40% input-tokens**
+- **Lätta modeller** minskar kostnaden för rutinuppgifter med **5–15x per förfrågan**
+- **Unified diff-utdata** stoppar regenerering av hela filer och sparar **70–80% output-tokens** vid redigeringsuppgifter
+
+---
+*Beräknad lästid: 8 minuter*

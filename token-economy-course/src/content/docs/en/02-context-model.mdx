@@ -1,0 +1,222 @@
+---
+title: 2. How Copilot Builds Context
+description: What goes into every request and how the context window fills up
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+# How Copilot Builds Context
+
+Every time you press Enter in Copilot Chat, a surprisingly large payload leaves your machine. Understanding what's in that payload — and how Copilot decides what to include — is the key to controlling your token burn.
+
+---
+
+## Anatomy of a Copilot Request
+
+Here's what gets packaged and sent with every chat message or agent step:
+
+```mermaid
+flowchart LR
+    A[System Prompt] --> B[Custom Instructions]
+    B --> C[Open Tabs Context]
+    C --> D[Conversation History]
+    D --> E[Tool Definitions]
+    E --> F[Your Message]
+    
+    style A stroke:#bd93f9,stroke-width:2px
+    style C stroke:#ff79c6,stroke-width:2px
+    style D stroke:#ff5555,stroke-width:2px
+    style E stroke:#ffb86c,stroke-width:2px
+    style F stroke:#50fa7b,stroke-width:2px
+```
+
+| Component | What It Is | Typical Size |
+|-----------|-----------|-------------|
+| **System Prompt** | Model-level instructions (role, capabilities) | ~500 tokens |
+| **Custom Instructions** | `.github/copilot-instructions.md`, `AGENTS.md` | ~50–1000+ tokens |
+| **Open Tabs** | Visible editor files, auto-included as context | ~500–10,000+ tokens |
+| **Conversation History** | All previous messages in the current thread | ~0–20,000+ tokens |
+| **Tool Definitions** | MCP server schemas, tool descriptions | ~500–5000+ tokens |
+| **Your Message** | The actual prompt you typed | ~10–500 tokens |
+
+:::note[Illustrative size estimates]
+These token ranges are approximate and vary by project, files, instructions, tools, and conversation length.
+:::
+
+:::tip[The fixed tax]
+System prompt + custom instructions are sent **every single time**, regardless of the question. This is your baseline token cost per request.
+:::
+
+---
+
+## The Prompt Prefix
+
+In an agentic session, a large share of every request repeats across turns: system instructions, tool definitions, repository context, and conversation history. This repeated beginning is the **prompt prefix**.
+
+```mermaid
+flowchart LR
+    subgraph Turn3[Turn 3]
+        P3[Same Prefix<br/>cached] --> M3[Message 3]
+    end
+    subgraph Turn2[Turn 2]
+        P2[Same Prefix<br/>cached] --> M2[Message 2]
+    end
+    subgraph Turn1[Turn 1]
+        P1[Prefix] --> M1[Message 1]
+    end
+    
+    style P2 stroke:#50fa7b,stroke-width:2px,stroke-dasharray: 5 5
+    style P3 stroke:#50fa7b,stroke-width:2px,stroke-dasharray: 5 5
+```
+
+The prompt prefix is the **single biggest lever** for token optimization. When the prefix stays stable, the provider can cache it. When you change context — open a new file, switch branches, add instructions — you invalidate the cache and pay full price.
+
+---
+
+## How Context Window Fills Up
+
+Copilot models have a maximum context window (128K–200K tokens depending on model). Here's what a typical long session looks like:
+
+```mermaid
+pie showData
+    title Context Window Usage After 10 Turns
+    "System + Instructions" : 10
+    "Tool Definitions" : 15
+    "Conversation History" : 40
+    "Open Files Context" : 25
+    "Remaining for Task" : 10
+```
+
+When the window fills, the model starts **forgetting** earlier context. It can't see the file you referenced 5 turns ago. The solution isn't a bigger window — it's using less per turn.
+
+---
+
+## Prefix Caching vs Cache Breakpoints
+
+This is where provider implementation matters. The two major approaches:
+
+### Anthropic: Cache Breakpoints
+
+Anthropic lets you **explicitly mark** sections of the prompt as cacheable. The first N tokens become a cache entry that persists across requests. Cache hits are ~90% cheaper than fresh computation.[^1]
+
+[^1]: [Prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — Anthropic Docs. Savings depend on the model and cache behavior.
+
+### OpenAI: Automatic Prompt Prefix
+
+OpenAI caches the **shared prefix** automatically. When identical tokens appear at the start of consecutive requests, the inference engine reuses the computed state. There's no manual control — it either matches or it doesn't.
+
+```mermaid
+flowchart TD
+    subgraph Anthropic[Anthropic Cache Model]
+        A1[Instructions] -->|Cache point| A2[Context]
+        A2 -->|Cache point| A3[History]
+        A3 --> A4[New message]
+        A1 -->|90% cheaper| A5[Cached K/V store]
+        A2 -->|90% cheaper| A5
+    end
+    
+    subgraph OpenAI[OpenAI Prefix Model]
+        B1[Shared prefix<br/>auto-cached] --> B2[New content<br/>full price]
+        B1 --> B3[Automatic K/V cache]
+    end
+    
+    style A1 stroke:#bd93f9,stroke-width:2px
+    style A5 stroke:#50fa7b,stroke-width:2px,stroke-dasharray: 5 5
+    style B1 stroke:#bd93f9,stroke-width:2px
+    style B3 stroke:#50fa7b,stroke-width:2px,stroke-dasharray: 5 5
+```
+
+:::note[Cache economics]
+Cached tokens are dramatically cheaper than fresh tokens. A useful mental model is **~10% of fresh cost on Anthropic** (about a 90% discount) and **~50% on OpenAI**, though exact pricing depends on model and tier. That means a **10K-token session with 60% cache hits can be cheaper than a 5K-token session with zero hits**.
+:::
+
+:::caution[What breaks the cache]
+Any change to the prompt prefix invalidates the cache: switching models, changing custom instructions, opening/closing a file, or even the conversation history growing past the cache boundary.
+:::
+
+:::tip[When to /clear vs When to Stay]
+
+| Situation | Action | Why |
+|-----------|--------|-----|
+| Same task, multiple steps | Stay in session | Caching compounds across turns |
+| Task complete, new unrelated task | Start fresh | Stale context pollutes answers |
+| Long session (10+ turns), same task | Compact-and-continue | Summarize, paste into new thread |
+| Model switching needed | Use subagent, don't switch main | Switching breaks cache entirely |
+
+:::
+
+---
+
+## The "Local Metric" Trap
+
+Here's a dangerous misconception: **you can't see the real cost from your local setup**.
+
+What you observe locally:
+- Response time
+- Number of messages sent
+- Approximate code quality
+
+What you **can't** see:
+- Actual token count per request (without debug logging)
+- Split between input, output, and cached tokens
+- Pooled credit consumption for your team
+- How your usage compares to others in your org
+
+This leads to blind spots. A developer who "only asked 20 questions" may have consumed thousands of tokens per question because the context window was bloated.
+
+:::tip[Enable debug logging to see actual counts]
+```json
+// VS Code settings.json
+"github.copilot.chat.agentDebugLog.fileLogging.enabled": true
+```
+Then open Chat view → **...** → **Show Agent Debug Logs** → open the **Summary** tab to see token counts per request.
+:::
+
+---
+
+## Common Cache-Busting Mistakes
+
+The painful part of prefix caching is that tiny, innocent-looking changes can force a full rebuild. These are the repeat offenders:
+
+| Mistake | What happens | Why it matters | How to fix it |
+|---------|--------------|----------------|---------------|
+| **Timestamps in system prompts** | Every request produces a different prefix hash, so the cache misses on every call. | You pay full price repeatedly for instructions that were supposed to be reusable. | Move the changing detail into a later message — for example a `<system-reminder>` block — instead of rewriting the top-level system prompt. |
+| **Switching models mid-session** | The new model can't reuse the old model's cached KV state. | Model changes force a full rebuild right when the conversation is largest. | Keep the main thread on one model; use a subagent for one-off cheaper tasks instead of switching the main session. |
+| **Changing tools mid-session** | Adding or removing MCP servers changes the tool prefix, invalidating downstream cache segments. | Tool schemas are often large, so a tool change can be an expensive cache reset. | Configure the toolset before you begin the session and keep it stable while you work. |
+| **Non-deterministic tool ordering** | The same tools in a different order produce a different serialized prefix. | The provider only sees bytes and hashes, not your intent. Same meaning, different order, same miss. | Use a stable, deterministic ordering for tool definitions every time. |
+| **JSON key randomization** | Languages like Go and Swift can emit object keys in a different order, changing the cached prefix. | Semantically identical payloads can still miss the cache if their serialized form changes. | Use ordered serialization or normalize key order before sending tool payloads. |
+| **Modifying instructions mid-session** | Editing `copilot-instructions.md` or `AGENTS.md` changes the always-on instruction layer for the next turn. | That breaks the system/custom-instructions cache and forces a full prefix rebuild. | Update instructions between tasks, then intentionally start a fresh session so the rebuild happens once, on purpose. |
+
+:::note[Rule of thumb]
+If a change affects **tools**, **top-level instructions**, or the **early shared history**, assume the cache just exploded and budget accordingly.
+:::
+
+---
+
+## What It Means for Your Workflow
+
+Understanding the context model leads to three practical rules:
+
+1. **Keep the prefix stable** — avoid unnecessary file switching during a session
+2. **Reset at task boundaries** — clear chat when switching tasks. Within a single task, keep the session alive to benefit from prefix caching.
+3. **Minimize always-on instructions** — keep `copilot-instructions.md` lean, use `.prompt.md` files for specialized rules
+
+These patterns can reduce your per-request context by 40–60%, depending on the project and workflow.
+
+---
+
+:::tip[Continue Learning]
+Understanding the context model makes [The Hidden Tax](/token-economy-course/en/01-hidden-tax) numbers concrete. Apply this knowledge with [Quick Wins](/token-economy-course/en/03-quick-wins) and [Writing Prompts That Cost Less](/token-economy-course/en/04-cheaper-prompts).
+:::
+
+---
+
+## Key Takeaways
+
+- Every request includes a **fixed prefix** (system instructions, tools, history) plus your message
+- The **prompt prefix** is cacheable — but easily invalidated
+- Anthropic uses **cache breakpoints** (manual), OpenAI uses **automatic prefix matching**
+- **Conversation history** is the fastest-growing part of the context window
+- You can't measure what you can't see — **enable debug logging** to understand your real cost
+
+*Estimated reading time: 10 minutes*

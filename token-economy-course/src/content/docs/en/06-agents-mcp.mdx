@@ -1,0 +1,344 @@
+---
+title: 6. Agents, Tools & MCP Hygiene
+description: Use agents and MCP servers without wasting credits
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+# Agents, Tools & MCP Hygiene
+
+Agent mode and MCP servers are Copilot's most powerful features — and the fastest way to burn through AI Credits. An unoptimized agent loop can consume **10x more tokens** than the same task done in Edit mode.
+
+This module teaches you when to use agents, how to scope them, and how to keep MCP servers from silently draining your budget.
+
+---
+
+## The Agentic Loop
+
+Every agent task follows a continuous feedback cycle of five steps:
+
+```mermaid
+flowchart LR
+    A[Analyze] --> B[Plan]
+    B --> C[Execute]
+    C --> D[Test]
+    D --> E[Iterate]
+    E --> A
+    
+    style A stroke:#bd93f9,stroke-width:2px
+    style B stroke:#ff79c6,stroke-width:2px
+    style C stroke:#ffb86c,stroke-width:2px
+    style D stroke:#50fa7b,stroke-width:2px
+    style E stroke:#ff5555,stroke-width:2px
+```
+
+| Step | What Happens | Token Cost Driver |
+|------|-------------|-------------------|
+| **Analyze** | Agent reads files, gathers context | Input tokens from file reads |
+| **Plan** | Agent decides approach, selects tools | Output tokens for reasoning chains |
+| **Execute** | Agent writes code, runs commands | Output tokens (code generation) + tool calls |
+| **Test** | Agent runs tests, checks results | Tool calls (terminal) + input (test output) |
+| **Iterate** | Agent fixes failures, refines | Full loop restart — compound cost |
+
+Understanding this loop explains why Agent mode costs **5–50K tokens** per task: it runs this entire cycle multiple times. Each iteration compounds the cost of every previous step.
+
+:::tip[Where to intervene]
+The most token-efficient place to break the loop is after **Test**. If the tests pass, stop the agent — don't let it iterate to "improve" working code. Use stop conditions: "After tests pass, stop and wait for review."
+:::
+
+---
+
+## The Three Modes and Their Costs
+
+Copilot Chat has three interaction modes, each with dramatically different token profiles:
+
+```mermaid
+flowchart LR
+    A[Ask Mode] -->|"Q&A only<br/>~500 tokens/turn"| A1[Low cost]
+    B[Edit Mode] -->|"Single file edits<br/>~1-2K tokens/turn"| B1[Medium cost]
+    C[Agent Mode] -->|"Multi-step loops<br/>~5-50K tokens/task"| C1[High cost]
+    
+    style A stroke:#50fa7b,stroke-width:2px
+    style B stroke:#ffb86c,stroke-width:2px
+    style C stroke:#ff5555,stroke-width:2px
+```
+
+| Mode | Best For | Typical Token Cost | Risk |
+|------|----------|-------------------|------|
+| **Ask** | Questions, explanations, code review | ~500 input + ~300 output | Low — one turn, no tools |
+| **Edit** | Single-file changes, refactoring | ~1-2K input + ~500 output | Low — no tool loops |
+| **Agent** | Multi-file changes, complex tasks | ~5-50K per task | **High** — tool loops amplify cost |
+
+:::caution[Agent mode has higher baseline overhead]
+Even with Tool Search, agent mode loads system instructions, the tool registry, and file context before the first response. That baseline is higher than Ask or Edit mode — but Tool Search prevents unused tool schemas from adding to it.
+:::
+
+---
+
+## The Hidden Cost of MCP Servers
+
+Every MCP server you have connected registers its tools in the agent's tool registry. Before Tool Search (mid-2025), the full schema of every tool was injected into every agent step's context window. With Tool Search, only the registry (names + short descriptions) is always-present — full schemas load on demand. See the note below for details.
+
+```mermaid
+flowchart TD
+    subgraph Session[Agent Session]
+        Step1["Step 1: Plan<br/>System + Registry"] --> Step2["Step 2: Read file<br/>System + Registry"]
+        Step2 --> Step3["Step 3: Write file<br/>System + Registry + requested schema"]
+        Step3 --> Step4["Step 4: Run tests<br/>System + Registry + requested schema"]
+    end
+    
+    subgraph Overhead[Tool Search Overhead]
+        T[Names + short descriptions<br/>always present; full schemas on demand]
+    end
+    
+    Step1 -.-> T
+    Step2 -.-> T
+    Step3 -.-> T
+    Step4 -.-> T
+    
+    style T stroke:#ff5555,stroke-width:2px
+```
+
+:::note[Tool Search reduces this overhead]
+Tool Search only keeps tool names + short descriptions in the always-present registry. Full schemas load only when the model requests a tool. Every tool the model uses still incurs its ~200 token schema cost.
+
+Before mid-2025, all schemas loaded every step. With Tool Search (Module 8), only needed tools load. Pruning unused MCP servers still matters — it shrinks the registry and reduces the chance of the model picking expensive tools for simple tasks.
+
+See [Module 8 — Tool Search](/token-economy-course/en/08-under-the-hood) for how it works internally.
+:::
+
+### The MCP Server Math
+
+Each server adds roughly **tools × ~200 tokens per tool definition** in the **pre-Tool Search baseline**. With Tool Search, current costs are approximately **60–75% lower** because only requested tool schemas load (plus the smaller always-present registry).
+
+| Scenario | MCP Servers | Tools | Pre-Tool Search baseline / step | Pre-Tool Search 10-step task | Current Tool Search estimate / step | Current 10-step estimate |
+|----------|-------------|-------|-------------------------------|------------------------------|------------------------------------|--------------------------|
+| Minimal | 2 (file + terminal) | ~10 | ~2,000 | ~20,000 | ~500–800 | ~5,000–8,000 |
+| Moderate | 5 (git, db, file, terminal, browser) | ~25 | ~5,000 | ~50,000 | ~1,250–2,000 | ~12,500–20,000 |
+| Heavy | 10+ (everything installed) | ~50+ | ~10,000+ | ~100,000+ | ~2,500–4,000+ | ~25,000–40,000+ |
+
+At Claude Sonnet input pricing ($3/M input), a single heavy 10-step agent task costs ~$0.30 — from tool registry overhead alone.
+
+:::tip[Check your baseline with /context]
+In Copilot CLI, run `/context` mid-session to see your System/Tools token consumption. In VS Code, estimate by counting active MCP servers × tools × ~200 tokens.
+:::
+
+---
+
+## How to Scope Agents for Token Efficiency
+
+### 1. Use Ask or Edit Mode First
+
+Always start with the cheapest mode that can solve the problem. Agent mode is not the default — it's the escalation path.
+
+```
+❌ Agent mode for a regex question → $0.15
+✅ Ask mode for the same question → $0.01
+```
+
+**Rule of thumb:** If the task touches one file, use Edit mode. If it's a question, use Ask mode. Only escalate to Agent when the task genuinely requires multi-file awareness or tool execution.
+
+### 2. Create Scoped Custom Agents
+
+Instead of a single `@workspace` agent that loads context from your entire project, create domain-specific agents:
+
+| Custom Agent | Context Scope | Tools | Best For |
+|--------------|--------------|-------|----------|
+| **Frontend** | `src/components/`, `src/styles/` | File read/write, terminal | UI changes |
+| **Database** | `prisma/`, `migrations/` | File read/write, DB MCP | Schema changes |
+| **Testing** | `tests/`, `src/` | File read/write, terminal | Test writing |
+| **Security** | Any | File read, security MCP | Audits |
+
+Each scoped agent loads **far fewer tool definitions** and a **much smaller file tree** — saving 5,000–10,000+ tokens per task.
+
+### 3. Set Stop Conditions
+
+Tell the agent when to stop. Without explicit boundaries, agents iterate until they run out of context window or tool budget.
+
+```
+Add pagination to the users endpoint. 
+If you encounter errors, stop and report — do not attempt fixes.
+Maximum 3 tool calls. After edits, stop for review.
+```
+
+### 4. Prune Unused MCP Servers
+
+Go through your VS Code settings and disable MCP servers you're not actively using:
+
+```json
+// settings.json — only keep what you need for current task
+{
+  "github.copilot.chat.agent.mcpServers": {
+    "filesystem": true,
+    "terminal": true,
+    "github": false,  // not needed for frontend work
+    "database": false // not needed for this task
+  }
+}
+```
+
+Or better: create **VS Code profiles** with different MCP sets:
+- **Coding profile**: file system + terminal only
+- **DevOps profile**: GitHub CLI + deployment tools
+- **Database profile**: database MCP + schema tools
+
+### 5. Build a Model Router Strategy
+
+Not every task needs the same model. A systematic router saves **73% in daily API costs** — reducing average spend from $15/day to $4/day — by matching task complexity to model tier.
+
+| Task Type | Primary (Smart) | Fallback (Cheap) | Max Cost/Task |
+|-----------|----------------|------------------|---------------|
+| Architecture decisions | Claude Opus | GPT-5.4 | $5.00 |
+| Code generation | Claude Sonnet | DeepSeek R1 | $0.50 |
+| Simple tests | GPT-5.4-mini | Mistral-Small | $0.10 |
+| Code review | Claude Sonnet | GPT-5.4-mini | $0.25 |
+| Regex, formatting | Claude Haiku | GPT-5.4-mini | $0.02 |
+
+```mermaid
+flowchart TD
+    A[Task Request] --> B{Complexity<br/>Classifier}
+    B -->|Architecture| C[Premium Model<br/>$15-75/M output]
+    B -->|Code Gen| D[Mid-Tier Model<br/>$3-15/M output]
+    B -->|Simple| E[Lightweight Model<br/>$1-5/M output]
+    C --> F[Result]
+    D --> F
+    E --> F
+    
+    style C stroke:#ff5555,stroke-width:2px
+    style D stroke:#ffb86c,stroke-width:2px
+    style E stroke:#50fa7b,stroke-width:2px
+```
+
+**How to apply this in Copilot:**
+
+1. **Keep the model selector on Auto** — Copilot routes simple requests to cheaper models automatically, saving ~60-70% on eligible turns
+2. **Switch manually for known tiers:**
+   - Haiku for: regex, string manipulation, docstrings, boilerplate
+   - Sonnet for: general development, cross-file changes
+   - Opus for: architecture review, security audits, complex debugging
+3. **Don't switch models mid-session for a single cheap question** — the cache rebuild costs more than the savings
+4. **Don't pay premium for simple work** — using Opus for a string split costs 15x more than Haiku for the same result
+
+:::tip[The 80/20 rule of model selection]
+About 80% of chat requests are simple enough for a lightweight model. If you leave the selector on a premium model "just in case," you're overpaying on 4 out of 5 requests.
+:::
+
+### 6. Five Sub-Agent Patterns That Save Tokens
+
+Research from Anthropic identifies five organizational patterns for structuring agent work. Each has different token implications.
+
+```mermaid
+flowchart TD
+    subgraph PC[Prompt Chaining]
+        PC1[Step 1] --> PC2[Step 2] --> PC3[Step 3]
+    end
+    
+    subgraph RT[Routing]
+        RT1[Classifier] --> RT2[Agent A]
+        RT1 --> RT3[Agent B]
+    end
+    
+    subgraph PZ[Parallelization]
+        PZ1[Agent 1]
+        PZ2[Agent 2]
+        PZ3[Agent 3]
+    end
+    
+    subgraph OW[Orchestrator-Workers]
+        OW1[Orchestrator] --> OW2[Worker 1]
+        OW1 --> OW3[Worker 2]
+    end
+    
+    subgraph EO[Evaluator-Optimizer]
+        EO1[Generator] --> EO2[Evaluator]
+        EO2 --> EO1
+    end
+```
+
+| Pattern | How It Works | Token Impact | Best For |
+|---------|-------------|-------------|----------|
+| **Prompt Chaining** | Output of step 1 becomes input to step 2 | Sequential — each step adds cost | Multi-stage tasks (schema → query → test) |
+| **Routing** | Lightweight classifier directs to specialized agent | Saves tokens by avoiding full context load | Triaging: bug vs feature vs question |
+| **Parallelization** | Independent agents run in sandboxed state | Parallel cost, avoids cross-agent interference | Multiple independent analyses |
+| **Orchestrator-Workers** | Smart model plans, cheap models execute | 80% of work hits cheap models | Complex multi-file features |
+| **Evaluator-Optimizer** | Generator produces, Evaluator reviews, Generator fixes | 2-3 cycles typical, catches errors early | Quality-critical code, security-sensitive work |
+
+:::tip[Most token-efficient pattern]
+**Evaluator-Optimizer** saves the most tokens in practice. Catching an error in review costs 2,000 tokens. Fixing that same error after it reaches production costs 50,000+ tokens across debugging, refactoring, and re-review. The 2-3 cycle overhead pays for itself on the first caught bug.
+:::
+
+**Practical takeaway:** You're already using these patterns implicitly. Naming them helps you choose the right one deliberately. For a complex multi-file feature, Orchestrator-Workers saves tokens vs one agent doing everything. For a security audit, Evaluator-Optimizer is essential.
+
+---
+
+### 7. The Model-Switching Cache Trap
+
+Switching models mid-session sounds smart — use Opus for architecture, then switch to Haiku for simple follow-ups. But prompt caches are **model-specific**.
+
+**Anthropic's official guidance:** "If you're 100k tokens into a conversation with Opus and want to ask an easy question, it would actually be more expensive to switch to Haiku than to have Opus answer." (Source: Anthropic Engineering Blog, 'Prompt caching is everything', April 2026) The new model can't reuse the old model's cached KV state. Switching forces a full cache rebuild right when the conversation is at its largest.
+
+**The solution — subagents:** Use the main session for the primary model, and launch a cheaper subagent for the one-off simple task. The subagent starts with a fresh (cold) cache, but that's cheaper than rebuilding the main session's entire context.
+
+**When switching IS worth it:**
+- At the very start of a session (before much history accumulates)
+- When the cost of the wrong model × remaining turns exceeds the rebuild cost
+
+See [Module 2 — Cache-Busting Mistakes](/token-economy-course/en/02-context-model#common-cache-busting-mistakes) for more patterns that break the cache.
+
+---
+
+## Tool Search: What Happens Internally
+
+VS Code Copilot uses a dual search strategy to decide which tools to present to the model:
+
+```mermaid
+flowchart LR
+    A[Your Prompt] --> B[Embedding Search]
+    A --> C[BM25 Keyword Search]
+    B --> D[Ranked Tool Candidates]
+    C --> D
+    D --> E[Tool Subset<br/>in Context Window]
+    
+    style B stroke:#bd93f9,stroke-width:2px
+    style C stroke:#ffb86c,stroke-width:2px
+    style E stroke:#50fa7b,stroke-width:2px
+```
+
+- **Embedding-guided search** — converts your prompt to a semantic vector and finds tools with similar descriptions (OpenAI Ada + Anthropic embedding models)
+- **BM25 keyword search** — classic text matching for exact tool names and keywords
+- Both results are merged and the top-N most relevant tools are injected into the context window
+
+This means: **well-named tools with clear descriptions get found; vague ones don't**. Rename your MCP tools with descriptive names and keywords to improve retrieval without bloating the context.
+
+:::note[Tool search runs every turn]
+Every agent step re-runs the tool search against your prompt. If the task changes mid-session, the tool set changes too — which **invalidates the prompt prefix cache**.
+:::
+
+---
+
+## Practical MCP Hygiene Checklist
+
+1. **Audit monthly** — list all connected MCP servers. Remove any not used in the last 30 days.
+2. **Profile your sessions** — create separate VS Code profiles for different workflows, each with only the MCP servers needed for that workflow.
+3. **Name tools well** — use descriptive names so tool search finds them without extra context.
+4. **Prefer deterministic tools** — for terminal tasks, run the command manually and paste output instead of letting the agent loop on it.
+5. **Count your MCP tax** — multiply (servers × tools × 200) to estimate the pre-Tool Search baseline; with Tool Search, full schemas load only when requested.
+
+---
+
+:::tip[Continue Learning]
+Agent hygiene builds on [Project Setup](/token-economy-course/en/05-project-setup). For a broader view of managing AI-generated code quality, see [Vibe Coding Without the Debt](/token-economy-course/en/07-vibe-coding-guardrails).
+:::
+
+---
+
+## Key Takeaways
+
+- Agent mode costs **5-50K tokens per task** — use Ask/Edit mode for simpler work
+- MCP tool schemas load on demand with **Tool Search** — but every tool used still costs ~200 tokens for its schema. Fewer registered servers = leaner registry
+- The pre-Tool Search baseline was **~200 tokens per tool per step**; Tool Search makes current costs approximately 60–75% lower
+- Create **scoped custom agents** instead of one monolithic `@workspace` agent
+- Set **stop conditions** to prevent runaway agent loops
+- VS Code Profiles with different MCP sets save **5,000–10,000+ tokens per session**
+
+*Estimated reading time: 10 minutes*
