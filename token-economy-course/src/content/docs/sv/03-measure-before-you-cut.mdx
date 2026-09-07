@@ -16,15 +16,13 @@ Det här kapitlet ger dig en liten verktygslåda för mätning i VS Code. Använ
 - Hur nära är du din månatliga allowance?
 - Vilka arbetsflödesändringar minskar kostnaden utan att sänka kvaliteten?
 
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av optimeringsloop och kvalitetsgräns.)*
+
 ---
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha aktiverade felsökningsloggning och hittade sitt dyraste mönster: en agentsession på 22 steg som kostade 1 100 credits för att rätta en bugg som borde ha tagit 3 steg. Mätningen visade vad intuitionen missade: 12 500 → 11 800 credits.
-:::
+## Credit hover per förfrågan 🟢
 
-## Credit hover per förfrågan
-
-Det snabbaste sättet att granska en förfrågan är att hovra över Copilot-svaret i Chat. VS Code visar **credit consumption** för just det steget. Det är kostnaden för en förfrågan, inte den totala kostnaden för konversationen.
+Det snabbaste sättet att granska en förfrågan är att hovra över Copilot-svaret i Chat. VS Code visar **credit consumption** för just det steget.[^m3-2] Det är kostnaden för en förfrågan, inte den totala kostnaden för konversationen.
 
 Använd den här vyn när du jämför liknande prompts. En kort fråga kan ändå vara dyr om den innehåller mycket kontext, många verktygsdefinitioner eller en lång agentloop. Omvänt kan en längre prompt vara billig om den omgivande kontexten är liten och stabil.
 
@@ -43,9 +41,9 @@ Notera uppgiften, modellen, promptvarianten, credits, tidsåtgång och om result
 
 ---
 
-## Ackumulerad sessionskostnad
+## Ackumulerad sessionskostnad 🟢
 
-Kostnaden per förfrågan är användbar, men visar inte hela notan för en lång agentsession. **Context window control** i chattens inmatningsfält ger dig helhetsbilden. Hovra över eller klicka på den för att se totala credits och tokenuppdelning för den aktuella sessionen.
+Kostnaden per förfrågan är användbar, men visar inte hela notan för en lång agentsession. **[Context window control](https://code.visualstudio.com/docs/chat/copilot-chat)** i chattens inmatningsfält ger dig helhetsbilden.[^m3-3] Hovra över eller klicka på den för att se totala credits och tokenuppdelning för den aktuella sessionen.
 
 ![Context window control som visar sessionsanvändning](https://code.visualstudio.com/assets/docs/chat/copilot-chat/chat-context-window-control.png)
 
@@ -66,9 +64,9 @@ En bra mätenhet är hela uppgiften: första prompten, verktygsanrop, korrigerin
 
 ---
 
-## Månadsdashboard
+## Månadsdashboard 🟢
 
-**Copilot-statusfältet** i VS Code ger dig ett månadsperspektiv. Välj det för att öppna statusdashboarden, där du ser hur stor del av din månatliga allowance du har använt. Dashboarden visar AI credits och, för Copilot Free, även inline suggestions.
+**[Copilot-statusfältet](https://code.visualstudio.com/docs/agents/optimize-usage-guide)** i VS Code ger dig ett månadsperspektiv. Välj det för att öppna statusdashboarden, där du ser hur stor del av din månatliga allowance du har använt.[^m3-4] Dashboarden visar AI credits och, för Copilot Free, även inline suggestions.
 
 ![Copilot status dashboard](https://code.visualstudio.com/assets/docs/agents/optimize-usage-guide/copilot-status-dashboard.png)
 
@@ -89,7 +87,7 @@ Färre credits är inte automatiskt bättre. Ett billigt arbetsflöde som ger fe
 
 ---
 
-## `/chronicle:cost-tips`
+## [`/chronicle:cost-tips`](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle) 🟢
 
 Du kan be VS Code om personliga rekommendationer baserade på din senaste aktivitet. Kör `/chronicle:cost-tips` i valfri chatt. Den analyserar aktuell sessionshistorik och ger praktiska förslag på hur du kan minska användningen.
 
@@ -99,15 +97,15 @@ Det är användbart när du vet att förbrukningen har ökat men inte direkt ser
 Se rekommendationerna som hypoteser att testa. Kontrollera dem mot uppgiftskvaliteten och creditinformationen i VS Code innan du ändrar arbetsflödet.
 :::
 
-Läs mer om att fråga sessionshistoriken med Chronicle i [VS Code-dokumentationen](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle).
+Läs mer om att fråga sessionshistoriken med Chronicle i [VS Code-dokumentationen](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle).[^m3-1]
 
 **Action:** Kör `/chronicle:cost-tips` efter en vecka av normalt arbete och välj en rekommendation att testa — inte alla på en gång.
 
 ---
 
-## Agent Debug Logs — Summary view
+## [Agent Debug Logs — Summary view](https://code.visualstudio.com/docs/agents/agent-troubleshooting) 🟢
 
-För mer detaljerad evidens aktiverar du filloggning i VS Code-inställningarna:
+För mer detaljerad evidens aktiverar du filloggning i VS Code-inställningarna:[^m3-5]
 
 ```json
 "github.copilot.chat.agentDebugLog.fileLogging.enabled": true
@@ -142,9 +140,9 @@ För en representativ uppgift skriver du ner kvalitet, credits, input tokens, ou
 
 ---
 
-## Cache Explorer-vyn
+## [Cache Explorer-vyn](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) 🟢
 
-I Agent Debug Logs finns också **Cache Explorer**. Den visar prompt cache hit rates och hur många input tokens som återanvändes. Det är viktigt eftersom två sessioner med ungefär lika många tokens kan ha olika kostnad när den ena återanvänder mer cachad input.
+I Agent Debug Logs finns också **Cache Explorer**. Den visar prompt cache hit rates och hur många input tokens som återanvändes.[^m3-6] Det är viktigt eftersom två sessioner med ungefär lika många tokens kan ha olika kostnad när den ena återanvänder mer cachad input.
 
 Använd Cache Explorer för att undersöka frågor som:
 
@@ -162,7 +160,7 @@ En högre cacheträffsfrekvens är bara bra när den cachade kontexten fortfaran
 
 ---
 
-## Optimeringsloopen
+## Optimeringsloopen 🟢
 
 Målet är inte att minimera credits till varje pris. Målet är att nå en kvalitetsgräns med lägsta tillförlitliga kostnad.
 
@@ -221,3 +219,10 @@ Omsätt din baslinje i handling med [Snabba vinster](/vibe-on-budget/sv/04-quick
 :::
 
 *Beräknad lästid: 8 minuter*
+
+[^m3-1]: [Query session history with Chronicle](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle) — VS Code Documentation.
+[^m3-2]: [Optimize AI credit usage in VS Code](https://code.visualstudio.com/docs/agents/guides/optimize-usage) — VS Code Documentation. Beskriver creditförbrukningen per steg för enskilda förfrågningar.
+[^m3-3]: [Manage agent sessions in VS Code](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions) — VS Code Documentation. Beskriver context window control och dess uppdelning av sessionens credits och tokens.
+[^m3-4]: [Optimize AI credit usage in VS Code](https://code.visualstudio.com/docs/agents/guides/optimize-usage) — VS Code Documentation. Beskriver Copilot-statusfältet och månadsöversikten.
+[^m3-5]: [Debug chat interactions](https://code.visualstudio.com/docs/agents/agent-troubleshooting/chat-debug-view) — VS Code Documentation. Dokumenterar Agent Logs och Chat Debug-vyn för att granska förfrågningar och verktygsanrop.
+[^m3-6]: [Diagnose prompt caching with the Cache Explorer](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) — VS Code Documentation. Dokumenterar cacheträffar, cachemissar och återanvända input-tokens.

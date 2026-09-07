@@ -11,13 +11,9 @@ Varje gång du trycker på Enter i Copilot Chat lämnar en förvånansvärt stor
 
 ---
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha upptäckte att deras "snabba fråga om autentisering" skickade 15 öppna flikar som kontext — ungefär 8 000 tokens från irrelevanta filer i varje förfrågan. Att förstå kontextmodellen minskade genast deras slöseri: 14 200 → 12 500 credits.
-:::
+## Anatomi av en Copilot-förfrågan 🟢
 
-## Anatomi av en Copilot-förfrågan
-
-Här är vad som paketeras och skickas med varje chattmeddelande eller agentsteg:
+Här är en praktisk modell av det material som kan bidra till en chattförfrågan eller ett agentsteg. OpenAI:s dokumentation om promptcachning beskriver uttryckligen renderade instruktioner, utvecklarmeddelanden, verktyg och konversationshistorik som delar av den cachade kontexten.[^m2-1]
 
 ```mermaid
 flowchart LR
@@ -40,16 +36,26 @@ flowchart LR
 | **Anpassade instruktioner** | `.github/copilot-instructions.md`, `AGENTS.md` | 50–1000+ tokens |
 | **Öppna flikar** | Synliga editorfiler, inkluderas automatiskt som kontext | 500–10 000+ tokens |
 | **Konversationshistorik** | Alla tidigare meddelanden i aktuell tråd | 0–20 000+ tokens |
-| **Verktygsdefinitioner** | MCP-server-scheman, verktygsbeskrivningar | 500–5000+ tokens |
+| **Verktygsdefinitioner** | [MCP (Model Context Protocol — ett öppet protokoll för AI-verktygskommunikation)](https://modelcontextprotocol.io/)-server-scheman, verktygsbeskrivningar | 500–5000+ tokens |
 | **Ditt meddelande** | Själva prompten du skrev | 10–500 tokens |
+
+:::note[Ingen fast storlek per komponent]
+Klienten och leverantören bestämmer den slutliga renderade förfrågan; behandla därför inte raderna som universella tokenbudgetar.[^m2-2]
+:::
+
+:::tip[Det återkommande prefixet]
+Systeminstruktioner, verktyg och återanvändbar kontext kan återkomma i senare förfrågningar. Det är den del som leverantörer ofta kan cacha när prefixet matchar.[^m2-1]
+:::
 
 :::tip[Den fasta skatten]
 Systemprompt + anpassade instruktioner skickas **varje gång**, oavsett fråga. Detta är din baskostnad per förfrågan.
 :::
 
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av kontextfönster, promptprefix och andra nyckeltermer.)*
+
 ---
 
-## Promptprefixet
+## Promptprefixet 🟡
 
 I en agentsession återupprepas en stor del av varje förfrågan mellan stegen: systeminstruktioner, verktygsdefinitioner, repositories-kontext och konversationshistorik. Denna upprepade början är **promptprefixet**.
 
@@ -69,13 +75,13 @@ flowchart LR
     style P3 stroke:#50fa7b,stroke-width:2px,stroke-dasharray: 5 5
 ```
 
-Promptprefixet är den **ensamt största hävstången** för tokenoptimering. När prefixet förblir stabilt kan leverantören cacha det. När du ändrar kontext — öppnar en ny fil, byter branch, lägger till instruktioner — ogiltigförklarar du cachen och betalar fullt pris.
+Promptprefixet är en viktig hävstång för tokenoptimering. När prefixet förblir stabilt kan leverantören återanvända det; när det renderade prefixet ändras kanske den relevanta cacheposten inte längre matchar.[^m2-1][^m2-3]
 
 ---
 
-## Hur kontextfönstret fylls
+## Hur kontextfönstret fylls 🟢
 
-Copilot-modeller har ett maximalt kontextfönster (128K–200K tokens beroende på modell). Så här ser en typisk lång session ut:
+Copilot-modeller har modellspecifika kontextgränser som kan variera kraftigt. Se den valda modellens publicerade gräns som auktoritativ i stället för att anta ett universellt intervall.[^m2-4][^m2-5][^m2-6]
 
 ```mermaid
 pie showData
@@ -87,23 +93,23 @@ pie showData
     "Kvar för uppgiften" : 10
 ```
 
-När fönstret fylls börjar modellen **glömma** tidigare kontext. Den kan inte se filen du refererade till för 5 steg sedan. Lösningen är inte ett större fönster — det är att använda mindre per steg.
+Systeminstruktioner, verktyg, konversationshistorik och filkontext konkurrerar om den valda modellens tillgängliga kontext; proportionerna beror på arbetsbelastningen.[^m2-1][^m2-4][^m2-5][^m2-6]
+
+När den tillgängliga kontextgränsen nås kan tidigare material behöva trunkeras, sammanfattas eller på annat sätt exkluderas av klienten eller leverantören. Hantera därför materialet som skickas per steg och kontrollera den valda modellens gräns.[^m2-4][^m2-5][^m2-6]
 
 ---
 
-## Prefix-cachning vs Cache Breakpoints
+## Prefix-cachning vs Cache Breakpoints 🟡
 
 Här spelar leverantörens implementation roll. De två huvudsakliga tillvägagångssätten:
 
-### Anthropic: Cache Breakpoints
+### Anthropic: [Cache Breakpoints](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)
 
-Anthropic låter dig **explicit markera** sektioner av prompten som cachebara. De första N tokens blir en cache-post som består över flera förfrågningar. Cache-träffar är ~90% billigare än färsk beräkning.[^1]
+Anthropic låter dig **explicit markera** promptblock som cachebara. Cacheläsningar prissätts till 10 % av standardpriset för indata enligt Anthropics aktuella prisdokumentation; det exakta resultatet beror på modell, cache-nivå och förfrågningens form.[^m2-7][^m2-9]
 
-[^1]: [Prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — Anthropic Docs. Besparingarna beror på modell och cachebeteende.
+### OpenAI: [Automatiskt Promptprefix](https://platform.openai.com/docs/guides/prompt-caching)
 
-### OpenAI: Automatiskt Promptprefix
-
-OpenAI cachar det **delade prefixet** automatiskt. När identiska tokens visas i början av på varandra följande förfrågningar återanvänder slutledningsmotorn det beräknade tillståndet. Det finns ingen manuell kontroll — antingen matchar det eller inte.
+OpenAI:s promptcachning återanvänder automatiskt matchande delade prefix på modeller som stöder det. Den aktuella dokumentationen beskriver även uttryckliga cachebrytarkontroller för modeller som stöder dem.[^m2-1]
 
 ```mermaid
 flowchart TD
@@ -147,7 +153,7 @@ Varje ändring av promptprefixet ogiltigförklarar cachen: byte av modell, ändr
 
 ---
 
-## Fällan med "lokala mätvärden"
+## Fällan med "lokala mätvärden" 🟢
 
 Här är en farlig missuppfattning: **du kan inte se den verkliga kostnaden från din lokala miljö**.
 
@@ -162,21 +168,21 @@ Vad du **inte** kan se:
 - Poolad credithförbrukning för ditt team
 - Hur din användning jämförs med andra i organisationen
 
-Detta leder till blindfläckar. En utvecklare som "bara ställde 20 frågor" kan ha förbrukat tusentals tokens per fråga eftersom kontextfönstret var svällt.
+Använd felsökningsvyn och leverantörens användningsdata i stället för att dra slutsatser om kostnad från enbart antalet meddelanden.[^m2-7][^m2-8]
 
 :::tip[Aktivera felsökningsloggning för att se faktiska antal]
 ```json
 // VS Code settings.json
 "github.copilot.chat.agentDebugLog.fileLogging.enabled": true
 ```
-Öppna sedan Chatt-vyn → **...** → **Show Agent Debug Logs** → fliken **Summary** för att se tokenantal per förfrågan.
+Öppna sedan Chatt-vyn → **...** → **[Show Agent Debug Logs](https://code.visualstudio.com/docs/agents/agent-troubleshooting)** → fliken **Summary** för att se tokenantal per förfrågan.
 :::
 
 ---
 
-## Vanliga misstag som bryter cachen
+## Vanliga misstag som bryter cachen 🟡
 
-Det smärtsamma med prefix-cachning är att små, oskyldiga ändringar kan tvinga fram en fullständig ombyggnad. Här är de vanligaste bovarna:
+Det smärtsamma med prefix-cachning är att ändringar i det gemensamma serialiserade prefixet kan hindra en cachematchning. Här är vanliga riskmönster från leverantörernas vägledning:[^m2-1][^m2-3]
 
 | Misstag | Vad händer | Varför det spelar roll | Så åtgärdar du det |
 |---------|------------|-----------------------|--------------------|
@@ -193,13 +199,13 @@ Om en ändring påverkar **verktyg**, **instruktioner på översta nivån** elle
 
 ---
 
-## Förgrena konversationer
+## Förgrena konversationer 🟡
 
 Skriv `/fork` i chattinmatningen för att skapa en ny session som **ärver hela konversationshistoriken**. Du kan också hovra över ett tidigare meddelande och välja **Fork Conversation** för att förgrena från just den kontrollpunkten.
 
-Använd förgrening när du vill utforska en alternativ lösning eller ställa en sidofråga utan att betala prefixkostnaden igen. Till skillnad från `/clear` och `/compact` är förgrening till för divergerande utforskning — parallella spår — inte för att fortsätta samma uppgift i en mindre kontext.
+Använd förgrening när du vill utforska en alternativ lösning eller ställa en sidofråga utan att betala prefixkostnaden igen. Till skillnad från `/clear` och [/compact](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) är förgrening till för divergerande utforskning — parallella spår — inte för att fortsätta samma uppgift i en mindre kontext.
 
-Se [Fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) i VS Code-dokumentationen.
+Se [Fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) i VS Code-dokumentationen. Kommandot [/compact](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) hanterar konversationskontexten.[^m2-15]
 
 :::tip[Praktisk slutsats]
 Förgrena innan du testar en riskfylld lösning: behåll originaltråden intakt och utforska alternativet i en gren som redan har den relevanta kontexten.
@@ -214,9 +220,9 @@ Att förstå kontextmodellen leder till fyra praktiska regler:
 1. **Håll prefixet stabilt** — undvik onödigt filbyte under en session
 2. **Återställ vid uppgiftsgränser** — rensa chatten när du byter uppgift. Inom en och samma uppgift, håll sessionen vid liv för att dra nytta av prefix-cachning.
 3. **Minimera alltid-på-instruktioner** — håll `copilot-instructions.md` smal, använd `.prompt.md`-filer för specialiserade regler
-4. **Grunda innan du utforskar** — se till att arbetsytans semantiska index är tillgängligt, använd `#codebase` för att uttryckligen grunda en förfrågan i den indexerade kodbasen och ta med relevanta filer, fel, begränsningar och kriterier för ett lyckat resultat i prompten. Använd symbolmedveten sökning och fokuserade MCP/CLI-verktyg för auktoritativa data, och lägg stabila projektkonventioner i anpassade instruktioner så att agenten slipper upptäcka dem på nytt i varje session. Se [Semantisk sökning](https://code.visualstudio.com/docs/agents/reference/workspace-context#_semantic-search).
+4. **Grunda innan du utforskar** — se till att arbetsytans semantiska index är tillgängligt, använd `#codebase` för att uttryckligen grunda en förfrågan i den indexerade kodbasen och ta med relevanta filer, fel, begränsningar och kriterier för ett lyckat resultat i prompten. Använd symbolmedveten sökning och fokuserade MCP/CLI-verktyg för auktoritativa data, och lägg stabila projektkonventioner i anpassade instruktioner så att agenten slipper upptäcka dem på nytt i varje session. Se [Semantisk sökning](https://code.visualstudio.com/docs/agents/reference/workspace-context#_semantic-search).[^m2-16]
 
-De här mönstren kan minska din kontext per förfrågan med 40–60 %, beroende på projekt och arbetsflöde.
+Mät effekten i den egna arbetsytan: den användbara baslinjen är den förfrågnings- och cacheinformation som klienten och leverantören visar.[^m2-2][^m2-7]
 
 ---
 
@@ -237,12 +243,12 @@ Olika modellleverantörer implementerar cachning på olika sätt — och skillna
 
 För de dagliga misstagen som bryter cachen, se avsnittet Vanliga misstag som bryter cachen ovan.
 
-OpenAI GPT-5.x stöder konfigurerbar cacheretention (24 timmar som standard för organisationer utan ZDR på GPT-5-seriens modeller). Cachning sker efter bästa förmåga och är inte garanterad — ett anrop kan ibland hamna på en server utan ditt prefix och då betala fullt pris. GPT-5.6 och senare modeller tog bort 24-timmarscachen till förmån för uttrycklig cachekontroll. För mycket asynkrona arbetsflöden ger detta mer kontroll än Anthropics fasta femminutersfönster.
+OpenAI dokumenterar kontroller för cacheretention, inklusive förlängd retention på upp till 24 timmar i distributioner som stöder det; tillgänglighet och standardvärden beror på modell, organisation och policy för datalagring. Cacheåteranvändning är inte garanterad, så följ träffdata i stället för att budgetera som om varje förfrågan träffar.[^m2-1][^m2-12]
 
 :::caution[Kontroversen kring Anthropic TTL]
-I mars 2026 ändrade Anthropic i tysthet sin standard-TTL för cache från **1 timme till 5 minuter**. Det orsakade stora, tysta kostnadsökningar för asynkrona system — cacherna löpte ut mellan förfrågningarna och varje steg betalade fullt pris.
+Anthropics postmortem från 23 april 2026 beskriver en cache-relaterad regression i Claude Code.[^m2-13] Particula Tech rapporterar separat om en ändring i mars 2026 som minskade en implicit promptcache-TTL från **1 timme till 5 minuter** för vissa förfrågningar; det är tredjepartsrapportering och ingen garanti för Anthropics prissättning.[^m2-14]
 
-Om du använder Anthropic-baserade modeller (Claude i Copilot), håll sessionerna aktiva och sammanhängande. Långa pauser mellan stegen kan göra att du förlorar cachen. Om ditt arbetsflöde är mycket asynkront ger OpenAI:s konfigurerbara lagringsfönster i GPT-5.x dig mer kontroll.
+Om du använder Anthropic-baserade modeller, ange dokumenterad TTL uttryckligen där integrationen tillåter det och följ cacheläsningarna. Långa pauser kan överstiga en kort TTL; leverantörernas retentionkontroller skiljer sig åt.[^m2-9][^m2-12]
 :::
 
 ### Vad det innebär för dig
@@ -276,3 +282,20 @@ Att förstå kontextmodellen gör siffrorna i [Den dolda skatten](/vibe-on-budge
 - Du kan inte mäta vad du inte kan se — **aktivera felsökningsloggning** för att förstå din verkliga kostnad
 
 *Beräknad lästid: 10 minuter*
+
+[^m2-1]: [Promptcachning](https://developers.openai.com/api/docs/guides/prompt-caching) — OpenAI, hämtad 2026-09-07.
+[^m2-2]: [AI-inställningsreferens](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code, hämtad 2026-09-07.
+[^m2-3]: [Så använder Claude Code promptcachning](https://code.claude.com/docs/en/prompt-caching) — Anthropic, hämtad 2026-09-07.
+[^m2-4]: [Översikt över Claude-modeller](https://docs.anthropic.com/en/docs/about-claude/models/overview) — Anthropic, hämtad 2026-09-07.
+[^m2-5]: [GPT-5-modelldokumentation](https://developers.openai.com/api/docs/models/gpt-5) — OpenAI, hämtad 2026-09-07.
+[^m2-6]: [Gemini-modeller](https://ai.google.dev/gemini-api/docs/models) — Google, hämtad 2026-09-07.
+[^m2-7]: [Priser](https://platform.claude.com/docs/en/about-claude/pricing) — Anthropic, hämtad 2026-09-07.
+[^m2-8]: [Chattens felsökningsvy](https://code.visualstudio.com/docs/agents/agent-troubleshooting/chat-debug-view) — Visual Studio Code, hämtad 2026-09-07.
+[^m2-9]: [Promptcachning](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) — Anthropic, hämtad 2026-09-07.
+[^m2-10]: [Kontextcachning](https://api-docs.deepseek.com/guides/kv_cache/) — DeepSeek, hämtad 2026-09-07.
+[^m2-11]: [Kontextcachning](https://ai.google.dev/gemini-api/docs/caching) — Google, hämtad 2026-09-07.
+[^m2-12]: [Promptcachning med Azure OpenAI](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/prompt-caching) — Microsoft, hämtad 2026-09-07.
+[^m2-13]: [En uppdatering om de senaste kvalitetsrapporterna för Claude Code](https://www.anthropic.com/engineering/april-23-postmortem) — Anthropic, 23 april 2026.
+[^m2-14]: [Anthropic Prompt Cache TTL sänkt till 5 minuter: så åtgärdar du det](https://particula.tech/blog/anthropic-prompt-cache-ttl-5-minute-regression-debugging) — Particula Tech, hämtad 2026-09-07.
+[^m2-15]: [Förgrena en chatsession](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) — Visual Studio Code, hämtad 2026-09-07.
+[^m2-16]: [Semantisk sökning](https://code.visualstudio.com/docs/agents/reference/workspace-context#_semantic-search) — Visual Studio Code, hämtad 2026-09-07.

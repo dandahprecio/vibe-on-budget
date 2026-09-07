@@ -80,6 +80,11 @@ export default defineConfig({
 							translations: { sv: "9. Helhetsbilden" },
 							slug: "09-under-the-hood",
 						},
+						{
+							label: "Glossary",
+							translations: { sv: "Ordlista" },
+							slug: "glossary",
+						},
 					],
 				},
 			],

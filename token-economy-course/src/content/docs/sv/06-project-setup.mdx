@@ -7,24 +7,22 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Projektinställningar för tokeneffektivitet
 
-Filerna du skapar (eller inte skapar) i ditt projekt bestämmer hur många tokens Copilot spenderar på **varje** förfrågan. Denna modul går igenom exakta filer och konfigurationer som minskar tokenförbrukningen i hela projektet.
+Filerna du skapar (eller inte skapar) i ditt projekt bestämmer hur många tokens Copilot spenderar på **varje** förfrågan. Denna modul går igenom exakta filer och konfigurationer som minskar tokenförbrukningen i hela projektet.[^m6-1]
 
 ---
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha granskade sin copilot-instructions.md — 847 rader hade samlats under 18 månader. De bantade den till 18 rader med den minimala mallen, flyttade arkitekturdokumentation till .prompt.md-filer och lade till .copilotignore. Skatten för alltid-på-kontext försvann: 8 200 → 7 500 credits.
-:::
+## Alltid-på-skatten 🟢
 
-## Alltid-på-skatten
-
-Dessa filer laddas vid **varje chattinteraktion**:
+Dessa filer laddas vid **varje chattinteraktion**:[^m6-1][^m6-2]
 
 | Fil | Laddas när | Tokenkostnad (typisk) |
 |---|---|---|
 | `.github/copilot-instructions.md` | Alltid | 50–2000+ tokens |
-| `AGENTS.md` | Agentläge | 200–5000+ tokens |
+| [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions) | Agentläge | 200–5000+ tokens |
 | Öppna editorflikar | Alltid | 500–10 000+ tokens |
 | VS Code-inställningar (Copilot-sektionen) | Alltid | ~50 tokens |
+
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av alltid-på-skatt, lazy-loading och AGENTS.md.)*
 
 Huvudinsikten: **varje alltid-på-instruktion som är "bra-att-ha" men inte "kritisk just nu" är bortkastade tokens**.
 
@@ -79,15 +77,15 @@ De flesta team överfyller denna fil med arkitekturdokument, stilguider och team
 Varje rad du lägger till i `copilot-instructions.md` betalas på **varje enskild förfrågan** av **varje teammedlem**. En 1000-rads instruktionsfil kostar 500+ tokens × tusentals förfrågningar per dag.
 :::
 
-### Tak på 200 rader
+### Tak på 200 rader 🟡
 
-Forskning visar att instruktionsfiler inte förblir små särskilt länge. Chakrabarti med flera (arXiv:2608.11095, augusti 2026) fann att instruktioner växte med **+226 %** under sin livstid när team fortsatte lägga till ytterligare ett undantag, en brasklapp eller en "tillfällig" regel. Daniel Vaughan, som tolkar artikeln, rekommenderar ett praktiskt tak: om filen överstiger några hundra rader är det dags att rensa.
+Forskning visar att instruktionsfiler inte förblir små särskilt länge. Chakrabarti med flera (arXiv:2608.11095, augusti 2026) fann att instruktioner växte med **+226 %** under sin livstid när team fortsatte lägga till ytterligare ett undantag, en brasklapp eller en "tillfällig" regel. Daniel Vaughan, som tolkar artikeln, rekommenderar ett praktiskt tak: om filen överstiger några hundra rader är det dags att rensa.[^m6-3][^m6-4]
 
 > Siffran 200 rader är praktisk vägledning från Vaughans analys, inte ett resultat från originalartikeln, som rapporterar ett medianvärde på 39 instruktioner och 90:e percentilen på 131.
 
 - **200 rader ≈ 1 500–2 000 tokens** — tillräckligt litet för att förbli synligt i förgrunden, men stort nog för identitet, 2–3 hårda regler och hänvisningar till djupare dokumentation.
 - **Över 200 rader** börjar modellen ägna mindre uppmärksamhet åt det tidiga innehållet. Filen blir osynlig ansamling: dyr, bekant och sällan omläst från början till slut.
-- **Tokenmatematik:** En fil på 1 247 rader (~9 400 tokens) över 1 000 turer förbrukar **9,4 miljoner alltid-på-tokens**. Flytta samma vägledning till filsökvägsstyrda filer + skills, sänk alltid-på-lagret till 250 tokens och kostnaden sjunker till **250 000 tokens** — en **37× minskning** med identiska funktioner.
+- **Tokenmatematik:** En fil på 1 247 rader (~9 400 tokens) över 1 000 turer förbrukar **9,4 miljoner alltid-på-tokens**. Flytta samma vägledning till filsökvägsstyrda filer + skills, sänk alltid-på-lagret till 250 tokens och kostnaden sjunker till **250 000 tokens** — en **37× minskning** med identiska funktioner.[^m6-5]
 
 <Steps>
 1. Granska dina instruktionsfiler med en tokenräknare.
@@ -95,7 +93,7 @@ Forskning visar att instruktionsfiler inte förblir små särskilt länge. Chakr
 3. Håll alltid-på-lagret så kort att en människa fortfarande kan läsa om och rensa det i ett enda sittningstillfälle.
 </Steps>
 
-### Promptkommentarer: bekämpa instruktionssvällning
+### Promptkommentarer: bekämpa instruktionssvällning 🟡
 
 Forskning tyder också på att instruktioner ansamlas eftersom **latent resonemang** — anledningen till att en regel finns — försvagas med tiden. När "varför" försvinner känns det riskabelt att radera gamla instruktioner, så de blir kvar för alltid.
 
@@ -109,13 +107,13 @@ Lösningen är enkel: kommentera viktiga regler med en HTML-kommentar som dokume
   OUTCOME: 62 % färre output-tokens, ingen kvalitetsförlust. Behåll. -->
 ```
 
-I verktyg som Claude Code och Codex CLI tas HTML-kommentarer bort före injicering, så du bevarar resonemanget till **noll tokenkostnad**. I Chakrabartis fältdata från 2026 minskade promptkommentarer överdriven instruktionstillväxt med **99,3 %**.
+I verktyg som [Claude Code](https://docs.anthropic.com/en/docs/claude-code) och [Codex CLI](https://github.com/openai/codex) tas HTML-kommentarer bort före injicering, så du bevarar resonemanget till **noll tokenkostnad**. I Chakrabartis fältdata från 2026 minskade promptkommentarer överdriven instruktionstillväxt med **99,3 %**.[^m6-4][^m6-6][^m6-3]
 
 ---
 
-## 2. Lazy-loading med `.prompt.md`-filer
+## 2. Lazy-loading med `.prompt.md`-filer 🟡
 
-Istället för att svälla din alltid-på-fil, skapa specialiserade promptfiler som laddas endast när det behövs:
+Istället för att svälla din alltid-på-fil, skapa specialiserade promptfiler som laddas endast när det behövs:[^m6-7]
 
 | Fil | Innehåll | När ska användas |
 |---|---|---|
@@ -132,9 +130,9 @@ Modellen läser filen och tillämpar reglerna för denna förfrågan endast. Ing
 
 ---
 
-## 3. `AGENTS.md`-kontraktet
+## 3. [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions)-kontraktet 🟢
 
-`AGENTS.md` definierar hur Copilot ska bete sig i **agentläge**. När den finns, laddas den som systemkontext för varje agentsteg.
+`AGENTS.md` definierar hur Copilot ska bete sig i **agentläge**. När den finns, laddas den som systemkontext för varje agentsteg.[^m6-2][^m6-4]
 
 `AGENTS.md` = **beteendekontrakt** (läge, omfattning, outputformat) — laddas alltid  
 `.prompt.md`-filer = **domänkunskap** (arkitektur, konventioner, kända problem) — laddas vid behov via `#file:`
@@ -161,7 +159,7 @@ Se [Lazy-loading med `.prompt.md`-filer](#2-lazy-loading-med-promptmd-filer) ova
 
 ---
 
-## 4. Innehållsexkludering med `.copilotignore`
+## 4. Innehållsexkludering med [`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore) 🟢
 
 Copilot läser din arbetsytas filer för kontext. Exkludera filer som aldrig är användbara:
 
@@ -186,7 +184,7 @@ package-lock.json
 - **Binära/resursfiler** — bilder, ljud, typsnitt (kan inte bearbetas ändå)
 :::
 
-Din `.gitignore` påverkar också agenten: matchande filer exkluderas från arbetsytans index och från agentens textsökning/grep. Se den som ett första lager av exkludering.
+Din `.gitignore` påverkar också agenten: matchande filer exkluderas från arbetsytans index och från agentens textsökning/grep. Se den som ett första lager av exkludering.[^m6-8]
 
 **Besparing:** 20–40% minskning av input-tokenförbrukning. Bonus: snabbare svar och färre hallucinationer från irrelevant kontext.
 
@@ -196,8 +194,8 @@ VS Code har två inställningar för mer finjusterad exkludering:
 
 | Inställning | Effekt |
 |---|---|
-| `files.exclude` | Döljer filer helt från Explorer, arbetsytans index och agentsökning |
-| `search.exclude` | Döljer filer från agentens textsökning/grep men behåller dem synliga i Explorer |
+| [`files.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Döljer filer helt från Explorer, arbetsytans index och agentsökning |
+| [`search.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Döljer filer från agentens textsökning/grep men behåller dem synliga i Explorer |
 
 ```json
 {
@@ -211,7 +209,7 @@ VS Code har två inställningar för mer finjusterad exkludering:
 }
 ```
 
-Använd `files.exclude` för sådant du aldrig vill se. Använd `search.exclude` för loggfiler som du ibland vill öppna manuellt men inte vill ha i sökresultaten. Se [Förbättra agentsökning med exkluderingsinställningar](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).
+Använd `files.exclude` för sådant du aldrig vill se. Använd `search.exclude` för loggfiler som du ibland vill öppna manuellt men inte vill ha i sökresultaten. Se [Förbättra agentsökning med exkluderingsinställningar](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).[^m6-9]
 
 | Mekanism | Påverkar arbetsytans index | Påverkar agentsökning | Påverkar Explorer | Rekommenderas för |
 |---|---|---|---|---|
@@ -262,7 +260,7 @@ Använd detta som en tumregel, inte ett hårt tak: **sikta på ≤100 tokens i d
 Om en värdefull regel tar dig lite över 100 tokens, behåll regeln och ta bort något mindre viktigt. Det viktiga är att vara kompakt som standard, inte att träffa ett magiskt tal.
 :::
 
-Använd ett tokenräkningsskript för att granska dina filer:
+Använd ett tokenräkningsskript för att granska dina filer:[^m6-10]
 
 ```powershell
 # count-tokens.ps1 — rough estimation
@@ -296,7 +294,7 @@ flowchart LR
 ```
 
 :::tip[Granska med verkliga verktyg]
-För en mer precis räkning, använd Copilot SDK eller `gh copilot` för att mäta faktisk tokenanvändning per förfrågan. Sätt ett månatligt budgetmål och gå igenom det med ditt team.
+För en mer precis räkning, använd Copilot SDK eller `gh copilot` för att mäta faktisk tokenanvändning per förfrågan. Sätt ett månatligt budgetmål och gå igenom det med ditt team.[^m6-5]
 :::
 
 ---
@@ -332,3 +330,14 @@ En stabil projektuppsättning gör [Agenter, verktyg och MCP-hygien](/vibe-on-bu
 - **Skriv instruktionsfiler manuellt** — automatiskt genererad kontext ökar ofta kostnaden utan att förbättra korrektheten
 
 *Beräknad lästid: 10 minuter*
+
+[^m6-1]: [Lägga till anpassade arkivreferenser för GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions) — GitHub Docs, hämtad september 2026.
+[^m6-2]: [Anpassade instruktioner](https://code.visualstudio.com/docs/agent-customization/custom-instructions) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-3]: [Varför fortsätter CLAUDE.md att växa? Katastrofalt ihågkommande i agentisk kodning](https://arxiv.org/abs/2608.11095) — arXiv, 11 augusti 2026.
+[^m6-4]: [Katastrofalt ihågkommande: varför din AGENTS.md fortsätter växa och hur promptkommentarer åtgärdar det](https://codex.danielvaughan.com/2026/08/12/catastrophic-remembering-agents-md-instruction-bloat-prompt-comments-codex-cli/) — Daniel Vaughan, 12 augusti 2026.
+[^m6-5]: [Användnings- och faktureringsmått](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) — GitHub Docs, hämtad september 2026.
+[^m6-6]: [Ta bort kommentarer från CLAUDE.md/AGENTS.md före injicering](https://github.com/anthropics/claude-code/issues/83899) — Claude Code issue tracker, hämtad september 2026.
+[^m6-7]: [Använd promptfiler i VS Code](https://code.visualstudio.com/docs/agent-customization/prompt-files) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-8]: [Så förstår Copilot din arbetsyta](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-9]: [AI-inställningsreferens](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-10]: Tokenräkningsskripten i den här modulen är nyttoexempel, inte externa mätningar eller faktureringsuppskattningar.

@@ -7,24 +7,23 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Project Setup for Token Efficiency
 
-The files you create (or don't create) in your project determine how many tokens Copilot spends on **every** request. This module walks through the exact files and configurations that reduce token consumption project-wide.
+The files you create (or don't create) in your project affect what an agent can use as context on each request.[^m6-1] This module walks through files and configurations that can reduce unnecessary context project-wide.
 
 ---
 
-:::note[Case Study: Team Alpha]
-Team Alpha audited their copilot-instructions.md — 847 lines accumulated over 18 months. They trimmed it to 18 lines using the minimal template, moved architecture docs to .prompt.md files, and added .copilotignore. Always-on tax eliminated: 8,200 → 7,500 credits.
 :::
+## The Always-On Tax 🟢
 
-## The Always-On Tax
+These files can be applied automatically or included as workspace context, depending on the tool and configuration:[^m6-1][^m6-2]
 
-These files are loaded on **every chat interaction**:
-
-| File | Loaded When | Token Cost (typical) |
+| File | Loaded When | Role |
 |---|---|---|
-| `.github/copilot-instructions.md` | Always | 50–2000+ tokens |
-| `AGENTS.md` | Agent mode | 200–5000+ tokens |
-| Open editor tabs | Always | 500–10,000+ tokens |
-| VS Code settings (Copilot section) | Always | ~50 tokens |
+| `.github/copilot-instructions.md` | Automatically, when supported | Repository-wide instructions |
+| [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions) | Agent-specific tooling | Agent instructions |
+| Open editor tabs | May be included as context | Workspace context |
+| VS Code settings (Copilot section) | When the feature reads them | Behavior and limits |
+
+*(See [Glossary](/vibe-on-budget/en/glossary) for always-on tax, lazy-loading, and AGENTS.md definitions.)*
 
 The key insight: **every always-on instruction that's "nice to have" but not "critical right now" is wasted tokens**.
 
@@ -43,10 +42,10 @@ Most teams overstuff this file with architecture docs, style guides, and team no
 - No markdown text outside the code block.
 
 # Language
-- English for all prompts and responses (~1.7x token savings vs Swedish; varies by tokenizer)
+- English for all prompts and responses
 ```
 
-**That's it.** 18 lines, ~50 tokens. Covers output compression (the single biggest saving) and language choice.
+**That's it.** Keep the file limited to instructions that should apply broadly. It covers output compression and language choice without duplicating project documentation.[^m6-1]
 
 ### Template: Medium (Balanced)
 
@@ -65,7 +64,7 @@ Most teams overstuff this file with architecture docs, style guides, and team no
 - No TypeScript — use JSDoc for types
 ```
 
-~80 tokens. Adds enough context for the model to generate relevant code without painting a full architecture picture.
+Adds enough context for the model to generate relevant code without painting a full architecture picture.
 
 ### What NOT to put here
 
@@ -79,15 +78,14 @@ Most teams overstuff this file with architecture docs, style guides, and team no
 Every line you add to `copilot-instructions.md` is paid on **every single request** by **every team member**. A 1000-line instruction file costs 500+ tokens × thousands of requests per day.
 :::
 
-### The 200-Line Ceiling
+### The 200-Line Ceiling 🟡
 
-Research suggests instruction files do not stay small for long. Chakrabarti et al. (arXiv:2608.11095, August 2026) found that instructions grew by **+226%** over their lifetime as teams kept adding one more exception, caveat, or "temporary" rule. Daniel Vaughan, interpreting the paper, recommends a practical ceiling: if output exceeds a few hundred lines, it is time to prune.
+Research suggests instruction files do not stay small for long. Chakrabarti et al. found **+226%** lifetime growth in a study of instruction lifetimes across public repositories.[^m6-3] Daniel Vaughan interprets the result as a maintenance problem and recommends a practical ceiling of roughly 200 lines before pruning.[^m6-4]
 
-> The 200-line figure is practical guidance from Vaughan's analysis, not a finding from the original paper, which reports a median of 39 instructions and a 90th percentile of 131.
+> The 200-line figure is practical guidance from Vaughan's analysis, not a finding from the original paper, which reports a median of 39 instructions and a 90th percentile of 131.[^m6-3][^m6-4]
 
-- **200 lines ≈ 1,500–2,000 tokens** — small enough to stay in foreground attention, large enough for identity, 2–3 hard rules, and pointers to deeper docs.
-- **Above 200 lines**, the model starts under-attending to early content. The file becomes invisible accretion: expensive, familiar-looking, and rarely reread end to end.
-- **Token math:** a 1,247-line file (~9,400 tokens) across 1,000 turns burns **9.4M always-on tokens**. Migrate the same guidance into path-scoped files + skills, get the always-on layer down to 250 tokens, and the cost drops to **250K tokens** — a **37× reduction** for identical capabilities.
+- **Around 200 lines** is a maintainability threshold, not a model-context guarantee.[^m6-4]
+- **Token math:** repeated context costs scale with the number of requests. Measure the actual input and output usage for your model and workflow instead of relying on a universal token estimate.[^m6-5]
 
 <Steps>
 1. Audit your instruction files with a token counter.
@@ -95,7 +93,7 @@ Research suggests instruction files do not stay small for long. Chakrabarti et a
 3. Keep the always-on layer short enough that a human can still reread and prune it in one sitting.
 </Steps>
 
-### Prompt Comments: Fighting Instruction Bloat
+### Prompt Comments: Fighting Instruction Bloat 🟡
 
 Research also suggests instructions accumulate because **latent reasoning** — the reason a rule exists — decays over time. Once the "why" disappears, deleting old instructions feels risky, so they linger forever.
 
@@ -109,13 +107,13 @@ The fix is simple: annotate important rules with an HTML comment that records th
   OUTCOME: 62% reduction in output tokens, no quality loss. Keep. -->
 ```
 
-In tools like Claude Code and Codex CLI, HTML comments are stripped before injection, so you preserve the reasoning at **zero token cost**. In Chakrabarti's 2026 field data, prompt comments reduced excess instruction growth by **99.3%**.
+Do not assume that HTML comments are stripped before injection. Daniel Vaughan reports comment stripping for Codex CLI, while a Claude Code issue reports that `CLAUDE.md` comments are sent verbatim.[^m6-4][^m6-6] Chakrabarti's study reports that prompt comments reduced excess instruction growth by **99.3%** in its evaluated setting.[^m6-3]
 
 ---
 
-## 2. Lazy-Loading with `.prompt.md` Files
+## 2. Lazy-Loading with `.prompt.md` Files 🟡
 
-Instead of bloating your always-on file, create specialized prompt files that are loaded only when needed:
+Instead of bloating your automatically applied instructions, create specialized prompt files that you invoke only when needed.[^m6-7]
 
 | File | Content | When to Use |
 |---|---|---|
@@ -128,13 +126,13 @@ Instead of bloating your always-on file, create specialized prompt files that ar
 Apply rules from #file:frontend-style.prompt.md to this component.
 ```
 
-The model reads the file and applies the rules for this request only. No always-on tax.
+The model can read the referenced file and apply its rules for that request. Prompt files are not automatically applied like custom instructions; invoke them explicitly in chat.[^m6-7]
 
 ---
 
-## 3. The `AGENTS.md` Contract
+## 3. The [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions) Contract 🟢
 
-`AGENTS.md` defines how Copilot should behave in **agent mode**. When present, it's loaded as system context for every agent step.
+`AGENTS.md` is an agent-instruction convention used by agentic coding tools. Its exact discovery and loading behavior depends on the tool; verify the relevant agent documentation before treating it as an always-on file.[^m6-2][^m6-4]
 
 `AGENTS.md` = **behavioral contract** (mode, scope, output format) — always loaded  
 `.prompt.md` files = **domain knowledge** (architecture, conventions, known issues) — loaded on demand via `#file:`
@@ -145,7 +143,7 @@ The model reads the file and applies the rules for this request only. No always-
 # .github/AGENTS.md (or .copilot/agents.md)
 
 - Mode: Ask-first. Refuse multi-step recursive folder crawls.
-- Lang: English (saves ~1.7x tokenizer overhead vs Swedish; varies by tokenizer)
+- Lang: English
 - Scope: Execute actions locally via CLI/terminal instead of agentic search loops.
 - Output: Changed code blocks ONLY. Do not return untouched wrappers/imports/setups.
 - Format: High-density bullets only. Prose explanations capped at 2 sentences.
@@ -157,11 +155,11 @@ Put architecture documentation, recurring feature specs, and historical "known i
 See [Lazy-Loading with `.prompt.md` Files](#2-lazy-loading-with-promptmd-files) above.
 :::
 
-~80 tokens. Covers the critical guardrails without architecture noise.
+Keep the contract short and move architecture documentation elsewhere.[^m6-2][^m6-4]
 
 ---
 
-## 4. Content Exclusion with `.copilotignore`
+## 4. Content Exclusion with [`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore) 🟢
 
 Copilot reads your workspace files for context. Exclude files that are never useful:
 
@@ -186,9 +184,7 @@ package-lock.json
 - **Binary/asset files** — images, audio, fonts (can't be processed anyway)
 :::
 
-Your `.gitignore` also affects the agent: it excludes matching files from the workspace index and from agent text search/grep. Treat it as a first layer of exclusion.
-
-**Savings:** 20–40% reduction in input token consumption. Bonus: faster responses and fewer hallucinations from irrelevant context.
+Your `.gitignore` can affect which files are available to workspace indexing and search tools, so treat it as one layer of exclusion.[^m6-8]
 
 ### VS Code Exclusion Settings
 
@@ -196,8 +192,8 @@ VS Code provides two settings for finer-grained exclusion:
 
 | Setting | Effect |
 |---|---|
-| `files.exclude` | Hides files completely from Explorer, the workspace index, and agent search |
-| `search.exclude` | Hides files from agent text search/grep but keeps them visible in Explorer |
+| [`files.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Excludes matching files from the Explorer and related workspace views |
+| [`search.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Excludes matching files from search results while keeping them visible in Explorer |
 
 ```json
 {
@@ -211,7 +207,7 @@ VS Code provides two settings for finer-grained exclusion:
 }
 ```
 
-Use `files.exclude` for things you never want to see. Use `search.exclude` for log files you may open manually but do not want in search results. See [Improve agent search with exclusion settings](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).
+Use `files.exclude` for things you never want to see and `search.exclude` for files you may open manually but do not want in search results.[^m6-9] See [Improve agent search with exclusion settings](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).
 
 | Mechanism | Affects workspace index | Affects agent search | Affects Explorer | Recommended for |
 |---|---|---|---|---|
@@ -243,10 +239,12 @@ Use `files.exclude` for things you never want to see. Use `search.exclude` for l
 
 | Setting | Effect |
 |---|---|
-| `autoOpenTabs.max: 5` | Only send 5 open files as context |
-| `defaultModel: haiku` | Start with cheapest model by default |
-| `maxRequests: 20` | Limit agent loop depth |
-| `maxToolCallsPerStep: 10` | Prevent runaway tool chains |
+| `autoOpenTabs.max: 5` | Configure how many open tabs may be added as context |
+| `defaultModel: haiku` | Select the default chat model when supported |
+| `maxRequests: 20` | Configure the maximum number of agent requests when supported |
+| `maxToolCallsPerStep: 10` | Configure the maximum tool calls per agent step when supported |
+
+These settings are version- and client-dependent; check the current [VS Code AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings) before copying them.[^m6-9]
 
 ---
 
@@ -262,7 +260,7 @@ Use this as a heuristic, not a hard cap: **aim for ≤100 tokens in your custom 
 If a high-value rule pushes you a little above 100 tokens, keep the rule and cut something less important. What matters is staying lean by default, not hitting a magic number.
 :::
 
-Use a token counting script to audit your files:
+Use a token counting script to audit your files. These are utility examples: the `$chars / 4` heuristic is not a tokenizer and should not be treated as billing data.[^m6-10]
 
 ```powershell
 # count-tokens.ps1 — rough estimation
@@ -296,7 +294,7 @@ flowchart LR
 ```
 
 :::tip[Audit with actual tools]
-For a more precise count, use the Copilot SDK or `gh copilot` to measure actual token usage per request. Set a monthly budget target and review it with your team.
+For a more precise count, use the [Copilot SDK usage APIs](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) to read per-call token counts and accumulated usage metrics.[^m6-5]
 :::
 
 ---
@@ -331,4 +329,13 @@ A solid project setup makes [Agents, Tools & MCP Hygiene](/vibe-on-budget/en/07-
 - **600-token fixed overhead** (system + instructions) keeps the always-on baseline minimal; context adds on top
 - **Write instruction files manually** — autogenerated context often adds cost without improving correctness
 
-*Estimated reading time: 10 minutes*
+[^m6-1]: [Adding repository custom instructions for GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions) — GitHub Docs, accessed September 2026.
+[^m6-2]: [Custom instructions](https://code.visualstudio.com/docs/agent-customization/custom-instructions) — Visual Studio Code Documentation, accessed September 2026.
+[^m6-3]: [Why Does CLAUDE.md Keep Growing? Catastrophic Remembering in Agentic Coding](https://arxiv.org/abs/2608.11095) — arXiv, 11 August 2026.
+[^m6-4]: [Catastrophic Remembering: Why Your AGENTS.md Keeps Growing and How Prompt Comments Fix It](https://codex.danielvaughan.com/2026/08/12/catastrophic-remembering-agents-md-instruction-bloat-prompt-comments-codex-cli/) — Daniel Vaughan, 12 August 2026.
+[^m6-5]: [Usage and billing metrics](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) — GitHub Docs, accessed September 2026.
+[^m6-6]: [Strip comments from CLAUDE.md/AGENTS.md before injection](https://github.com/anthropics/claude-code/issues/83899) — Claude Code issue tracker, accessed September 2026.
+[^m6-7]: [Use prompt files in VS Code](https://code.visualstudio.com/docs/agent-customization/prompt-files) — Visual Studio Code Documentation, accessed September 2026.
+[^m6-8]: [How Copilot understands your workspace](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code Documentation, accessed September 2026.
+[^m6-9]: [AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code Documentation, accessed September 2026.
+[^m6-10]: Token-counting scripts in this module are utility examples, not external measurements or billing estimates.

@@ -7,19 +7,16 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # The Hidden Tax: Understanding AI Credit Costs
 
-Starting **June 1, 2026**, GitHub moved Copilot billing to a **Usage-Based Billing (UBB)** model. Every interaction — chat, agent, CLI, API calls — is measured in tokens and deducted from a shared pool of **AI Credits**. [^1]
+Starting **June 1, 2026**, GitHub moved Copilot billing to a **[Usage-Based Billing (UBB)](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing)** model. Every interaction — chat, agent, CLI, API calls — is measured in tokens (see [Glossary](/vibe-on-budget/en/glossary) for key terms) and deducted from a shared pool of **[AI Credits](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)**. [^m1-1]
 
-[^1]: [GitHub Copilot is moving to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/) — GitHub Blog. See also [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs.
+[^m1-1]: [GitHub Copilot is moving to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/) — GitHub Blog. See also [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs.
 
 This module explains what that means for your wallet.
 
 ---
 
-:::note[Case Study: Team Alpha]
-Meet Team Alpha: 5 developers, one Copilot Business plan (9,500 pooled credits/month). Their first month on usage-based billing: 14,200 credits consumed. That's $480 over budget. This course follows their journey to bring costs under control — without shipping slower.
 :::
-
-## What Is UBB and Why Should You Care
+## What Is UBB and Why Should You Care 🟢
 
 Under the old model, you paid a flat fee per seat. Your heaviest user cost the same as someone who never opened chat. Under UBB, **you pay for what you use**.
 
@@ -39,7 +36,7 @@ The key insight: **not all usage costs the same**. The split between input token
 
 ---
 
-## Where Your Tokens Go
+## Where Your Tokens Go 🟢
 
 Every Copilot request has three token categories:
 
@@ -65,24 +62,24 @@ Output tokens can cost approximately **4–8x more** than input tokens per milli
 
 ---
 
-## AI Credits Per Plan
+## AI Credits Per Plan 🟢
 
-Each paid plan includes a monthly credit allowance, and Free has a smaller capped allowance. When that allowance runs out, additional usage is billed at **$0.01 per credit**. [^2]
+Each paid plan includes a monthly credit allowance, and Free has a smaller capped allowance. When that allowance runs out, additional usage is billed at **$0.01 per credit**. [^m1-2]
 
 | Plan | Monthly Credits | Value | Pooling |
 |------|----------------|-------|---------|
 | Copilot Free | Limited | $0 | No chat pool |
-| Copilot Pro | 1,500[^3] | $15 | Individual only |
-| Copilot Pro+ | 7,000[^3] | $70 | Individual only |
-| Copilot Max | 20,000[^3] | $200 | Individual only |
+| Copilot Pro | 1,500[^m1-3] | $15 | Individual only |
+| Copilot Pro+ | 7,000[^m1-3] | $70 | Individual only |
+| Copilot Max | 20,000[^m1-3] | $200 | Individual only |
 | Copilot Business | 1,900/license | $19 | **Enterprise pool** |
 | Copilot Enterprise | 3,900/license | $39 | **Enterprise pool** |
 
-[^2]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Reference rates for additional usage.
-[^3]: Individual plan credit allowances updated per [Usage-based billing for individuals](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals) — GitHub Docs.
+[^m1-2]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. It states that 1 AI credit = $0.01 USD and that additional usage is billed at the published per-token rates.
+[^m1-3]: Individual plan credit allowances updated per [Usage-based billing for individuals](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals) — GitHub Docs.
 
 :::note[Plan allowances can change]
-For individual plans, GitHub now splits included usage into **base credits** plus a variable **flex allotment**, so totals like **1,500**, **7,000**, and **20,000** are current allowances rather than permanent promises. Check the live plan page before copying these numbers into a budget or slide deck.[^3]
+For individual plans, GitHub now splits included usage into **base credits** plus a variable **flex allotment**, so totals like **1,500**, **7,000**, and **20,000** are current allowances rather than permanent promises. Check the live plan page before copying these numbers into a budget or slide deck.[^m1-3]
 :::
 
 :::caution[Enterprise pooling is a double-edged sword]
@@ -91,7 +88,7 @@ One developer wasting tokens drains the shared budget for the whole organization
 
 ---
 
-## The Asymmetric Pricing Problem
+## The Asymmetric Pricing Problem 🟢
 
 Here's where most teams get surprised. Output tokens are dramatically more expensive than input tokens.
 
@@ -111,16 +108,16 @@ flowchart LR
     style Output stroke:#ff5555,stroke-width:2px
 ```
 
-For Claude Haiku 4.5: **$1.00/M input → $5.00/M output** (5x multiplier).
+For Claude Haiku 4.5: **$1.00/M input → $5.00/M output** (5x multiplier). [^m1-4]
 For powerful models like Claude Opus 4.8: **$5.00/M input → $25.00/M output**.
 
 The takeaway: **what the model says back to you costs 5x what you send it**. Long, chatty responses are the fastest way to burn through credits.
 
 ---
 
-## Measuring What Matters: Effective Tokens
+## Measuring What Matters: Effective Tokens 🟡
 
-Raw token count is misleading. A 10K-token session with 60% cache hits is dramatically cheaper than a 5K-token session with zero cache hits. GitHub engineers introduced the **Effective Tokens (ET)** formula to normalize this in their May 2026 write-up on token efficiency:[^5]
+Raw token count is misleading. A 10K-token session with 60% cache hits is dramatically cheaper than a 5K-token session with zero cache hits. GitHub engineers introduced the **Effective Tokens (ET)** (see [Glossary](/vibe-on-budget/en/glossary)) formula to normalize this in their May 2026 write-up on token efficiency:[^m1-5]
 
 $$
 ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
@@ -132,7 +129,7 @@ Where:
 - **C** — cached input tokens (0.1x weight — up to 90% cheaper)
 - **O** — output tokens (4.0x weight — the real cost driver)
 
-[^5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — published May 7, 2026 and updated May 13, 2026.
+[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — published May 7, 2026 and updated May 13, 2026.
 
 ```mermaid
 xychart-beta
@@ -152,14 +149,14 @@ The insight: **optimizing for raw token count misses the point**. A request with
 
 ## What's Free vs What Costs
 
-Not everything in Copilot costs credits. The split is crucial:
+Not everything in Copilot costs credits. The split is crucial:[^m1-6]
 
 | Free (no credits) | Costs Credits |
 |---|---|
-| Inline code completions (Ghost Text) | Copilot Chat messages |
-| Next Edit Suggestions | Agent mode sessions |
+| Inline code completions ([Ghost Text](https://code.visualstudio.com/docs/editor/github-copilot#_inline-suggestions)) | Copilot Chat messages |
+| [Next Edit Suggestions](https://code.visualstudio.com/docs/editor/github-copilot#_next-edit-suggestions-preview) | [Agent mode](https://code.visualstudio.com/docs/agents/overview) sessions |
 | | CLI copilot commands |
-| | PR summaries |
+| | [PR summaries](https://docs.github.com/en/copilot/using-github-copilot/reviewing-pull-requests-with-copilot) |
 | | Custom model fine-tuning |
 
 :::tip[Maximum ROI]
@@ -168,39 +165,43 @@ Use **inline completions** for routine coding. They're unlimited and free. Reser
 
 ---
 
-## Model Pricing Reference
+## Model Pricing Reference 🟢
 
-Here are the current Claude model prices (per 1M tokens) available in Copilot: [^4]
+Here are the current Claude model prices (per 1M tokens) available in Copilot: [^m1-4]
 
 :::note[Check live model rates]
-Plan allowances are relatively stable, but model catalogs and per-token rates move faster. Treat the table below as a current snapshot and use GitHub Docs as the source of truth before budgeting or training others on exact rates.[^4] Also note that Anthropic models charge a cache write fee (typically 1.25× base input) when creating new cache entries.
+Plan allowances are relatively stable, but model catalogs and per-token rates move faster. Treat the table below as a current snapshot and use GitHub Docs as the source of truth before budgeting or training others on exact rates.[^m1-4] Also note that Anthropic models charge a cache write fee (typically 1.25× base input) when creating new cache entries.[^m1-9]
 :::
 
 | Model | Input $/M | Output $/M | Best For |
 |-------|-----------|------------|----------|
-| Claude Haiku 4.5 | $1.00 | $5.00 | Quick edits, regex, tests |
-| Claude Sonnet 4.6 | $3.00 | $15.00 | General development |
-| Claude Opus 4.8 | $5.00 | $25.00 | Architecture, complex bugs |
-| Claude Fable 5 | $10.00 | $50.00 | Strategic planning |
+| [Claude Haiku 4.5](https://docs.anthropic.com/en/docs/about-claude/models) | $1.00 | $5.00 | Quick edits, regex, tests |
+| [Claude Sonnet 4.6](https://docs.anthropic.com/en/docs/about-claude/models) | $3.00 | $15.00 | General development |
+| [Claude Opus 4.8](https://docs.anthropic.com/en/docs/about-claude/models) | $5.00 | $25.00 | Architecture, complex bugs |
+| [Claude Fable 5](https://docs.anthropic.com/en/docs/about-claude/models) | $10.00 | $50.00 | Strategic planning |
 
 OpenAI and Google models follow similar patterns — lightweight tiers are significantly cheaper.
 
-[^4]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Reference rates per 1M tokens for additional usage.
+[^m1-4]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Reference rates per 1M tokens for additional usage and the source for the input/output price asymmetry.
+[^m1-6]: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs. It states that Copilot code completions and next edit suggestions are not billed in AI credits and remain unlimited for paid plans.
+[^m1-7]: [About Copilot auto model selection](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub Docs. Paid Copilot plans receive a 10% discount on model costs when using Auto model selection.
+[^m1-8]: [Content exclusion for GitHub Copilot](https://docs.github.com/en/copilot/concepts/context/content-exclusion) — GitHub Docs. Repository administrators, organization owners, and enterprise owners can configure Copilot to ignore selected files.
+[^m1-9]: [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing) — Anthropic Docs. The pricing table lists separate cache-write rates, including the 5-minute cache-write multiplier.
 
 :::note[Auto mode saves automatically]
-Keep your model selector on "Auto" when possible. Copilot routes simple questions to cheaper models, giving your team a variable discount.
+Keep your model selector on "Auto" when possible. Copilot routes simple questions to cheaper models, giving your team a variable discount. Paid plans receive a 10% discount on model costs when using Auto model selection.[^m1-7]
 :::
 
 ---
 
-## Enterprise Considerations
+## Enterprise Considerations 🟡
 
 If you're on Business or Enterprise:
 
-- **Pooled budget** — all credits are shared at the billing entity level
-- **No per-user caps** — one heavy user affects everyone
-- **Overage billing** — when the pool empties, additional usage becomes metered spend at $0.01/credit
-- **Content exclusion** — admins can block certain file types from being sent as context
+- **Pooled budget** — all credits are shared at the billing entity level[^m1-1]
+- **No default per-user caps** — unless an administrator configures a user-level budget, one heavy user affects everyone[^m1-1]
+- **Overage billing** — when the pool empties, additional usage becomes metered spend at $0.01/credit[^m1-1]
+- **Content exclusion** — admins can block certain file types from being sent as context[^m1-8]
 
 ### What This Means for Team Leads
 

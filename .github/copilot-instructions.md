@@ -42,6 +42,7 @@ Complete tasks correct. Minimal context, output, tool activity.
 - Do not rerun successful commands unless verification requires.
 - On failure: inspect specific error, make one focused correction.
 - Avoid installing packages or accessing external resources unless required.
+- Specific tools > terminal commands.
 
 ## Implementation
 

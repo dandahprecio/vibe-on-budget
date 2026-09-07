@@ -7,19 +7,15 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Den dolda skatten: Förstå kostnaden för AI Credits
 
-Från och med **1 juni 2026** flyttade GitHub Copilot till en **användningsbaserad prismodell (UBB)**. Varje interaktion — chatt, agent, CLI, API-anrop — mäts i tokens och dras från en gemensam pool av **AI Credits**. [^1]
+Från och med **1 juni 2026** flyttade GitHub Copilot till en [**Usage-Based Billing (UBB)**](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing)-modell. Varje interaktion — chatt, agent, CLI, API-anrop — mäts i tokens (se [Ordlista](/vibe-on-budget/sv/glossary) för nyckeltermer) och dras från en gemensam pool av **[AI Credits](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)**. [^m1-1]
 
-[^1]: [GitHub Copilot is moving to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/) — GitHub Blog. Se även [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs.
+[^m1-1]: [GitHub Copilot is moving to usage-based billing](https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/) — GitHub Blog. Se även [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs.
 
 Denna modul förklarar vad det innebär för din plånbok.
 
 ---
 
-:::note[Fallstudie: Team Alpha]
-Möt Team Alpha: 5 utvecklare, en Copilot Business-plan (9 500 poolade credits/månad). Deras första månad med användningsbaserad debitering: 14 200 credits förbrukade. Det är 480 dollar över budget. Den här kursen följer deras resa mot att få kontroll över kostnaderna — utan att leverera långsammare.
-:::
-
-## Vad är UBB och varför du borde bry dig
+## Vad är UBB och varför du borde bry dig 🟢
 
 Under den gamla modellen betalade du en fast avgift per plats. Din tyngsta användare kostade lika mycket som någon som aldrig öppnade chatten. Med UBB **betalar du för vad du använder**.
 
@@ -39,7 +35,7 @@ Huvudinsikten: **all användning kostar inte lika mycket**. Uppdelningen mellan 
 
 ---
 
-## Var dina tokens tar vägen
+## Var dina tokens tar vägen 🟢
 
 Varje Copilot-förfrågan har tre token-kategorier:
 
@@ -61,24 +57,24 @@ Output-tokens kostar ungefär **4–8x mer** än input-tokens per miljon, beroen
 
 ---
 
-## AI Credits per plan
+## AI Credits per plan 🟢
 
-Varje betald plan inkluderar en månatlig credittilldelning, och Free har en mindre begränsad tilldelning. När tilldelningen tar slut faktureras ytterligare användning till **$0,01 per credit**. [^2]
+Varje betald plan inkluderar en månatlig credittilldelning, och Free har en mindre begränsad tilldelning. När tilldelningen tar slut faktureras ytterligare användning till **$0,01 per credit**. [^m1-2]
 
 | Plan | Månatliga Credits | Värde | Poolning |
 |------|------------------|-------|---------|
 | Copilot Free | Begränsat | $0 | Ingen chattpool |
-| Copilot Pro | 1 500[^3] | $15 | Endast individuell |
-| Copilot Pro+ | 7 000[^3] | $70 | Endast individuell |
+| Copilot Pro | 1 500[^m1-3] | $15 | Endast individuell |
+| Copilot Pro+ | 7 000[^m1-3] | $70 | Endast individuell |
 | Copilot Business | 1 900/licens | $19 | **Företagspool** |
-| Copilot Max | 20 000[^3] | $200 | Endast individuell |
+| Copilot Max | 20 000[^m1-3] | $200 | Endast individuell |
 | Copilot Enterprise | 3 900/licens | $39 | **Företagspool** |
 
-[^2]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Referenspriser för ytterligare användning.
-[^3]: Individuella plantilldelningar uppdaterade enligt [Usage-based billing for individuals](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals) — GitHub Docs.
+[^m1-2]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Det anger att 1 AI credit = 0,01 USD och att ytterligare användning faktureras enligt publicerade tokenpriser.
+[^m1-3]: Individuella plantilldelningar uppdaterade enligt [Usage-based billing for individuals](https://docs.github.com/en/copilot/concepts/billing/usage-based-billing-for-individuals) — GitHub Docs.
 
 :::note[Plantilldelningar kan ändras]
-För individuella planer delar GitHub nu upp inkluderad användning i **baskrediter** plus en variabel **flex-tilldelning**, så totaler som **1 500**, **7 000** och **20 000** är aktuella tilldelningar snarare än permanenta löften. Kontrollera den aktuella plansidan innan du kopierar dessa siffror till en budget eller presentation.[^3]
+För individuella planer delar GitHub nu upp inkluderad användning i **baskrediter** plus en variabel **flex-tilldelning**, så totaler som **1 500**, **7 000** och **20 000** är aktuella tilldelningar snarare än permanenta löften. Kontrollera den aktuella plansidan innan du kopierar dessa siffror till en budget eller presentation.[^m1-3]
 :::
 
 :::caution[Företagspoolning är ett tveeggat svärd]
@@ -87,7 +83,7 @@ En utvecklare som slösar tokens dränerar den delade budgeten för hela organis
 
 ---
 
-## Problemet med asymmetrisk prissättning
+## Problemet med asymmetrisk prissättning 🟢
 
 Här blir de flesta team överraskade. Output-tokens är dramatiskt dyrare än input-tokens.
 
@@ -114,9 +110,9 @@ Slutsatsen: **vad modellen säger tillbaka kostar 5x vad du skickar**. Långa, p
 
 ---
 
-## Mäta det som spelar roll: effektiva tokens
+## Mäta det som spelar roll: effektiva tokens 🟡
 
-Rått tokenantal är missvisande. En session på 10 000 tokens med 60 % cacheträffar är dramatiskt billigare än en session på 5 000 tokens utan cacheträffar. GitHub introducerade formeln **Effective Tokens (ET)** för att normalisera detta i sin text om tokeneffektivitet från maj 2026:[^5]
+Rått tokenantal är missvisande. En session på 10 000 tokens med 60 % cacheträffar är dramatiskt billigare än en session på 5 000 tokens utan cacheträffar. GitHub introducerade formeln **Effective Tokens (ET)** (se [Ordlista](/vibe-on-budget/sv/glossary)) för att normalisera detta i sin text om tokeneffektivitet från maj 2026:[^m1-5]
 
 $$
 ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
@@ -128,7 +124,7 @@ Där:
 - **C** — cachade input-tokens (vikt 0,1x — upp till 90 % billigare)
 - **O** — output-tokens (vikt 4,0x — den verkliga kostnadsdrivaren)
 
-[^5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
+[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
 
 :::tip[ET i praktiken]
 GitHub rapporterade en **62 % minskning** av effektiva tokens över 109 körningscykler i sitt arbetsflöde för automatisk ärendetria­ge — bara genom att strukturera om hur kontexten sattes samman. I alla analyserade arbetsflöden rapporterade GitHub ET-besparingar på mellan **19 % och 62 %**.
@@ -144,10 +140,10 @@ Allt i Copilot kostar inte credits. Uppdelningen är avgörande:
 
 | Gratis (inga credits) | Kostar Credits |
 |---|---|
-| Inline-kodkomplettering (Ghost Text) | Copilot Chat-meddelanden |
-| Next Edit Suggestions | Agentläge-sessioner |
+| Inline-kodkomplettering ([Ghost Text](https://code.visualstudio.com/docs/editor/github-copilot#_inline-suggestions)) | Copilot Chat-meddelanden |
+| [Next Edit Suggestions](https://code.visualstudio.com/docs/editor/github-copilot#_next-edit-suggestions-preview) | [Agentläge](https://code.visualstudio.com/docs/agents/overview)-sessioner |
 | | CLI copilot-kommandon |
-| | PR-sammanfattningar |
+| | [PR-sammanfattningar](https://docs.github.com/en/copilot/using-github-copilot/reviewing-pull-requests-with-copilot) |
 | | Finjustering av anpassade modeller |
 
 :::tip[Maximal ROI]
@@ -156,32 +152,32 @@ Använd **inline-komplettering** för rutinkodning. De är obegränsade och grat
 
 ---
 
-## Modellprisreferens
+## Modellprisreferens 🟢
 
-Här är aktuella Claude-modellpriser (per 1M tokens) tillgängliga i Copilot: [^4]
+Här är aktuella Claude-modellpriser (per 1M tokens) tillgängliga i Copilot: [^m1-4]
 
 :::note[Kontrollera aktuella modellpriser]
-Plantilldelningar är relativt stabila, men modellkataloger och tokenpriser ändras snabbare. Se tabellen nedan som en aktuell ögonblicksbild och använd GitHub Docs som källa innan du budgeterar eller utbildar andra om exakta priser.[^4] Observera också att Anthropic-modeller tar ut en avgift för cache-skrivning (vanligtvis 1,25× grundpriset för input) när nya cacheposter skapas.
+Plantilldelningar är relativt stabila, men modellkataloger och tokenpriser ändras snabbare. Se tabellen nedan som en aktuell ögonblicksbild och använd GitHub Docs som källa innan du budgeterar eller utbildar andra om exakta priser.[^m1-4] Observera också att Anthropic-modeller tar ut en avgift för cache-skrivning (vanligtvis 1,25× grundpriset för input) när nya cacheposter skapas.[^m1-9]
 :::
 
 | Modell | Input $/M | Output $/M | Bäst för |
 |-------|-----------|------------|----------|
-| Claude Haiku 4.5 | $1,00 | $5,00 | Snabba ändringar, regex, tester |
-| Claude Sonnet 4.6 | $3,00 | $15,00 | Allmän utveckling |
-| Claude Opus 4.8 | $5,00 | $25,00 | Arkitektur, komplexa buggar |
-| Claude Fable 5 | $10,00 | $50,00 | Strategisk planering |
+| [Claude Haiku 4.5](https://docs.anthropic.com/en/docs/about-claude/models) | $1,00 | $5,00 | Snabba ändringar, regex, tester |
+| [Claude Sonnet 4.6](https://docs.anthropic.com/en/docs/about-claude/models) | $3,00 | $15,00 | Allmän utveckling |
+| [Claude Opus 4.8](https://docs.anthropic.com/en/docs/about-claude/models) | $5,00 | $25,00 | Arkitektur, komplexa buggar |
+| [Claude Fable 5](https://docs.anthropic.com/en/docs/about-claude/models) | $10,00 | $50,00 | Strategisk planering |
 
 OpenAI- och Google-modeller följer liknande mönster — lätta modeller är betydligt billigare.
 
-[^4]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Referenspriser per 1M tokens för ytterligare användning.
+[^m1-4]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Referenspriser per 1M tokens för ytterligare användning och källan till asymmetrin mellan input- och outputpriser.
 
 :::note[Auto-läge sparar automatiskt]
-Håll modellväljaren på "Auto" när möjligt. Copilot skickar enkla frågor till billigare modeller, vilket ger ditt team en rörlig rabatt.
+Håll modellväljaren på "Auto" när möjligt. Copilot skickar enkla frågor till billigare modeller, vilket ger ditt team en rörlig rabatt. Betalda planer får 10 % rabatt på modellkostnader vid automatiskt modellval.[^m1-7]
 :::
 
 ---
 
-## Företagsöverväganden
+## Företagsöverväganden 🟡
 
 Om du har Business eller Enterprise:
 
@@ -221,3 +217,8 @@ Nu när du förstår kostnadsmodellen kan du läsa om [hur Copilot bygger kontex
 - Auto-läge ger dig **automatiska rabatter** på enkla frågor
 
 *Beräknad lästid: 10 minuter*
+
+[^m1-6]: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs. Den anger att Copilots kodkompletteringar och förslag på nästa redigering inte faktureras i AI credits och förblir obegränsade för betalda planer.
+[^m1-7]: [About Copilot auto model selection](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub Docs. Betalda Copilot-planer får 10 % rabatt på modellkostnader vid användning av automatiskt modellval.
+[^m1-8]: [Content exclusion for GitHub Copilot](https://docs.github.com/en/copilot/concepts/context/content-exclusion) — GitHub Docs. Repository-administratörer, organisationsägare och enterpriseägare kan konfigurera Copilot att ignorera valda filer.
+[^m1-9]: [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing) — Anthropic Docs. Pristabellen listar separata priser för cache-skrivning, inklusive multiplikatorn för fem minuters cache-skrivning.

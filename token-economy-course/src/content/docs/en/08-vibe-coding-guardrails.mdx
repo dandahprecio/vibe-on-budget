@@ -7,17 +7,16 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe Coding Without the Debt
 
-Vibe coding — letting AI write your code while you focus on intent — is the fastest way to build software in 2026. But there's a catch: **static analysis warnings increase ~30% and code complexity ~41% after AI coding tool adoption (CMU study, arXiv:2511.04427)**, code duplication can rise 81% (GitClear 2026), and refactoring can drop ~60% (GitClear 2025). Why does this matter for your token budget? Because bad code creates rework. Rework creates more prompts, more agent loops, and more tokens.
+Vibe coding — letting AI write your code while you focus on intent — was named Collins Dictionary's 2025 Word of the Year [^m8-7], after Andrej Karpathy used the term in a February 2025 post [^m8-5]. But there's a catch: **Cursor adoption was associated with persistent increases in static-analysis warnings and code complexity** in a Carnegie Mellon study [^m8-1]. GitClear reported that duplicated blocks rose 81% from 2023 to 2026 [^m8-2], while its 2025 report found refactoring-related lines fell from 25% in 2021 to under 10% in 2024 [^m8-3]. Bad code creates rework, which creates more prompts, agent loops, and tokens.
 
 The fastest way to burn credits isn't a bad prompt — it's fixing bugs that shouldn't exist. The solution isn't to stop vibe coding; it's to build guardrails that prevent small quality shortcuts from becoming recurring token costs.
 
+*(See [Glossary](/vibe-on-budget/en/glossary) for vibe coding, agentic workflow, technical debt, and guardrail definitions.)*
+
 ---
 
-:::note[Case Study: Team Alpha]
-Team Alpha added a 15-line spec template, TDD for critical paths, and a pre-commit security audit prompt. Rework cycles dropped ~40%: 6,800 → 6,300 credits. The upfront cost of guardrails was ~500 tokens/day; the savings from fewer retries was ~5,000 tokens/day.
 :::
-
-## Vibe Coding or Agentic Workflow? A Decision Framework
+## 🟢 Vibe Coding or Agentic Workflow? A Decision Framework
 
 Not all projects need the same level of rigor. The key question is where your project falls on the **verification vs discovery** axis:
 
@@ -31,7 +30,7 @@ Not all projects need the same level of rigor. The key question is where your pr
 ```mermaid
 flowchart LR
     A[New Project] --> B{Business-critical?}
-    B -->|Yes| C[Agentic Workflow<br/>Full guardrails<br/>AGENTS.md + TDD + Review]
+    B -->|Yes| C[Agentic Workflow<br/>Full guardrails<br/>AGENTS.md + Test-Driven Development + Review]
     B -->|No| D{Vibe Coding<br/>Fast iteration<br/>Lightweight setup}
     D --> E{Prototype succeeds?}
     E -->|Yes| C
@@ -52,7 +51,7 @@ Go to [Module 6 — Project Setup](/vibe-on-budget/en/06-project-setup) and conf
 
 ---
 
-## The Four Failure Modes of AI-Generated Code
+## 🟡 The Four Failure Modes of AI-Generated Code
 
 Understanding where debt accumulates helps you catch it early:
 
@@ -77,13 +76,13 @@ AI excels at continuing patterns but struggles when no pattern exists yet. A vib
 
 ### 3. Bloated Functions
 
-A single AI response that handles "add user flow" may produce a 300-line function doing form validation, database writes, email notifications, and business logic — all in one place. The AI has no concept of SRP (Single Responsibility Principle).
+A single AI response that handles "add user flow" may produce a 300-line function doing form validation, database writes, email notifications, and business logic — all in one place. The AI has no concept of [SRP (Single Responsibility Principle)](https://en.wikipedia.org/wiki/Single-responsibility_principle).
 
 **Token Cost:** 300-line functions mean the agent reads the entire file as context for every related request.
 
 ### 4. Missing Edge Cases
 
-AI generates the happy path well. It forgets rate limits, retries, idempotency, background jobs, and what happens when the database is unreachable.
+AI generates the happy path well. It forgets rate limits, retries, [idempotency](https://en.wikipedia.org/wiki/Idempotence), background jobs, and what happens when the database is unreachable.
 
 **Token Cost:** Happy-path code that breaks in production triggers expensive debugging sessions.
 
@@ -111,7 +110,7 @@ flowchart LR
 
 ### Why Unsupervised Agents Burn Credits
 
-## The Winchester Mystery House Problem
+## 🟡 The Winchester Mystery House Problem
 
 There's a specific architectural anti-pattern that emerges when agents iterate without supervision. It's named after the famous mansion built without a coherent blueprint — and it's one of the most expensive forms of AI-generated technical debt.
 
@@ -139,7 +138,7 @@ When agents are allowed to iterate blindly, patching the codebase feature by fea
 
 Every redundant abstraction the agent invents is code that must be read, debugged, and eventually refactored — each step consuming tokens.
 
-### The 4-Step Prevention Methodology
+### 🟡 The 4-Step Prevention Methodology
 
 **1. One-Sentence Outcome**
 Before any code, write a single sentence that defines the desired input and output. Freeze it. This prevents requirements from swelling mid-stream — a primary cause of Winchester architecture.
@@ -174,15 +173,17 @@ These areas are **never** vibe-coded. When the task crosses into any of these, e
 - Real-time state synchronization
 - Payment processing
 
+Treat these as security-sensitive boundaries requiring human review and established controls, consistent with OWASP guidance for AI-assisted coding [^m8-6].
+
 :::caution[These aren't suggestions]
-Reports indicate that a WIRED investigation in 2026 identified nearly 2,000 vibe-coded applications that unintentionally exposed private customer data — simply because they were deployed to production without architectural oversight. Security-compromised code in critical territory becomes a security incident, not a technical debt item.
+A 2026 [WIRED](https://www.wired.com/story/thousands-of-vibe-coded-apps-expose-corporate-and-personal-data-on-the-open-web/) investigation reported that RedAccess researchers found more than 5,000 vibe-coded applications with virtually no security or authentication; around 40% exposed sensitive data [^m8-4]. Security-compromised code in critical territory becomes a security incident, not a technical debt item.
 :::
 
 Agentic coding works best for **integrating glue code, analysis tools, and bounded scripts** — not for inventing database layers or auth systems from scratch. When in doubt, use what's already proven.
 
 ---
 
-## Guardrail 1: Write a Spec First
+## 🟢 Guardrail 1: Write a Spec First
 
 Before telling an agent to "build the feature," write a lightweight spec:
 
@@ -210,33 +211,17 @@ Exclusions:
 
 A spec doesn't need to be long — 10–15 lines is enough to prevent the most expensive mistakes. The key sections: data model, API behavior, edge cases, and what *not* to change.
 
-:::note[Token Impact]
-A 15-line spec costs ~100 input tokens. An incorrect implementation requiring 3 revision rounds costs ~15,000 tokens. **ROI: ~150x.**
-:::
-
 :::tip[Store specs as `.prompt.md` files]
 Store specs for recurring features in `.prompt.md` files (e.g., `docs/user-profile-spec.prompt.md`). Reference them with `#file:` when starting work on that feature — the agent reads the file and follows the patterns you've defined.
 :::
 
 ---
 
-## Guardrail 2: TDD with Copilot
+## 🟢 Guardrail 2: [TDD (Test-Driven Development)](https://en.wikipedia.org/wiki/Test-driven_development) with Copilot
 
 Test-Driven Development pairs naturally with AI coding. The test defines the expected behavior — the AI just implements it. This catches the most common failure mode: **code that looks plausible but doesn't handle edge cases**.
 
-**How TDD changes the token math:**
-
-| Approach | Tokens | Quality Risk |
-|----------|--------|-------------|
-| "Build this feature" (no tests) | ~2K prompt, ~10K output | High — no verification |
-| "Write tests first, then implement" | ~3K prompt, ~12K output | Low — tests verify |
-| "Add tests after" | ~2K + ~5K output | Medium — tests biased by code |
-
-The token overhead of TDD is small (~3K input tokens) and pays for itself when the first test fails because the agent forgot an edge case.
-
-:::note[Token Impact]
-Tests add ~1K input tokens. A missed edge case caught in production costs ~30K tokens in debugging and fixes. **ROI: ~30x.**
-:::
+Use your provider's token accounting to compare the cost of writing tests first with the cost of later debugging and fixes. The useful comparison is project-specific; the guardrail is to make the expected behavior executable before implementation.
 
 **Practical workflow:**
 
@@ -255,7 +240,7 @@ flowchart LR
 
 ---
 
-## Guardrail 3: Review Automation
+## 🟢 Guardrail 3: Review Automation
 
 Manual code review is the bottleneck. Automate it with a second AI pass.
 
@@ -289,15 +274,11 @@ flowchart TD
     style E stroke:#50fa7b,stroke-width:2px
 ```
 
-The review loop typically converges in **2–3 cycles**. Different models catch different things — one might flag over-engineered solutions, another spots missing edge cases.
-
-:::note[Token Impact]
-A review pass costs ~2K tokens. A bug reaching production costs ~50K tokens. **ROI: ~25x.**
-:::
+Use as many review/fix cycles as the evidence requires. Different models can expose different blind spots, so keep the loop open until the findings are resolved and the tests pass.
 
 ---
 
-## Guardrail 4: Project Memory with `.prompt.md` Files
+## 🟢 Guardrail 4: Project Memory with `.prompt.md` Files
 
 `AGENTS.md` defines *how* the agent should behave — mode, scope, output format. Keep it lean (see [Module 6](/vibe-on-budget/en/06-project-setup)). But *what* the agent should know about your project — architecture, conventions, historical mistakes — belongs in separate `.prompt.md` files loaded on demand.
 
@@ -343,13 +324,10 @@ Before implementing, review #file:docs/known-issues.prompt.md. Do not repeat the
 `AGENTS.md` is sent on **every** agent interaction. `.prompt.md` files are sent only when you explicitly reference them. Keeping project memory separate from behavioral rules saves hundreds of tokens per agent step.
 :::
 
-:::note[Token Impact]
-A known-issues file costs ~100 tokens to load. Repeating a known mistake costs ~10K tokens in rework. **ROI: ~100x.**
-:::
 
 ---
 
-## Guardrail 5: Security as a Hard Gate
+## 🟢 Guardrail 5: Security as a Hard Gate
 
 Security vulnerabilities are the most expensive form of AI debt. Make security checks non-optional:
 
@@ -372,9 +350,6 @@ Security audit this function. Check for OWASP Top 10.
 List only critical and high severity issues. Code only.
 ```
 
-:::note[Token Impact]
-A security audit prompt costs ~500 tokens. A data breach costs millions of tokens in incident response and regulatory-penalty work. **ROI: immeasurable.**
-:::
 
 ---
 
@@ -388,10 +363,6 @@ About three months after starting to vibe code, do a focused audit:
 4. **Are permissions enforced on the backend?** — Never trust the frontend for security
 5. **Can the app deploy from a clean checkout?** — If not, you have dependency rot
 6. **Where are secrets stored?** — They should never be in frontend code or public env vars
-
-:::note[Token Impact]
-A 90-day audit costs ~2K tokens in review prompts. Finding and fixing systemic issues early prevents compounding token waste over months of agent sessions.
-:::
 
 ---
 
@@ -409,7 +380,7 @@ Guardrails work best with [Project Setup](/vibe-on-budget/en/06-project-setup) a
 
 ## Key Takeaways
 
-- CMU study (arXiv:2511.04427) found static analysis warnings increase ~30% and code complexity ~41% after AI coding tool adoption — guardrails are essential
+- A Carnegie Mellon study associated Cursor adoption with persistent increases in static-analysis warnings and code complexity [^m8-1] — guardrails are essential
 - Code quality is token economics: preventing rework costs fewer tokens than debugging and refactoring it later
 - Write a **lightweight spec** before asking the agent to build a feature
 - Use **TDD** — tests define behavior, AI implements it
@@ -419,3 +390,11 @@ Guardrails work best with [Project Setup](/vibe-on-budget/en/06-project-setup) a
 - Do a **90-day audit** to catch systemic issues before they compound
 
 *Estimated reading time: 10 minutes*
+
+[^m8-1]: [Speed at the Cost of Quality](https://arxiv.org/abs/2511.04427) — Carnegie Mellon University, 2025.
+[^m8-2]: [The Maintainability Gap: 2026 AI Code Quality Research](https://www.gitclear.com/the_ai_code_quality_maintainability_gap) — GitClear, 2026.
+[^m8-3]: [AI Copilot Code Quality: 2025 Data](https://www.gitclear.com/ai_assistant_code_quality_2025_research) — GitClear, 2025.
+[^m8-4]: [Thousands of Vibe-Coded Apps Expose Corporate and Personal Data](https://www.wired.com/story/thousands-of-vibe-coded-apps-expose-corporate-and-personal-data-on-the-open-web/) — WIRED, 2026.
+[^m8-5]: [Andrej Karpathy's February 2025 post](https://x.com/karpathy/status/1886192184808149383).
+[^m8-6]: [Secure Coding with AI Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Coding_with_AI_Cheat_Sheet.html) — OWASP.
+[^m8-7]: [Collins Word of the Year 2025](https://www.collinsdictionary.com/us/woty) — Collins Dictionary.

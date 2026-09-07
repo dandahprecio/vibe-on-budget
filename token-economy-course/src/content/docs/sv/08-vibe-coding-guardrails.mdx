@@ -7,17 +7,15 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe coding utan skulden
 
-Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — är det snabbaste sättet att bygga mjukvara 2026. Men det finns en hake: **statiska analysvarningar ökar ~30% och kodkomplexiteten ~41% efter att AI-kodverktyg införts (CMU-studie, arXiv:2511.04427)**, kodduplicering kan öka 81% (GitClear 2026) och refaktorering kan minska ~60% (GitClear 2025). Varför spelar det roll för din tokenbudget? Därför att dålig kod skapar omarbete. Omarbete skapar fler promptar, fler agentloopar och fler tokens.
+Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — utsågs till Collins Dictionaries årets ord 2025 [^m8-7], efter att Andrej Karpathy använde termen i ett inlägg i februari 2025 [^m8-5]. Men det finns en hake: **en CMU-studie kopplade införandet av Cursor till varaktiga ökningar av statiska analysvarningar och kodkomplexitet** [^m8-1]. GitClear rapporterade att duplicerade kodblock ökade 81% från 2023 till 2026 [^m8-2], medan deras rapport från 2025 visade att refaktoriseringsrelaterade rader minskade från 25% 2021 till under 10% 2024 [^m8-3]. Dålig kod skapar omarbete, vilket skapar fler promptar, agentloopar och tokens.
 
 Det snabbaste sättet att bränna credits är inte en dålig prompt — det är att åtgärda buggar som aldrig borde ha funnits. Lösningen är inte att sluta vibe-coda, utan att bygga skyddsräcken som hindrar små kvalitetsgenvägar från att bli återkommande tokenkostnader.
 
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av vibe coding, agentiskt arbetsflöde, teknisk skuld och skyddsräcken.)*
+
 ---
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha lade till en 15-raders specmall, TDD för kritiska flöden och en säkerhetsgranskningsprompt före commit. Omarbetscyklerna minskade med ~40%: 6 800 → 6 300 credits. Den initiala kostnaden för skyddsräckena var ~500 tokens/dag; besparingen från färre omförsök var ~5 000 tokens/dag.
-:::
-
-## Vibe coding eller agentiskt arbetsflöde? Ett beslutsramverk
+## 🟢 Vibe coding eller agentiskt arbetsflöde? Ett beslutsramverk
 
 Alla projekt behöver inte samma grad av noggrannhet. Nyckelfrågan är var projektet hamnar på axeln **verifiering kontra upptäckt**:
 
@@ -31,7 +29,7 @@ Alla projekt behöver inte samma grad av noggrannhet. Nyckelfrågan är var proj
 ```mermaid
 flowchart LR
     A[New Project] --> B{Business-critical?}
-    B -->|Yes| C[Agentic Workflow<br/>Full guardrails<br/>AGENTS.md + TDD + Review]
+    B -->|Yes| C[Agentic Workflow<br/>Full guardrails<br/>AGENTS.md + Test-Driven Development + Review]
     B -->|No| D{Vibe Coding<br/>Fast iteration<br/>Lightweight setup}
     D --> E{Prototype succeeds?}
     E -->|Yes| C
@@ -52,7 +50,7 @@ Gå till [Modul 6 — Projektsetup](/vibe-on-budget/sv/06-project-setup) och kon
 
 ---
 
-## De fyra felfelen med AI-genererad kod
+## 🟡 De fyra felfelen med AI-genererad kod
 
 Att förstå var skuld ackumuleras hjälper dig att fånga den tidigt:
 
@@ -77,13 +75,13 @@ AI är utmärkt på att fortsätta mönster men kämpar när inget mönster finn
 
 ### 3. Svällande funktioner
 
-Ett enda AI-svar som hanterar "lägg till användarflöde" kan producera en 300-raders funktion som gör formulärvalidering, databasskrivningar, e-postnotifieringar och affärslogik — allt på ett ställe. AI har inget koncept om SRP (Single Responsibility Principle).
+Ett enda AI-svar som hanterar "lägg till användarflöde" kan producera en 300-raders funktion som gör formulärvalidering, databasskrivningar, e-postnotifieringar och affärslogik — allt på ett ställe. AI har inget koncept om [SRP (Single Responsibility Principle)](https://en.wikipedia.org/wiki/Single-responsibility_principle).
 
 **Tokenkostnad:** 300-raders funktioner innebär att agenten läser hela filen som kontext för varje relaterad begäran.
 
 ### 4. Saknade gränsfall
 
-AI genererar glad pathen väl. Den glömmer rate limits, försök vid fel, idempotens, bakgrundsjobb och vad som händer när databasen inte är tillgänglig.
+AI genererar glad pathen väl. Den glömmer rate limits, försök vid fel, [idempotens](https://en.wikipedia.org/wiki/Idempotence), bakgrundsjobb och vad som händer när databasen inte är tillgänglig.
 
 **Tokenkostnad:** Glad-path-kod som går sönder i produktion utlöser dyra felsökningssessioner.
 
@@ -111,7 +109,7 @@ flowchart LR
 
 ### Varför oövervakade agenter bränner credits
 
-## Problemet med Winchester Mystery House
+## 🟡 Problemet med Winchester Mystery House
 
 Det finns ett särskilt arkitektoniskt antimönster som uppstår när agenter itererar utan övervakning. Det har fått sitt namn efter den berömda herrgården som byggdes utan en sammanhängande ritning — och är en av de dyraste formerna av AI-genererad teknisk skuld.
 
@@ -139,7 +137,7 @@ När agenter får iterera blint och patcha kodbasen funktion för funktion utan 
 
 Varje redundant abstraktion agenten hittar på är kod som måste läsas, felsökas och till slut refaktoriseras — varje steg förbrukar tokens.
 
-### Metod i fyra steg för att förebygga problemet
+### 🟡 Metod i fyra steg för att förebygga problemet
 
 **1. Resultat i en mening**
 Innan någon kod skrivs, formulera en mening som definierar önskad indata och utdata. Frys den. Det hindrar kraven från att svälla under arbetets gång — en huvudorsak till Winchester-arkitektur.
@@ -174,15 +172,17 @@ Dessa områden ska **aldrig** vibe-codas. När uppgiften går in i något av dem
 - Synkronisering av realtidstillstånd
 - Betalningshantering
 
+Behandla dessa som säkerhetskänsliga gränser som kräver mänsklig granskning och etablerade kontroller, i linje med OWASP:s vägledning för AI-assisterad kodning [^m8-6].
+
 :::caution[Dessa är inte förslag]
-Rapporter tyder på att en WIRED-granskning 2026 identifierade nästan 2 000 vibe-codade applikationer som oavsiktligt exponerade privata kunddata — helt enkelt eftersom de distribuerades till produktion utan arkitektonisk tillsyn. Säkerhetskomprometterad kod i kritiska områden blir en säkerhetsincident, inte en post för teknisk skuld.
+En [WIRED](https://www.wired.com/story/thousands-of-vibe-coded-apps-expose-corporate-and-personal-data-on-the-open-web/)-granskning från 2026 rapporterade att RedAccess-forskare hittade över 5 000 vibe-codade applikationer med i praktiken ingen säkerhet eller autentisering; omkring 40% exponerade känsliga data [^m8-4]. Säkerhetskomprometterad kod i kritiska områden blir en säkerhetsincident, inte en post för teknisk skuld.
 :::
 
 Agentiskt kodande fungerar bäst för **integrering av limkod, analysverktyg och avgränsade skript** — inte för att uppfinna databaslager eller auth-system från grunden. Använd det som redan är beprövat när du är osäker.
 
 ---
 
-## Skyddsräcke 1: Skriv en spec först
+## 🟢 Skyddsräcke 1: Skriv en spec först
 
 Innan du ber en agent att "bygga funktionen", skriv en lättviktsspec:
 
@@ -210,33 +210,17 @@ Undantag:
 
 En spec behöver inte vara lång — 10–15 rader räcker för att förhindra de dyraste misstagen. Nyckelsektionerna: datamodell, API-beteende, gränsfall och vad som *inte* ska ändras.
 
-:::note[Tokenpåverkan]
-En spec på 15 rader kostar ~100 input-tokens. En felaktig implementation som kräver 3 revideringsrundor kostar ~15 000 tokens. **ROI: ~150x.**
-:::
-
 :::tip[Spara specar som `.prompt.md`-filer]
 Spara specar för återkommande funktioner i `.prompt.md`-filer (t.ex. `docs/user-profile-spec.prompt.md`). Referera till dem med `#file:` när du börjar arbeta med funktionen — agenten läser filen och följer mönstren du definierat.
 :::
 
 ---
 
-## Skyddsräcke 2: TDD med Copilot
+## 🟢 Skyddsräcke 2: [TDD (Test-Driven Development)](https://en.wikipedia.org/wiki/Test-driven_development) med Copilot
 
 Testdriven utveckling passar naturligt ihop med AI-kodning. Testet definierar förväntat beteende — AI implementerar bara. Detta fångar det vanligaste felet: **kod som ser korrekt ut men inte hanterar gränsfall**.
 
-**Hur TDD ändrar token-matematiken:**
-
-| Tillvägagångssätt | Tokens | Kvalitetsrisk |
-|----------|--------|-------------|
-| "Bygg denna funktion" (inga tester) | ~2K prompt, ~10K output | Hög — ingen verifiering |
-| "Skriv tester först, implementera sen" | ~3K prompt, ~12K output | Låg — tester verifierar |
-| "Lägg till tester efteråt" | ~2K + ~5K output | Mellan — tester påverkas av koden |
-
-Token-omkostnaden för TDD är liten (~3K input-tokens) och betalar sig själv när första testet misslyckas för att agenten glömde ett gränsfall.
-
-:::note[Tokenpåverkan]
-Tester lägger till ~1K input-tokens. Ett missat gränsfall som upptäcks i produktion kostar ~30K tokens i felsökning och fixar. **ROI: ~30x.**
-:::
+Använd leverantörens tokenredovisning för att jämföra kostnaden för att skriva tester först med kostnaden för senare felsökning och fixar. Jämförelsen är projektspecifik; skyddsräcket är att göra det förväntade beteendet körbart före implementationen.
 
 **Praktiskt arbetsflöde:**
 
@@ -255,7 +239,7 @@ flowchart LR
 
 ---
 
-## Skyddsräcke 3: Automatiserad granskning
+## 🟢 Skyddsräcke 3: Automatiserad granskning
 
 Manuell kodgranskning är flaskhalsen. Automatisera den med en andra AI-genomgång.
 
@@ -289,15 +273,11 @@ flowchart TD
     style E stroke:#50fa7b,stroke-width:2px
 ```
 
-Granskningsloopen konvergerar vanligtvis på **2–3 cykler**. Olika modeller fångar olika saker — en kan flagga överkonstruerade lösningar, en annan upptäcker saknade gränsfall.
-
-:::note[Tokenpåverkan]
-En granskningsrunda kostar ~2K tokens. En bugg som når produktion kostar ~50K tokens. **ROI: ~25x.**
-:::
+Använd så många gransknings- och fixcykler som bevisen kräver. Olika modeller kan synliggöra olika blindfläckar, så fortsätt tills fynden är åtgärdade och testerna passerar.
 
 ---
 
-## Skyddsräcke 4: Projektminne med `.prompt.md`-filer
+## 🟢 Skyddsräcke 4: Projektminne med `.prompt.md`-filer
 
 `AGENTS.md` definierar *hur* agenten ska bete sig — läge, omfattning och outputformat. Håll den smal (se [Modul 6](/vibe-on-budget/sv/06-project-setup)). Men *vad* agenten ska veta om ditt projekt — arkitektur, konventioner och historiska misstag — hör hemma i separata `.prompt.md`-filer som laddas vid behov.
 
@@ -343,13 +323,10 @@ Before implementing, review #file:docs/known-issues.prompt.md. Do not repeat the
 `AGENTS.md` skickas vid **varje** agentinteraktion. `.prompt.md`-filer skickas endast när du uttryckligen refererar till dem. Att hålla projektminnet separat från beteenderegler sparar hundratals tokens per agentsteg.
 :::
 
-:::note[Tokenpåverkan]
-En fil med kända problem kostar ~100 tokens att läsa in. Att upprepa ett känt misstag kostar ~10K tokens i omarbete. **ROI: ~100x.**
-:::
 
 ---
 
-## Skyddsräcke 5: Säkerhet som hård spärr
+## 🟢 Skyddsräcke 5: Säkerhet som hård spärr
 
 Säkerhetsbrister är den dyraste formen av AI-skuld. Gör säkerhetskontroller icke-förhandlingsbara:
 
@@ -372,9 +349,6 @@ Säkerhetsgranska denna funktion. Kolla OWASP Top 10.
 Lista endast kritiska och allvarliga problem. Kod endast.
 ```
 
-:::note[Tokenpåverkan]
-En säkerhetsgranskningsprompt kostar ~500 tokens. Ett dataintrång kostar miljontals tokens i incidenthantering och arbete med regulatoriska sanktioner. **ROI: omätbar.**
-:::
 
 ---
 
@@ -388,10 +362,6 @@ Efter cirka tre månaders vibe-coding, gör en fokuserad granskning:
 4. **Är behörigheter kontrollerade på backend?** — Lita aldrig på frontend för säkerhet
 5. **Kan appen distribueras från en ren checkout?** — Om inte, har du beroenderöta
 6. **Var lagras hemligheter?** — De ska aldrig finnas i frontend-kod eller publika env-variabler
-
-:::note[Tokenpåverkan]
-En 90-dagarsgranskning kostar ~2K tokens i granskningspromptar. Att hitta och åtgärda systemiska problem tidigt förhindrar att tokenspill byggs på under månader av agentsessioner.
-:::
 
 ---
 
@@ -409,7 +379,7 @@ Skyddsräcken fungerar bäst med [Projektsetup](/vibe-on-budget/sv/06-project-se
 
 ## Viktiga slutsatser
 
-- CMU-studien (arXiv:2511.04427) visade att statiska analysvarningar ökar ~30% och kodkomplexiteten ~41% efter att AI-kodverktyg införts — skyddsräcken är nödvändiga
+- En CMU-studie kopplade Cursor-användning till varaktiga ökningar av statiska analysvarningar och kodkomplexitet [^m8-1] — skyddsräcken är nödvändiga
 - Kodkvalitet är tokenekonomi: att förhindra omarbete kostar färre tokens än att felsöka och refaktorera senare
 - Skriv en **lättviktsspec** innan du ber agenten bygga en funktion
 - Använd **TDD** — tester definierar beteende, AI implementerar
@@ -418,4 +388,12 @@ Skyddsräcken fungerar bäst med [Projektsetup](/vibe-on-budget/sv/06-project-se
 - **Säkerhetskontroller måste vara icke-förhandlingsbara** — verifiera auth, auktorisering, indatavalidering varje gång
 - Gör en **90-dagarsgranskning** för att fånga systemiska problem innan de växer
 
-*Beräknad lästid: 10 minuter*---
+*Beräknad lästid: 10 minuter*
+
+[^m8-1]: [Speed at the Cost of Quality](https://arxiv.org/abs/2511.04427) — Carnegie Mellon University, 2025.
+[^m8-2]: [The Maintainability Gap: 2026 AI Code Quality Research](https://www.gitclear.com/the_ai_code_quality_maintainability_gap) — GitClear, 2026.
+[^m8-3]: [AI Copilot Code Quality: 2025 Data](https://www.gitclear.com/ai_assistant_code_quality_2025_research) — GitClear, 2025.
+[^m8-4]: [Thousands of Vibe-Coded Apps Expose Corporate and Personal Data](https://www.wired.com/story/thousands-of-vibe-coded-apps-expose-corporate-and-personal-data-on-the-open-web/) — WIRED, 2026.
+[^m8-5]: [Andrej Karpathy's February 2025 post](https://x.com/karpathy/status/1886192184808149383).
+[^m8-6]: [Secure Coding with AI Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Coding_with_AI_Cheat_Sheet.html) — OWASP.
+[^m8-7]: [Collins Word of the Year 2025](https://www.collinsdictionary.com/us/woty) — Collins Dictionary.

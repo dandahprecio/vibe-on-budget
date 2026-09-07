@@ -1,262 +1,163 @@
 ---
 title: "9. Helhetsbilden: Hur Copilot sparar tokens åt dig"
-description: En sammanfattning av hur Copilot sparar tokens automatiskt och hur hela optimeringsstacken hänger ihop
+description: En källbaserad sammanfattning av hur Copilots kodningsharness minskar tokenanvändning och latens
 ---
 
 import { Steps } from "@astrojs/starlight/components";
 
 # Helhetsbilden: Hur Copilot sparar tokens åt dig
 
-Varje modul hittills har handlat om **vad du kan göra** — skriva kortare promptar, rensa MCP-servrar, konfigurera instruktionsfiler. Denna modul handlar om **vad Copilot gör automatiskt för dig**.
+Tidigare moduler fokuserade på användarstyrda val som promptstruktur, kontexturval och verktygskonfiguration. Den här modulen fokuserar på kodningsharnesset: lagret som sammanställer kontext, exponerar verktyg, kör agentloopen, tolkar verktygsanrop och omvandlar modellens output till åtgärder i editorn. [^m9-1]
 
-I modul 2 och 7 lärde du dig om promptcachning, Tool Search och automatiskt modellval — Copilots tre största interna optimeringar. Denna modul täcker de återstående delarna av stacken: outputkomprimering, anslutningsförbättringar, batchning och ingenjörskulturen som gör allt detta säkert att förlita sig på.
+VS Code-teamet beskriver arbetet med tokeneffektivitet som en pågående serie uppmätta förbättringar, inte som en enda optimering. För förändringar i harnesset uppger teamet att de använder A/B-experiment i produktion och offline-utvärderingar mot testsviter, och kontrollerar att uppgiftsframgången bibehålls eller förbättras medan tokenanvändningen minskar. [^m9-2]
 
-Medan du optimerar din sida, levererar VS Code- och GitHub-utvecklingsteamen infrastruktursförbättringar som minskar tokenförbrukning och latens utan någon användaråtgärd. Dessa optimeringar är osynliga — men de sparar fler tokens dagligen än alla prompt-tricks tillsammans.
+## 🟡 De osynliga optimeringarna
 
----
+Harnesset ligger mellan editorn och modellen. Det sammanställer prompten, hanterar verktygen som är tillgängliga för modellen, kör agentloopen och matar tillbaka verktygsresultat till senare turer. [^m9-1]
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha anpassade sitt arbetsflöde till Copilots interna optimeringar: långa sessioner för komplexa uppgifter, nya sessioner vid uppgiftsgränser och automatiskt modellval. När cachningen byggdes på över flera steg: 6 300 → 5 900 credits. Slutresultat: 14 200 → 5 900 — en minskning med 58%. De ligger nu 3 600 credits UNDER sin pooltilldelning på 9 500.
-:::
-
-## De osynliga optimeringarna
-
-Varje Copilot-förfrågan passerar genom **harnesset** (det agentiska ramverket i VS Code) innan den når modellleverantören. Harnessets jobb är att sammanställa kontext, hantera verktyg och dirigera förfrågningar. Sedan mitten av 2025 har harnesset varit fokus för en ihållande satsning på tokeneffektivitet.
-
-Resultatet är en stadig ström av små vinster som ackumuleras:
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av outputkomprimering, bakgrundsbatchning, serverless och kontinuerlig batchning.)*
 
 ```mermaid
 flowchart LR
-    subgraph Harness["VS Code Agentic Harness"]
-        Batching[Background Work Batching]
-        Output[Output Compression<br/>+ line-number removal]
-        Transport[Persistent connections]
+    subgraph Harness["VS Code coding harness"]
+        Context[Context assembly]
+        Tools[Tool exposure]
+        Loop[Agent loop]
+        Transport[Request transport]
     end
-    
-    subgraph Provider["Model Provider"]
-        Reliability[Quality validation]
-    end
-    
-    Batching --> Provider
-    Output --> Provider
-    Transport --> Provider
-    Reliability --> Provider
-    
-    style Harness stroke:#61afef,stroke-width:2px
-    style Provider stroke:#bd93f9,stroke-width:2px
+    Model[Model provider]
+    Context --> Model
+    Tools --> Model
+    Loop --> Model
+    Transport --> Model
+    Model --> Loop
 ```
 
-Optimeringarna delas in i två kategorier:
-- **Harness-nivå** (VS Code-teamet): hur kontext förbereds, batchas och levereras
-- **Leverantörsnivå** (OpenAI/Anthropic): hur modelltillstånd beräknas
+Diagrammet visar ansvarsområden som dokumenterats av VS Code. Det hävdar inte att varje förfrågan använder samma interna implementation. [^m9-1]
 
-Tillsammans bildar de en stack som gör varje agentsväng billigare, snabbare och säkrare än tidigare — utan någon ändring i koden du skriver.
+## 🟡 1. Outputkomprimering
 
----
+[VS Code](https://code.visualstudio.com/blogs) rapporterar att harnessarbetet omfattar outputkomprimering, bland annat borttagning av radnummer från genererad kod när dekorationerna inte tillför användbar betydelse. Den publicerade mätningen för outputkomprimering är **5,5 procents minskning av outputtokens**. [^m9-2]
 
-## 1. Outputkomprimering
+Samma artikel rapporterar att **Tool Search minskar tokenanvändningen med 9–11 procent** genom att undvika att ta med varje verktygsdefinition i varje förfrågan och i stället läsa in definitioner när de behövs. [^m9-2]
 
-Modelloutput är där kostnadsmultiplikatorn gör mest ont (4–8x inputkostnad per token). Harnesset tillämpar flera komprimeringstekniker på genererad output.
+Siffrorna beskriver VS Code-teamets mätningar för Copilot-harnesset. De är inte en universell komprimeringsgrad för alla modeller eller kodningsagenter. [^m9-2]
 
-### Vad som komprimeras
+## 🟡 2. Bakgrundsarbete och batchning
 
-- **Blankteckennormalisering**: redundanta blankrader och indrag i kodblock komprimeras
-- **Borttagning av radnummer**: diff-vyer inkluderar ofta radnummerdekorationer som inte tjänar något semantiskt syfte — harnesset tar bort dem innan tokenräkning
-- **Förklaringskomprimering**: när modellen genererar utförliga förklaringar tillsammans med kod kan harnesset trunkera eller strukturera outputen
+Harnessartikeln beskriver agentisk kodning som en iterativ loop där harnesset hanterar kontext och verktygsresultat mellan modellanrop. Den arkitekturen gör bakgrundsarbete, som kontext- och verktygshantering, till en del av systemet runt modellförfrågan snarare än av modellen ensam. [^m9-1]
 
-### Siffrorna
+Artikeln om tokeneffektivitet rapporterar batchning av bakgrundsarbete under inaktiva perioder som en av optimeringarna teamet utvärderat. Källan stöder batchningsbeteendet, men publicerar inte de före- och eftermätningar av antal förfrågningar som fanns i en tidigare version av lektionen. Därför återges de inte här. [^m9-2]
 
-VS Code-teamet fann att outputkomprimering ensam minskar fakturerbara output-tokens med **~5,5%** i genomsnitt. Tool Search (att skjuta upp verktygsscheman) sparar ytterligare **~9–11%** genom att läsa in fullständiga verktygsdefinitioner endast när de behövs. I kombination med code-only-instruktioner (Modul 4) kan output-tokens minska med 70%+.
+## 🟡 3. [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)-förbättringar
 
----
+VS Code rapporterar att beständiga WebSocket-anslutningar minskar medianen för **TTFT (Time-To-First-Token) med 19 procent**. Detta är ett mått på latens, inte en minskning av antalet genererade tokens. Anslutningarna använder också [TLS (Transport Layer Security)](https://en.wikipedia.org/wiki/Transport_Layer_Security) för transportsäkerhet. [^m9-2]
 
-## 2. Batchning av bakgrundsarbete
+Snabbare transport kan ändra hur lång tid en agentisk tur tar, men den citerade källan visar inte att WebSockets minskar övergivna sessioner, antalet återförsök eller förbrukningen av autentiseringstokens. Sådana orsakssamband hävdas därför inte här. [^m9-2]
 
-Agentiska sessioner genererar mycket bakgrundsarbete: kontexthämtning, inbäddningsberäkning, sökindexering och tillståndshantering. Varje bakgrundsoperation var, tills nyligen, en oberoende förfrågan.
+## 🟡 4. Evidensbaserad optimering
 
-**Före batchning**: varje bakgrundsoperation utlöste sin egen tur-och-retur. Kontext hämtades, sedan beräknades inbäddningar, sedan löstes verktygsscheman — varje steg lade till latens och tokenomkostnad för mellanliggande tillstånd.
+VS Code-teamet säger att de utvärderar harnessförändringar med A/B-experiment i produktion och offline-utvärderingar mot testsviter, där uppgiftsframgången måste bibehållas eller förbättras samtidigt som tokenanvändningen minskar. [^m9-2]
 
-**Efter batchning**: bakgrundsarbete köas och exekveras i batchar under inaktiva perioder. Harnesset samlar pågående operationer och löser dem i en enda omgång.
+Processen stöder jämförelser mellan kontroll- och behandlingsgrupper, men den citerade artikeln publicerar inte värdena för uppgiftsframgång, latens eller trohet från exempeltabellen som tidigare fanns i lektionen. Tabellen har tagits bort i stället för att presentera osourcade siffror som mätningar. [^m9-2]
 
-```mermaid
-sequenceDiagram
-    participant Agent as Agent Loop
-    participant Harness as Harness
-    participant Provider as Model Provider
-    
-    Note over Agent,Provider: Before batching
-    Agent->>Harness: Turn 1
-    Harness->>Provider: Request + context
-    Provider->>Agent: Response
-    Harness->>Harness: Fetch context (separate request)
-    Harness->>Harness: Compute embed (separate request)
-    Harness->>Harness: Index results (separate request)
-    
-    Note over Agent,Provider: After batching
-    Agent->>Harness: Turn 2
-    Harness->>Harness: Queue: fetch + embed + index
-    Harness->>Provider: Request + context
-    Provider->>Agent: Response
-    Note over Harness: Background batch executes<br/>during user think time
-    Harness->>Harness: All pending work in one batch
-```
-
-Effekten är mest synlig i längre sessioner (5+ steg). Utan batchning bär de första stegen omkostnad från installationsarbete. Med batchning fördelas den omkostnaden över sessionens livscykel.
-
----
-
-## 3. WebSocket-förbättringar
-
-Agentiska sessioner använde traditionellt kortlivade HTTP-anslutningar — varje steg etablerade en ny anslutning, skickade begäran, tog emot svar och stängde.
-
-Under 2026 flyttade GitHub Copilot i VS Code till **beständiga WebSocket-anslutningar** för agentiska sessioner. Detta minskar inte direkt tokenantalet, men det minskar **tiden till första token med ~19%** (median-TTFT) och eliminerar TLS-handskakningsomkostnaden vid varje steg.
-
-För tokenekonomin innebär snabbare svar:
-- **Färre övergivna sessioner** — användare väntar mindre, så de är mindre benägna att starta en ny tråd
-- **Lägre återförsökskostnad** — när ett steg misslyckas är återsändning över WebSocket snabbare än att återetablera HTTPS
-- **Bättre återanvändning av autentisering** — beständiga anslutningar bibehåller autentiseringstillstånd, vilket undviker redundanta autentiseringstokens
-
----
-
-## 4. A/B-experimentkultur
-
-Varje optimering som nämnts här validerades med samma process: **A/B-experiment i produktion plus offline-utvärderingar mot testsviter**.
-
-VS Code-teamets regel: en optimering lanseras endast om uppgiftsframgångsfrekvensen bibehålls eller förbättras medan tokenanvändningen minskar. Detta förhindrar det vanliga feltillståndet att optimera för tokenantal på bekostnad av kvalitet.
-
-### Exempel: Experiment med outputkomprimering (illustrativt)
-
-| Mått | Kontroll | Behandling (komprimering) |
-|--------|---------|------------------------|
-| Uppgiftsframgång | 83% | 83% (oförändrad) |
-| Median output-tokens | 4 800 | 4 200 (-12%) |
-| Median latens | 3,2s | 3,0s (-6%) |
-| Outputtrohet | 98% | 98% (oförändrad) |
-
-Outputkomprimering sparade tokens utan att ändra uppgiftsresultat eller outputtrohet.
-
-Denna kultur spelar roll för dig eftersom den innebär att dessa optimeringar är **säkra**. När Copilot sparar tokens bakom kulisserna skär den inte hörn. Samma uppgift utförs med färre resurser.
-
----
+GitHub-artikeln om kostnadseffektivitet beskriver på samma sätt effektivitet som ett problem för hela uppgiften: att minska en del av en förfrågan räcker inte om förändringen orsakar mer arbete någon annanstans i uppgiften. [^m9-3]
 
 ## Vad dessa optimeringar innebär för ditt arbetsflöde
 
-Den största insikten från förändringarna under huven: **harnesset vill samma sak som du** — färre tokens per slutförd uppgift. Optimeringarna fungerar bäst när ditt arbetsflöde är i linje med dem.
-
-### Gör
-
-- **Ge agenten ostörd tid** för komplexa uppgifter — bakgrundsarbete kan batchas under pauser
-- **Använd tydliga, fokuserade promptar** — komprimering fungerar bäst när den avsedda outputen är entydig
-- **Lita på harnesset** — outputkomprimering, batchning och anslutningsförbättringar är automatiska
-
-### Gör inte
-
-- **Behåll inte sessioner över orelaterade uppgifter** — gammal kontext förorenar svar och slösar tokens. En ny uppgift förtjänar en ny session.
-- **Optimera inte ett enda mätvärde isolerat** — lägre tokenantal är inte användbart om uppgiftskvaliteten sjunker
+- Ge komplexa uppgifter tillräckligt med ostörd tid för att harnesset ska hantera agentloopen och dess omgivande arbete; harnesset ansvarar för kontextsammanställning, verktygsexponering och återkoppling av verktygsresultat. [^m9-1]
+- Håll promptar fokuserade och kontexten relevant. GitHubs vägledning rekommenderar att välja lämplig modell, strukturera promptar och lägga till skyddsräcken för att slutföra uppgifter effektivare och använda färre AI-credits. [^m9-4]
+- Bedöm en optimering utifrån slutförd uppgiftskvalitet och resursanvändning tillsammans, eftersom VS Code:s utvärderingsprocess uttryckligen kontrollerar uppgiftsframgång tillsammans med tokenanvändning. [^m9-2]
 
 ### En varning: Fällan med lokala mätvärden
 
-Det är frestande att mäta dina egna tokenbesparingar med en lokal räknare och förklara seger. Men som GitHub-bloggen noterar kan **lokala mätvärden vara missvisande**. En optimering som minskar input-tokens med 15% kan öka output-tokens med 25% eftersom modellen kompenserar med mer utförlig kod.
+Tokenantalet är inte ensamt ett komplett mått på effektivitet i kodningsuppgifter. GitHubs kostnadseffektivitetsdiskussion betonar att hela uppgiften ska utvärderas i stället för ett enda lokalt mått, eftersom arbete som sparas i ett steg kan kompenseras av extra arbete i ett annat. [^m9-3]
 
-Harness-nivåns optimeringar mäts *holistiskt* — total kostnad per slutförd uppgift, inte tokenantal per steg. Detta är rätt mätvärde. Ditt jobb är att skriva bra kod och tydliga promptar; harnesset sköter resten.
+## 🔴 5. Infrastrukturekonomi (för självhostade modeller)
 
----
+Team som kör egna modeller måste jämföra pris per token med kostnaden för att hålla dedikerad hårdvara tillgänglig. Serverless-inferens debiteras efter förbrukning, medan dedikerad infrastruktur debiteras för provisionerad beräkningskapacitet. Avvägningen beror på genomströmning och utnyttjandegrad. [^m9-5]
 
-## 5. Infrastrukturekonomi (för självhostade modeller)
+### Serverless kontra dedikerad GPU
 
-Medan de flesta Copilot-användare förlitar sig på GitHubs hanterade infrastruktur möter team som kör egna modeller ytterligare kostnadsavvägningar. Det här avsnittet går igenom valet mellan serverless och dedikerade GPU:er.
-
-### Serverless vs dedikerad GPU
-
-För företag som kör egna modeller påverkar valet av driftmodell kostnaden per token kraftigt. Formeln för brytpunkten:
+För en dedikerad GPU kan den effektiva kostnaden per miljon tokens beräknas från GPU-priset per timme, genomströmningen och den ihållande utnyttjandegraden:
 
 $$
-\mathrm{Cost\ per\ Million} = \left( \frac{R}{T \times 3600 \times U} \right) \times 1\,000\,000
+\mathrm{Cost\ per\ Million} = \frac{R}{T \times 3600 \times U} \times 1{,}000{,}000
 $$
 
-Där $R$ = hårdvarukostnad/timme, $T$ = maximal genomströmning (tokens/sekund), $U$ = utnyttjandegrad.
+Här är $R$ GPU-priset per timme, $T$ genomströmningen i tokens per sekund och $U$ utnyttjandegraden. Detta är kostnadsmodellen som publicerats för den uppmätta H200-jämförelsen. [^m9-6]
 
-| Utnyttjandegrad | Effektiva tokens/timme | Kostnad per miljon |
-|-------------|----------------------|------------------|
-| 10% | 43 200 | $46,30 |
-| 25% | 108 000 | $18,52 |
-| 50% | 216 000 | $9,26 |
-| 80% | 345 600 | $5,79 |
+DigitalOcean-benchmarken rapporterar en NVIDIA [H200 GPU](https://www.nvidia.com/en-us/data-center/h200/) för **3,44 dollar per GPU-timme**, med Llama 3.3 70B, FP8-kvantisering och vLLM. Den uppmätta kostnaden varierade från **20,32 dollar per miljon outputtokens vid batch 1** till **0,45 dollar per miljon outputtokens vid batch 128**, vilket visar varför trafikprofil och batchning spelar roll. [^m9-6]
 
-*Baserat på en standardiserad GPU för $2,00/timme och medelstor genomströmning på 120 tokens/sekund.*
+Samma benchmarksammanfattning rapporterar **0,65 dollar per miljon tokens** för den jämförda serverless-tjänsten och en **brytpunkt på 72,2 procents ihållande utnyttjandegrad** för det dedikerade H200-scenariot. Vid 40 procents utnyttjandegrad rapporteras **1,173 dollar per miljon tokens** för den dedikerade konfigurationen. [^m9-7]
 
-:::caution[Utnyttjandefällan]
-För en modern H200-GPU-instans på $3,44/timme jämfört med serverless på $0,65/M tokens behöver du **72,2% konstant utnyttjandegrad** dygnet runt bara för att nå brytpunkten. Vid en mer realistisk utnyttjandegrad på 40% (vanligt för ryckiga agentiska arbetsflöden) stiger den effektiva kostnaden till **$1,173/M — en premie på 80% jämfört med serverless**.
+| Uppmätt konfiguration | Rapporterat resultat |
+|---|---:|
+| H200, batch 1 | 20,32 dollar / 1M outputtokens |
+| H200, batch 128 | 0,45 dollar / 1M outputtokens |
+| Brytpunkt dedikerad/serverless | 72,2 % ihållande utnyttjandegrad |
 
-Batchstorleken förstärker detta: inferens med en enda förfrågan (batch-1) kan kosta upp till $20,32/M tokens på grund av låg parallellisering av kärnorna. Kontinuerlig batchning med 64–128 förfrågningar sänker kostnaderna dramatiskt.
-:::
+Detta gäller den namngivna hårdvaran, modellen, ramverket, arbetsbelastningen och datumet i DigitalOcean-benchmarken. Det är inte universella priser för alla GPU:er eller leverantörer. [^m9-6]
 
-**Slutsatsen för agentiska arbetsflöden:** Serverless vinner för ryckiga, asynkrona agentsessioner. Dedikerad hårdvara lönar sig bara för kontinuerliga inferenspipelines med hög genomströmning. De flesta utvecklingsteam bör stanna på serverless och i stället fokusera på promptoptimering.
+**Slutsats:** ryckig trafik kan gynna användningsbaserad inferens, medan dedikerad hårdvara med kontinuerligt hög belastning kan ge bättre styckekonomi. Rätt val kräver uppmätt genomströmning och utnyttjandegrad för arbetsbelastningen, inte bara ett hårdvarupris. [^m9-5] [^m9-6]
 
----
+## 🟡 Så hänger det ihop: hela stacken
 
-## Helhetsbilden: hela stacken
+Den källbaserade stacken är lagerindelad: harnesset sammanställer kontext och verktyg, transporten påverkar latensen, modellserveringens infrastruktur bestämmer beräkningskostnaden och utvärderingen kontrollerar att kvaliteten bevaras. [^m9-1] [^m9-2] [^m9-5]
 
 ```mermaid
-pie title Where Token Savings Come From<br/>(Remaining harness optimizations, per session)
-    "Tool search + output compression" : 30
-    "Background batching" : 25
-    "WebSocket improvements" : 20
-    "A/B validation" : 15
-    "Infrastructure economics" : 10
+flowchart TD
+    User[User prompt and workspace] --> Harness[Harness: context, tools, agent loop]
+    Harness --> Transport[Transport and batching]
+    Transport --> Model[Model inference]
+    Model --> Evaluation[Task-quality and token evaluation]
+    Evaluation --> Harness
 ```
 
-Den fullständiga optimeringsstacken kombinerar automatiska förbättringar i harnesset, leverantörernas funktioner och de tekniker du styr direkt. Denna modul fokuserade på de återstående delarna i harnesset; tidigare moduler täcker de andra lagren. Stacken fungerar bäst tillsammans med användarteknikerna från modul 4–8: fokuserade promptar, mager projektkontext, disciplinerad verktygsanvändning och skyddsräcken som håller uppgifterna på rätt spår.
-
----
-
-## Team Alpha: Hela resan
-
-| Milstolpe | Credits/månad | Vad ändrades |
-|-----------|--------------|--------------|
-| Startpunkt | 14 200 | Första UBB-månaden, ingen optimering |
-| Efter modul 2 | 12 500 | Förstod kontextmodellen, stängde flikar |
-| Efter modul 3 | 11 800 | Aktiverade felsökningsloggning, hittade värsta mönstret |
-| Efter modul 4 | 8 900 | Snabba vinster #1, #4, #6 tillämpade |
-| Efter modul 5 | 8 200 | Engelska promptar, punktformat |
-| Efter modul 6 | 7 500 | Magra instruktioner, .copilotignore |
-| Efter modul 7 | 6 800 | MCP-rensning, automatiskt modellval |
-| Efter modul 8 | 6 300 | Specmall, TDD, säkerhetsgranskning |
-| Slutligt (modul 9) | 5 900 | Arbetsflödet anpassat till cachning/optimeringar |
-
-**Totala besparingar: 8 300 credits/månad (83 USD/månad). Pooltilldelning: 9 500 credits. Nu under budget.**
-
----
+Diagrammet är en syntes av ansvarsområdena och utvärderingsprocessen i de citerade VS Code- och GitHub-artiklarna. Det är inte en procentuell uppdelning av tokenbesparingar. [^m9-1] [^m9-2] [^m9-3]
 
 :::tip[Fortsätt lära dig]
-Gå tillbaka till [kontextmodellen](/vibe-on-budget/sv/02-context-model) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) för att tillämpa teknikerna som kompletterar Copilots automatiska optimeringar.
+Gå tillbaka till [kontextmodellen](/vibe-on-budget/sv/02-context-model) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) för att tillämpa tekniker som kompletterar harnesset. [^m9-1] [^m9-4]
 :::
-
----
 
 :::note[På horisonten: Tokeneffektivitet på modellnivå]
 <details>
 <summary>Klicka för att expandera — tekniker på forskningsstadiet</summary>
 
-Forskning flyttar tokeneffektiviteten djupare ner i stacken:
+Forskning riktar sig också mot modell- och inferenslagren:
 
-- **Kontextpruning** — algoritmer som tar bort icke-informativa tokens från träningsdata och tvingar modeller att fokusera på det som spelar roll.
-- **Gles Mixture-of-Experts (MoE)** — modeller med 48B+ totala parametrar men endast 2–3B aktiva under inferens, vilket dramatiskt minskar beräkningskostnaden per token.
-- **Multi-Token Prediction** — genererar flera tokens per framåtpass i stället för en, vilket förbättrar genomströmningen utan större modeller.
+- **Kontextpruning** väljer en föränderlig delmängd av prompttokens för beräkning. LazyLLM beskriver dynamiskt tokenurval under prefilling och decoding och rapporterar 2,34× snabbare prefilling för Llama 2 7B i en flerdokumentfrågesvarsuppgift med bibehållen noggrannhet. [^m9-8]
+- **Gles Mixture-of-Experts (MoE)** dirigerar tokens genom utvalda experter. SHAPE-artikeln beskriver låg beräkningskostnad per token i glesa MoE-modeller, minneskostnaden för att hålla expertpoolen laddad och konkurrenskraftig noggrannhet vid 20 och 40 procents expertpruning i de utvärderade basmodellerna. [^m9-9]
+- **Multi-Token Prediction** tillhandahåller flera framtida tokenprognoser för spekulativ decoding. Den citerade forskningen beskriver hur flera tokens kan genereras per steg samtidigt som autoregressiv generering stöds. [^m9-10]
 
-Dessa tekniker befinner sig på forskningsstadiet — de finns ännu inte i Copilot. Men de visar vart branschen är på väg: effektiviteten flyttar från dina promptar hela vägen ner till kislet.
+Dessa artiklar visar forskningsmetoder och uppmätta resultat i sina angivna experimentmiljöer. De visar inte att teknikerna är driftsatta i GitHub Copilot. [^m9-8] [^m9-9] [^m9-10]
 
 </details>
 :::
 
----
-
 ## Övning
 
-1. Öppna Cache Explorer i Agent Debug Logs för din senaste långa session. Hur hög var din cacheträff? Hur många input-tokens återanvändes?
+1. Öppna Cache Explorer i Agent Debug Logs för din senaste långa session. Hur hög var din cacheträff? Hur många inputtokens återanvändes?
 2. Stanna i en lång session i stället för att starta flera korta för din nästa komplexa uppgift. Jämför sessionens totala credits med din baslinje från modul 3.
-3. Gå igenom kursens Viktiga slutsatser från alla 9 moduler. Välj de 3 tekniker som skulle spara MEST tokens för dig. Tillämpa dem den här veckan.
+3. Gå igenom kursens Viktiga slutsatser från alla 9 moduler. Välj de 3 tekniker som skulle spara mest tokens för dig och tillämpa dem den här veckan.
 
 ## Viktiga slutsatser
 
-- Copilots harness levererar **kontinuerliga tokeneffektivitetsförbättringar** — ingen åtgärd krävs från din sida
+- Copilots harness sammanställer kontext, exponerar verktyg, kör agentloopen och matar tillbaka resultat till modellen. [^m9-1]
+- VS Code rapporterar 5,5 procent lägre outputtokenanvändning från outputkomprimering, 9–11 procent lägre tokenanvändning från Tool Search och 19 procent lägre median-TTFT från beständiga WebSocket-anslutningar i de citerade mätningarna. [^m9-2]
+- VS Code validerar förändringar med A/B-experiment i produktion och offline-utvärderingar mot testsviter. [^m9-2]
+- Kostnaden för dedikerade GPU:er beror på genomströmning, batchning och utnyttjandegrad; den citerade H200-benchmarken rapporterar en brytpunkt på 72,2 procent mot det jämförda serverless-priset. [^m9-6] [^m9-7]
+- Kontextpruning, gles MoE-pruning och multi-token prediction stöds här av forskningsartiklar, inte av ett påstående om att de är driftsatta i Copilot. [^m9-8] [^m9-9] [^m9-10]
+
+*Beräknad lästid: 7 minuter*
+
+[^m9-1]: [Kodningsharnesset bakom GitHub Copilot i VS Code](https://code.visualstudio.com/blogs/2026/05/15/agent-harnesses-github-copilot-vscode) — Julia Kasper, Megan Rogge och Aaron Munger, Visual Studio Code, 15 maj 2026.
+[^m9-2]: [Förbättrad tokeneffektivitet för GitHub Copilot i VS Code](https://code.visualstudio.com/blogs/2026/06/17/improving-token-efficiency-in-github-copilot) — Ryan Caldwell och Bhavya U, Visual Studio Code, 17 juni 2026.
+[^m9-3]: [Så gör vi AI-kodning mer kostnadseffektiv utan att offra uppgiftskvaliteten](https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/) — GitHub, 2026.
+[^m9-4]: [Optimera din AI-användning för att maximera effektiviteten och minska kostnaden](https://docs.github.com/en/copilot/tutorials/optimize-ai-usage) — GitHub Docs, 2026.
+[^m9-5]: [LLM-inferenskostnad per token: jämförelse mellan serverless och dedikerad drift](https://lyceum.technology/magazine/inference-cost-per-token-provider-comparison/) — Maximilian Niroomand, Lyceum Technology, 2026.
+[^m9-6]: [Tokenekonomi för olika trafikprofiler på dedikerade GPU:er](https://www.digitalocean.com/community/tutorials/llm-inference-cost) — DigitalOcean Community, 8 juli 2026.
+[^m9-7]: [Inferenskostnadsmodellen som ingen har publicerat: tokenekonomi för olika trafikprofiler på dedikerade GPU:er](https://daily.dev/posts/the-inference-cost-model-nobody-has-published-token-economics-across-traffic-profiles-on-dedicated--ddrg6yxfh) — DigitalOcean Community, 8 juli 2026.
+[^m9-8]: [LazyLLM: Dynamisk tokenpruning för effektiv inferens med lång kontext](https://arxiv.org/abs/2407.14057) — Minsik Cho, Thomas Merth, Sachin Mehta, Mohammad Rastegari och Mahyar Najibi, arXiv, 2024.
+[^m9-9]: [SHAPE: Koalitionsmedveten expertpruning för glesa Mixture-of-Experts-LLM:er](https://arxiv.org/abs/2606.09886) — Alizen et al., arXiv, inskickad 3 juni 2026.
+[^m9-10]: [Snabbare språkmodeller med bättre prediktion av flera tokens](https://arxiv.org/abs/2410.17765) — arXiv, 2024.

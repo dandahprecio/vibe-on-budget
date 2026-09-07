@@ -7,19 +7,17 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Agenter, verktyg och MCP-hygien
 
-Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och det snabbaste sättet att bränna AI Credits. En ooptimerad agentloop kan förbruka **10x fler tokens** än samma uppgift i Edit-läge (författarens uppskattning baserad på typiskt djup i agentloopar).
+Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och de kan öka förbrukningen eftersom agenter kan använda verktyg och iterera genom en uppgift.[^m7-1]
 
 Denna modul lär dig när du ska använda agenter, hur du avgränsar dem och hur du hindrar MCP-servrar från att tyst dränera din budget.
 
 ---
 
-:::note[Fallstudie: Team Alpha]
-Team Alpha hade 12 anslutna MCP-servrar — de flesta installerade "för säkerhets skull". De bantade ner till 3 (filsystem, terminal, GitHub), skapade VS Code-profiler och ställde modellväljaren på Auto. Resultat: 7 500 → 6 800 credits. Deras dagar med "regex i Opus" var över.
-:::
-
-## Agentloopen
+## 🟢 Agentloopen
 
 Varje agentuppgift följer en kontinuerlig återkopplingscykel med fem steg:
+
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av agentloop, harness, verktygsregister och inbäddningsvektor.)*
 
 ```mermaid
 flowchart LR
@@ -44,7 +42,7 @@ flowchart LR
 | **Testa** | Agenten kör tester och kontrollerar resultat | Verktygsanrop (terminal) + input (testutdata) |
 | **Iterera** | Agenten åtgärdar fel och förfinar | Hela loopen startar om — sammansatt kostnad |
 
-Att förstå loopen förklarar varför agentläge kostar **5–50K tokens** per uppgift (författarens uppskattning baserad på typiskt loopdjup och kontextstorlek): hela cykeln körs flera gånger. Varje iteration adderar kostnaden för alla tidigare steg.
+Varje ytterligare iteration lägger till fler meddelanden, verktygsresultat och kontext i konversationen. VS Code beskriver kontextfönstret som summan av användarmeddelande, historik, instruktioner, refererade filer och verktygsutdata.[^m7-2]
 
 :::tip[Var du ska bryta loopen]
 Det mest tokeneffektiva stället att bryta loopen är efter **Testa**. Om testerna går igenom, stoppa agenten — låt den inte iterera för att "förbättra" fungerande kod. Använd stoppvillkor: "När testerna går igenom, stoppa och vänta på granskning."
@@ -52,7 +50,7 @@ Det mest tokeneffektiva stället att bryta loopen är efter **Testa**. Om tester
 
 ---
 
-## De tre lägena och deras kostnader
+## 🟢 De tre lägena och deras kostnader[^m7-11]
 
 Copilot Chat har tre interaktionslägen med dramatiskt olika token-profiler:
 
@@ -69,9 +67,9 @@ flowchart LR
 
 | Läge | Bäst för | Typisk tokenkostnad | Risk |
 |------|----------|-------------------|------|
-| **Ask** | Frågor, förklaringar, kodgranskning | ~500 input + ~300 output | Låg — ett samtal, inga verktyg |
-| **Edit** | Enkelfilsändringar, refaktorering | ~1-2K input + ~500 output | Låg — inga verktygsslingor |
-| **Agent** | Flertalsändringar, komplexa uppgifter | ~5-50K per uppgift | **Hög** — verktygsslingor förstärker kostnaden |
+| **[Ask Mode](https://code.visualstudio.com/docs/agents/overview)** | Frågor, förklaringar, kodgranskning | ~500 input + ~300 output | Låg — ett samtal, inga verktyg |
+| **[Edit Mode](https://code.visualstudio.com/docs/agents/overview)** | Enkelfilsändringar, refaktorering | ~1-2K input + ~500 output | Låg — inga verktygsslingor |
+| **[Agent Mode](https://code.visualstudio.com/docs/agents/overview)** | Flertalsändringar, komplexa uppgifter | ~5-50K per uppgift | **Hög** — verktygsslingor förstärker kostnaden |
 
 :::caution[Agentläge har högre baslinjeomkostnad]
 Även med verktygssökning laddar agentläge systeminstruktioner, verktygsregistret och filkontext före det första svaret. Baslinjen är högre än i Ask- eller Edit-läge — men verktygssökning hindrar oanvända verktygsscheman från att läggas till.
@@ -79,7 +77,7 @@ flowchart LR
 
 ---
 
-## Thinking Effort
+## 🟡 [Thinking Effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort)[^m7-3]
 
 Thinking effort styr hur mycket resonemang (thinking tokens) modellen använder för varje förfrågan. Högre effort innebär fler thinking tokens, vilket ökar latensen och förbrukningen av credits.
 
@@ -91,7 +89,7 @@ VS Code sätter standardvärden baserat på utvärderingar och har adaptivt reso
 
 ---
 
-## Den dolda kostnaden för MCP-servrar
+## 🟡 Den dolda kostnaden för MCP-servrar[^m7-4]
 
 Varje MCP-server du har ansluten registrerar sina verktyg i agentens verktygsregister. Före verktygssökning (mitten av 2025) injicerades det fullständiga schemat för varje verktyg i varje agentstegs kontextfönster. Med verktygssökning är bara registret (namn + korta beskrivningar) alltid närvarande — fullständiga scheman laddas vid behov. Se notisen nedan för detaljer.
 
@@ -116,28 +114,22 @@ flowchart TD
 ```
 
 :::note[Verktygssökning minskar denna omkostnad]
-Verktygssökning behåller endast verktygsnamn + korta beskrivningar i det alltid närvarande registret. Fullständiga scheman laddas först när modellen begär ett verktyg. Varje verktyg modellen använder medför fortfarande kostnaden för dess schema (~200 tokens).
+Verktygssökning behåller endast verktygsnamn + korta beskrivningar i det alltid närvarande registret. Fullständiga scheman laddas först när modellen begär ett verktyg. Varje verktyg modellen använder medför fortfarande kostnaden för dess schema (~200 tokens).[^m7-5][^m7-6]
 
 Före mitten av 2025 laddades alla scheman vid varje steg. Med verktygssökning laddas bara nödvändiga verktyg. Det är fortfarande viktigt att rensa bort oanvända MCP-servrar — det gör registret mindre och minskar risken att modellen väljer dyra verktyg för enkla uppgifter.
 :::
 
-### MCP-server-matematiken
+### 🟡 MCP-server-matematiken
 
-Varje server lägger till ungefär **verktyg × ~200 tokens per verktygsdefinition** i **baslinjen före verktygssökning**. Med verktygssökning är dagens kostnader cirka **60–75 % lägre**, eftersom bara begärda verktygsscheman laddas (plus det mindre alltid närvarande registret).
+En MCP-verktygsdefinition innehåller strukturerade metadata, bland annat namn, beskrivning och indataschema. Den serialiserade storleken varierar beroende på dessa fält, så uppskatta utifrån de faktiska definitionerna i stället för att multiplicera med en universell tokenkonstant.[^m7-6]
 
-| Scenario | MCP-servrar | Verktyg | Baslinje före verktygssökning / steg | Baslinje före verktygssökning, 10 steg | Dagens uppskattning med verktygssökning / steg | Dagens uppskattning, 10 steg |
-|----------|-------------|---------|--------------------------------------|------------------------------------------|-----------------------------------------------|-------------------------------|
-| Minimalt | 2 (fil + terminal) | ~10 | ~2 000 | ~20 000 | ~500–800 | ~5 000–8 000 |
-| Måttligt | 5 (git, db, fil, terminal, browser) | ~25 | ~5 000 | ~50 000 | ~1 250–2 000 | ~12 500–20 000 |
-| Tungt | 10+ (allt installerat) | ~50+ | ~10 000+ | ~100 000+ | ~2 500–4 000+ | ~25 000–40 000+ |
+| Scenario | Praktisk åtgärd |
+|----------|------------------|
+| Liten verktygsuppsättning | Behåll bara servrarna som behövs för uppgiften |
+| Större verktygsuppsättning | Använd verktygskonfiguration eller profiler för att begränsa den aktiva uppsättningen |
+| Okänd verktygsuppsättning | Inspektera de faktiska schemana innan du uppskattar kontextförbrukningen |
 
-Med Claude Sonnet-priser ($3/M input) kostar en enda tung 10-stegs agentuppgift **~$0.30** — bara från verktygsregistrets omkostnad.
-
-:::tip[Kontrollera din baslinje med /context]
-Kör `/context` i Copilot CLI mitt i en session för att se din System/Verktyg-förbrukning. I VS Code, uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
-:::
-
-### Så fungerar verktygssökning internt
+### 🔴 Så fungerar [verktygssökning](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) internt
 
 Harnessen har ett register över tillgängliga verktyg med korta beskrivningar och inbäddningsvektorer. I stället för att placera varje fullständigt schema i kontextfönstret använder den registret för att identifiera sannolika kandidater för den aktuella uppgiften. När modellen behöver ett verktyg hämtar harnessen verktygets fullständiga schema vid behov; verktyg som inte begärs förblir utanför kontexten.
 
@@ -160,9 +152,7 @@ flowchart TD
     style After stroke:#50fa7b,stroke-width:2px
 ```
 
-Verktygssökning är särskilt värdefull i MCP-tunga uppsättningar: typiska sessioner skickar bara 5–8 scheman i stället för 20–30, stora uppsättningar skickar omkring 10 i stället för 30, och enkla redigeringsuppgifter kan skicka inga scheman alls. Det minskar verktygsrelaterad kontext med ungefär **60–75 %**, medan varje verktyg modellen faktiskt använder fortfarande medför kostnaden för sitt schema.
-
-Till Claude Sonnet-priset för input ($3/M) kostar en enda tung agentuppgift på 10 steg cirka $0,30 — enbart från verktygsregistrets omkostnad (illustrativ uppskattning baserad på tabellen ovan).
+Verktygssökning är mest användbar när många verktyg är tillgängliga, eftersom relevansfiltrering kan minska irrelevant verktygskontext. Omvandla inte den kvalitativa nyttan till en fast besparingsprocent utan att mäta den egna arbetsbelastningen.[^m7-5]
 
 :::tip[Kontrollera din baslinje med /context]
 I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/Tools-tokens. I VS Code kan du uppskatta genom att räkna aktiva MCP-servrar × verktyg × ~200 tokens.
@@ -170,7 +160,7 @@ I Copilot CLI kan du köra `/context` mitt i sessionen för att se dina System/T
 
 ---
 
-## Så avgränsar du agenter för tokeneffektivitet
+## 🟡 Så avgränsar du agenter för tokeneffektivitet
 
 ### 1. Använd Ask- eller Edit-läge först
 
@@ -183,9 +173,9 @@ Börja alltid med det billigaste läget som kan lösa problemet. Agentläge är 
 
 **Tumregel:** Om uppgiften rör en fil, använd Edit-läge. Om det är en fråga, använd Ask-läge. Eskalera bara till Agent när uppgiften verkligen kräver flerfilskännedom eller verktygsexekvering.
 
-### 2. Skapa avgränsade anpassade agenter
+### 2. Skapa avgränsade [anpassade agenter](https://code.visualstudio.com/docs/agent-customization/overview)
 
-Istället för en enda `@workspace`-agent som laddar kontext från hela projektet, skapa domänspecifika agenter:
+Istället för en enda [`@workspace`](https://code.visualstudio.com/docs/chat/chat-participants)-agent som laddar kontext från hela projektet, skapa domänspecifika agenter:
 
 | Anpassad agent | Kontextomfång | Verktyg | Bäst för |
 |--------------|--------------|--------|----------|
@@ -194,7 +184,7 @@ Istället för en enda `@workspace`-agent som laddar kontext från hela projekte
 | **Testning** | `tests/`, `src/` | Läsa/skriva fil, terminal | Skriva tester |
 | **Säkerhet** | Alla | Läsa fil, säkerhets-MCP | Granskningar |
 
-Varje avgränsad agent laddar **långt färre verktygsdefinitioner** och ett **mycket mindre filträd** — vilket sparar 5 000–10 000+ tokens per uppgift.
+Varje avgränsad agent laddar **långt färre verktygsdefinitioner** och ett **mycket mindre filträd** — vilket sparar 5 000–10 000+ tokens per uppgift.[^m7-7]
 
 ### 3. Sätt stoppvillkor
 
@@ -233,7 +223,7 @@ Gå igenom dina VS Code-inställningar och inaktivera MCP-servrar du inte aktivt
 
 ## Batcha upprepade operationer
 
-Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i modellens kontextfönster. För deterministiska flöden eller masskörningar: använd ett script eller kommandoradsverktyg för att köra loopen utanför agentkonversationen och returnera bara slutresultatet till agenten.
+Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i modellens kontextfönster. För deterministiska flöden eller masskörningar: använd ett script eller kommandoradsverktyg för att köra loopen utanför agentkonversationen och returnera bara slutresultatet till agenten.[^m7-12]
 
 :::tip[Flytta upprepade operationer utanför konversationen]
 I stället för att be agenten köra och inspektera många liknande databasfrågor en i taget, skriv ett granskat script som kör frågebatchen och producerar en koncis sammanfattning. Kör scriptet via terminalverktyget och ge sedan sammanfattningen till modellen för analys. Benchmarka den scriptade och den interaktiva versionen av arbetsflödet först — besparingen beror på verktygen, resultaten och uppgiften.
@@ -243,7 +233,7 @@ I stället för att be agenten köra och inspektera många liknande databasfråg
 
 ### 5. Bygg en modellrouterstrategi
 
-Alla uppgifter kräver inte samma modell. En systematisk router kan spara **73 % av de dagliga API-kostnaderna** — från 15 dollar per dag till 4 dollar — genom att matcha uppgiftens komplexitet mot rätt modellnivå (författarens uppskattning baserad på en illustrativ arbetsbelastning).
+Alla uppgifter kräver inte samma modell. En router bör matcha uppgiftens komplexitet mot modellens kapacitet och pris. Det finns ingen auktoritativ källa för specifika besparingssiffror som 73 % eller 15 till 4 dollar, så de presenteras inte som generella resultat här.[^m7-8]
 
 | Uppgiftstyp | Primär (smart) | Reserv (billig) | Maxkostnad/uppgift |
 |-------------|----------------|-----------------|--------------------|
@@ -255,13 +245,13 @@ Alla uppgifter kräver inte samma modell. En systematisk router kan spara **73 %
 
 **Så tillämpar du detta i Copilot:**
 
-1. **Låt modellväljaren stå på Auto** — Copilot dirigerar enkla förfrågningar till billigare modeller automatiskt och sparar cirka 60–70 % på berättigade turer (Copilot-teamets interna uppskattning — oberoende verifiering ej tillgänglig; individuella resultat varierar beroende på arbetsbelastning).
+1. **Låt modellväljaren stå på Auto när det passar** — GitHub uppger att Auto bedömer uppgiftens komplexitet och systemets hälsa, dirigerar till en optimal modell och ger betalplaner 10 % rabatt på modellkostnader när Auto är valt.[^m7-8]
 2. **Byt manuellt för kända nivåer:** Haiku för regex, strängmanipulation, docstrings och boilerplate; Sonnet för generell utveckling och ändringar över flera filer; Opus för arkitekturgranskning, säkerhetsrevisioner och komplex felsökning.
 3. **Byt inte modell mitt i en session för en enstaka billig fråga** — cache-ombyggnaden kostar mer än besparingen.
-4. **Betala inte premium för enkelt arbete** — Opus för en strängdelning kostar 15 gånger mer än Haiku för samma resultat.
+4. **Betala inte premium för enkelt arbete** — Opus för en strängdelning kostar 15 gånger mer än Haiku för samma resultat.[^m7-9]
 
 :::tip[80/20-regeln för modellval]
-Ungefär 80 % av chattförfrågningarna är tillräckligt enkla för en lättviktsmodell (författarens uppskattning baserad på typisk förfrågningsmix). Om du låter väljaren stå på en premiummodell "för säkerhets skull" betalar du för mycket för 4 av 5 förfrågningar.
+Rätt modellmix beror på arbetsbelastningen. Använd Auto eller jämför publicerade modellpriser i stället för att anta att en fast andel av förfrågningarna passar en lättviktsmodell.
 :::
 
 ### Så fungerar automatiskt modellval
@@ -274,11 +264,11 @@ Automatiskt modellval klassificerar varje förfrågan med hjälp av uppgiftsinb�
 | Redigering i en fil eller liten refaktorering | Mellanklassmodell |
 | Redigering i flera filer, komplex planering eller verktygsorkestrering | Mest kapabla modell |
 
-Eftersom ungefär **60–70 % av förfrågningarna** är tillräckligt enkla för en billigare modell (Copilot-teamets interna uppskattning — oberoende verifiering ej tillgänglig; individuella resultat varierar beroende på arbetsbelastning) kan Auto minska modellrelaterade kostnader med cirka **60–70 %** för berättigade uppgifter, samtidigt som modeller med högre kapacitet används när de behövs.
+Eftersom Auto tar hänsyn till uppgiftens komplexitet och tillgänglighet kan funktionen reservera dyrare modeller för uppgifter som behöver dem. Besparingen beror på arbetsbelastningen och vilka modeller som ingår i planen.[^m7-8]
 
 ### 6. Fem subagentmönster som sparar tokens
 
-Forskning från Anthropic identifierar fem organisatoriska mönster för att strukturera agentarbete. Varje mönster har olika tokenkonsekvenser.
+Forskning från Anthropic identifierar fem organisatoriska mönster för att strukturera agentarbete. Varje mönster har olika tokenkonsekvenser.[^m7-10]
 
 | Mönster | Så fungerar det | Tokenpåverkan | Bäst för |
 |---------|-----------------|---------------|----------|
@@ -289,7 +279,7 @@ Forskning från Anthropic identifierar fem organisatoriska mönster för att str
 | **Utvärderare–optimerare** | En generator producerar, en utvärderare granskar och generatorn rättar | Vanligen 2–3 cykler, fångar fel tidigt | Kvalitetskritiskt och säkerhetskänsligt arbete |
 
 :::tip[Det mest tokeneffektiva mönstret]
-**Utvärderare–optimerare** sparar mest tokens i praktiken (författarens uppskattning). Att fånga ett fel i granskning kostar 2 000 tokens. Att rätta samma fel efter produktion kostar 50 000+ tokens genom felsökning, refaktorering och ny granskning.
+**Utvärderare–optimerare** lägger till en granskningsloop, så använd mönstret när kvalitetsvinsten motiverar den extra genereringen och utvärderingen. Anthropic presenterar det som ett komponerbart mönster, inte som en garanterad tokenbesparing.[^m7-10]
 :::
 
 **Praktisk slutsats:** Att namnge dessa mönster hjälper dig att välja rätt medvetet. För en komplex funktion över flera filer sparar Orkestrerare–arbetare tokens; för en säkerhetsrevision är Utvärderare–optimerare avgörande.
@@ -300,7 +290,7 @@ Forskning från Anthropic identifierar fem organisatoriska mönster för att str
 
 Att byta modell mitt i sessionen låter smart — använd Opus för arkitektur och byt sedan till Haiku för enkla följdfrågor. Men promptcacher är **modellspecifika**.
 
-**Anthropics officiella vägledning:** "Om du har kommit 100 000 tokens in i en konversation med Opus och vill ställa en enkel fråga blir det faktiskt dyrare att byta till Haiku än att låta Opus svara." (Källa: Anthropic Engineering Blog, *Prompt caching is everything*, april 2026.) Den nya modellen kan inte återanvända den gamla modellens cachade KV-tillstånd. Ett byte tvingar fram en fullständig cache-ombyggnad precis när sessionen är som störst.
+**Anthropics officiella vägledning:** "Om du har kommit 100 000 tokens in i en konversation med Opus och vill ställa en enkel fråga blir det faktiskt dyrare att byta till Haiku än att låta Opus svara." (Källa: Anthropic Engineering Blog, *Prompt caching is everything*, april 2026.) Den nya modellen kan inte återanvända den gamla modellens cachade KV-tillstånd. Ett byte tvingar fram en fullständig cache-ombyggnad precis när sessionen är som störst.[^m7-8]
 
 **Lösningen — subagenter:** Använd huvudsessionen för huvudmodellen och starta en billigare subagent för den enstaka enkla uppgiften. Subagenten börjar med en ny (kall) cache, men det är billigare än att bygga om hela huvudsessionskontexten.
 
@@ -312,9 +302,9 @@ Se [Modul 2 — Cachebrytande misstag](/vibe-on-budget/sv/02-context-model#vanli
 
 ---
 
-## Verktygssökning: Vad som händer internt
+## 🔴 [Verktygssökning](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer): Vad som händer internt
 
-VS Code Copilot använder en dubbl sökstrategi för att avgöra vilka verktyg som ska presenteras för modellen:
+VS Code Copilot använder en dubbl sökstrategi för att avgöra vilka verktyg som ska presenteras för modellen:[^m7-5]
 
 ```mermaid
 flowchart LR
@@ -343,7 +333,7 @@ Varje agentsteg kör om verktygssökningen mot din prompt. Om uppgiften ändras 
 
 ## Praktisk MCP-hygien-checklista
 
-1. **Granska månatligen** — lista alla anslutna MCP-servrar. Ta bort de som inte använts på 30 dagar.
+1. **Granska månatligen** — lista alla anslutna MCP-servrar. Ta bort de som inte använts på 30 dagar.[^m7-7]
 2. **Profilera dina sessioner** — skapa separata VS Code-profiler för olika arbetsflöden, var och en med bara de MCP-servrar som behövs.
 3. **Namnge verktyg väl** — använd beskrivande namn så att verktygssökning hittar dem utan extra kontext.
 4. **Föredra deterministiska verktyg** — för terminaluppgifter, kör kommandot manuellt och klistra in utdata istället för att låta agenten loopa.
@@ -373,3 +363,16 @@ Fortsätt med [Vibe coding utan skuld](/vibe-on-budget/sv/08-vibe-coding-guardra
 - VS Code-profiler med olika MCP-uppsättningar sparar **5 000–10 000+ tokens per session**
 
 *Beräknad lästid: 10 minuter*
+
+[^m7-1]: [Använd chatt i VS Code](https://code.visualstudio.com/docs/chat/chat-overview) — Microsoft, ej daterad; [Kontext](https://code.visualstudio.com/docs/agents/concepts/context) — Microsoft, ej daterad.
+[^m7-2]: [Kontext](https://code.visualstudio.com/docs/agents/concepts/context) — Microsoft, ej daterad.
+[^m7-3]: [Konfigurera thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort) — Microsoft, ej daterad.
+[^m7-4]: [Lägga till och hantera MCP-servrar i VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) — Microsoft, ej daterad; [Verktyg](https://modelcontextprotocol.io/specification/draft/server/tools) — Model Context Protocol, ej daterad.
+[^m7-5]: [Förbättra tokeneffektiviteten för GitHub Copilot i VS Code](https://code.visualstudio.com/blogs/2026/06/17/improving-token-efficiency-in-github-copilot) — Microsoft, 17 juni 2026.
+[^m7-6]: [Verktyg](https://modelcontextprotocol.io/specification/draft/server/tools) — Model Context Protocol, ej daterad; [Diskussion om MCP-verktygsscheman](https://github.com/modelcontextprotocol/modelcontextprotocol/issues/2808) — Model Context Protocol, ej daterad.
+[^m7-7]: [MCP-konfigurationsreferens](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) — Microsoft, ej daterad; [Anpassade agenter i VS Code](https://code.visualstudio.com/docs/agent-customization/custom-agents) — Microsoft, ej daterad.
+[^m7-8]: [Om Copilots automatiska modellval](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub, ej daterad.
+[^m7-9]: [Copilot-fakturering och priser](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub, ej daterad.
+[^m7-10]: [Bygga effektiva agenter](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic, 19 december 2024.
+[^m7-11]: [Chattlägen](https://code.visualstudio.com/docs/agents/chat/modes) — Microsoft, ej daterad; [Använd chatt i VS Code](https://code.visualstudio.com/docs/chat/chat-overview) — Microsoft, ej daterad.
+[^m7-12]: [Optimera din AI-användning för maximal effektivitet och lägre kostnad](https://docs.github.com/en/copilot/tutorials/optimize-ai-usage) — GitHub, ej daterad.
