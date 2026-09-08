@@ -1,0 +1,75 @@
+---
+title: Spara det som fungerar i projektet
+description: Spara återkommande, beprövade instruktioner i projektet utan att göra varje uppgift tyngre
+---
+
+## Vilken regel behöver du slippa upprepa?
+
+I [del 5](/vibe-on-budget/sv/agents-and-tools) såg du hur en agentuppgift kan avgränsas med ett tydligt mål, lämpliga verktyg och ett stoppvillkor. Nästa steg är att spara sådant som du märker att du behöver säga om och om igen.
+
+Börja inte med att skapa en komplett uppsättning specialfiler. Börja med ett faktiskt återkommande behov. Kanske behöver alla ändringar i projektet ha ett test, kanske ska en viss katalog inte ändras utan att du först har frågat, eller kanske finns en viktig säkerhetsgräns som lätt glöms bort. En bra sparad instruktion tar bort upprepning utan att ersätta ditt omdöme.
+
+## Spara rätt sak på rätt plats
+
+Tänk på fyra olika sorters information:
+
+- **Projektgemensamma regler** gäller nästan allt arbete i projektet. Exempel: ändra inte genererade filer och kör projektets relevanta kontroll före avslut.
+- **Villkorade instruktioner** gäller bara när ett villkor är uppfyllt. Exempel: använd frontendregler när du ändrar filer under `src/components/`.
+- **Dokumentation** förklarar hur systemet fungerar och varför beslut har fattats. Den är till för människor och kan vara längre än en instruktion.
+- **Återanvändbara uppgifter** beskriver en aktivitet som du kör vid behov, till exempel en mall för en säker kodgranskning eller en releasekontroll.
+
+Skillnaden spelar roll. En arkitekturbeskrivning är inte automatiskt en regel. En regel för en enskild del av projektet ska inte behöva följa med när du arbetar någon annanstans. Och en arbetsgång som du bara använder ibland behöver inte bli en regel för varje uppgift.
+
+Anta att du flera gånger har fått en komponentändring utan test. En rimlig första instruktion kan vara:
+
+```text
+När du ändrar beteende i src/components/, föreslå eller uppdatera ett relevant test.
+Om inget test är lämpligt, förklara varför innan du avslutar.
+```
+
+Den är konkret, kopplad till ett observerat behov och lämnar utrymme för ett undantag som måste motiveras. Den säger inte att alla svar ska vara långa, att varje fil måste testas på samma sätt eller att instruktionen är en säkerhetsbarriär.
+
+## Välj minsta lämpliga tillämpningsområde
+
+Placera en regel så smalt som möjligt, men inte smalare än att den faktiskt träffar uppgifterna där den behövs. En regel som gäller hela projektet kan ligga i projektets gemensamma instruktioner, till exempel `.github/copilot-instructions.md` eller en `*.instructions.md`-fil. En regel för en viss filtyp eller katalog bör vara villkorad om din miljö stöder filsökvägsstyrda instruktioner. En sällan använd arbetsgång kan vara en promptfil eller annan återanvändbar uppgift, om den funktionen finns och är aktiverad i din valda miljö.
+
+Kontrollera alltid två saker:
+
+1. **När ska regeln aktiveras?** Läs dokumentationen för just den VS Code- och Copilot-miljö du använder. Namn, sökvägar och laddningsvillkor kan ändras mellan verktyg och versioner.
+2. **Vad händer när den aktiveras?** Prova med en liten, ofarlig uppgift och kontrollera att regeln faktiskt syns i arbetet. En fil som råkar ligga i projektet är inte bevis på att agenten har läst den.
+
+Promptfiler kan vara användbara för instruktioner som du vill lägga till vid behov. Skills kan ge en mer strukturerad form i miljöer som uttryckligen stöder dem. Anta inte att en fil med ett visst namn fungerar överallt. Om din valda miljö inte dokumenterar stödet, behandla filen som vanlig dokumentation tills du har verifierat annat.
+
+Korthet är inte det högsta målet. En kort regel som utelämnar ett viktigt krav på kvalitet, integritet eller säkerhet är sämre än en något längre regel som bevarar kravet. Ta bort upprepning och otydlighet, inte nödvändiga begränsningar. Lägg aldrig hemligheter, personuppgifter eller känsligt material i instruktioner bara för att göra dem bekväma.
+
+## Valfritt moment i ditt projekt
+
+**Förbättra eller föreslå en återkommande instruktion och kontrollera att den används när den ska.**
+
+Välj en uppgift som du har gjort minst två gånger. Skriv först ned vad som återkommer och vilket fel eller extra arbete regeln ska förebygga. Formulera sedan en enda instruktion med ett tydligt tillämpningsområde.
+
+Testa den på en liten arbetskopia:
+
+1. Kör en uppgift där regeln ska gälla.
+2. Kontrollera vilket tecken på aktivering du kan se, till exempel agentens plan, vald instruktion eller den resulterande ändringen.
+3. Kör en närliggande uppgift där regeln inte ska gälla.
+4. Granska ändringarna och notera om regeln hjälpte, störde eller inte aktiverades.
+
+Om aktiveringen inte går att kontrollera, skriv det som ett resultat. Förbättra inte regeln genom att lägga till fler filer innan du förstår problemet.
+
+## En regel gäller bara frontend. Ska den skickas med varje uppgift?
+
+<details>
+<summary>Facit</summary>
+
+Nej. Välj det smalaste lämpliga tillämpningsområdet, till exempel frontendkatalogen eller den uppgiftstyp där regeln behövs. Kontrollera sedan att aktiveringen fungerar när du ändrar frontend och inte behandla filens placering som ett bevis i sig.
+
+Om regeln även innehåller ett projektgemensamt säkerhetskrav kan just den delen behöva ligga bredare. Dela då upp reglerna efter ansvar i stället för att skicka med hela frontendregeln överallt.
+
+</details>
+
+## Sammanfattning
+
+Spara först sådant som har visat sig behövas i verkliga uppgifter. Skilj projektgemensamma regler från villkorade instruktioner, dokumentation och återanvändbara arbetsgångar. Börja med en relevant instruktion och kontrollera både när den aktiveras och vad den faktiskt förändrar. Håll den kort där det går, men låt inte korthet tränga undan viktiga kvalitets- och säkerhetskrav.
+
+I [del 7](/vibe-on-budget/sv/working-routine) sätter du ihop lärdomarna. Där jämför du hela arbetsuppgifter — resultat, verifiering, förbrukning och omarbete — och bygger en arbetsrutin som passar ditt projekt.

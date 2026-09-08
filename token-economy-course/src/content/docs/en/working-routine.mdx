@@ -1,0 +1,113 @@
+---
+title: Compare and build your workflow
+description: Compare quality, usage, and effort, then build a workflow that fits your project
+---
+
+You have now seen how task size, context, workflow, session, and project instructions affect the work. The final part is not about finding a universal best model or a magic prompt. It is about comparing complete tasks and building a routine that works in your project.
+
+## The question this module answers
+
+**How do you know whether a workflow actually produces better results without unnecessary usage?**
+
+Do not assess only the first answer. A cheap answer that requires several corrections, extra verification, or a lot of manual rework can cost more time and money than a more expensive first attempt. Look at the whole task:
+
+- **Final result:** Does the change meet the requirements and the project's quality level?
+- **Verification:** Could you check the result in a relevant way?
+- **Usage:** Which measurements are actually available?
+- **Effort:** How long did the task take, including waiting and review?
+- **Rework:** How many corrections or new attempts were needed?
+
+A workflow is good when it delivers sufficiently high quality with effort and usage that are reasonable for the task. What is reasonable depends on the risks. A security-critical change must not be chosen only because it is cheaper.
+
+## A learning experiment is not a benchmark
+
+A **learning experiment** helps you understand what happens in one attempt. You can try a new model, workflow, or prompt and record what you observe. This is valuable, but the result is affected by the task, starting state, current session, and things you may not have measured.
+
+A **reliable benchmark** requires more control. You need to compare equivalent tasks from equivalent starting states, use the same requirements and verification, and document what differs between attempts. Even then, the conclusion is local: it says something about the tasks and conditions you tried, not about every project or future model version.
+
+You do not need to build a research laboratory to make a practical decision. Be clear about the strength of the conclusion:
+
+- one attempt can provide a hypothesis
+- several comparable attempts can provide a preliminary trend
+- stable, relevant measurements can support a routine
+- missing or incomparable data means **insufficient evidence**
+
+Writing “insufficient evidence” is a correct result. It is better than turning a difference that may have another cause into a general recommendation.
+
+## How to make a controlled comparison
+
+Choose a small, recurring task that is safe to try. Do not use production data, secrets, or a change that is difficult to restore just to get a measurement.
+
+1. **Describe the task and requirements.** Use the same goal and acceptance criteria for each attempt.
+2. **Save the starting state.** Note relevant files, existing changes, test situation, and other context that may affect the result.
+3. **Decide on verification in advance.** Use the same tests or manual checks for all compared attempts.
+4. **Change one thing at a time.** Change, for example, the workflow or model, but not the prompt, file selection, and requirements at the same time if you want to know what affected the result.
+5. **Record other differences.** If the session, context, model, or starting state still differs, include it in the note.
+6. **Compare the entire task.** Include the final result, verification, available usage, time, and corrections.
+7. **Formulate a limited conclusion.** Write what the experiment supports, what it does not show, and what needs to be tried again.
+
+You can use the same note from earlier sections:
+
+- **Task:**
+- **Starting state:**
+- **Requirements:**
+- **Verification:**
+- **Workflow:** ask, plan, or change first
+- **Changed variable:**
+- **Result:**
+- **Cost:** value or *not available*
+- **Time:**
+- **Corrections:**
+- **Other differences:**
+- **Conclusion:**
+
+Write **not available** when the environment does not show a relevant cost measurement. An estimate can be useful as a separate rough assessment, but do not present it as actual credits.
+
+## Build a routine you can follow
+
+A personal workflow needs to be short enough to use and clear enough to check. It might include these decisions:
+
+1. Start with the goal, boundary, and verification.
+2. Read the relevant project instructions and include only the context needed.
+3. Choose asking, planning, editing, or tool work based on the task's uncertainty.
+4. Keep a session while its history remains relevant; start over when it leads you in the wrong direction.
+5. Have Copilot make a bounded change and review the diff.
+6. Verify the result and record corrections before assessing usage.
+7. Save only rules that have proved recurring and useful.
+
+This is a starting point, not a law. Adjust the workflow when a recurring problem can be supported by evidence. If a change makes security, quality, or understandability worse, do not keep it just because it appears cheaper.
+
+## Optional exercise in your own project
+
+### Make a controlled comparison and formulate your workflow.
+
+Choose a recurring and recoverable task. Make a comparison if it is safe and reasonable, preferably with the same starting state and verification. Change one variable, such as workflow or model choice, and complete the note for each attempt.
+
+Then compare the entire effort. Ask:
+
+- Was the final result equally useful?
+- Was verification equally strong?
+- How many corrections were needed?
+- Which cost and time measurements are actually available?
+- Is the difference clear enough to support a routine, or is the evidence insufficient?
+
+Then write a personal routine in five to seven points. It should say how you start, when you change workflow or session, how you verify, and what you record. You do not need more attempts if the comparison is expensive or risky.
+
+## Understanding question
+
+### Question: A cheaper first answer required two corrections. What do you need before calling it a saving?
+
+<details>
+<summary>Show answer</summary>
+
+You need to compare the whole task, not just the first answer. At minimum, record final result quality, verification, available usage, time, and manual or agent-driven rework. Also check that the tasks had comparable starting states, requirements, and context.
+
+If the cheaper answer still produced an equally useful and verified final result, the total effort may still be reasonable. If the corrections used up the saving, reduced quality, or weakened verification, there is no evidence that the workflow is better. If important measurements are missing or the attempts cannot be compared, the conclusion should be **insufficient evidence**.
+
+</details>
+
+## Summary
+
+Do not build a workflow from the cheapest first response. Compare the whole task: final result, verification, usage, time, and rework. Distinguish a learning experiment from a reliable benchmark, keep the starting state and requirements as similar as possible, and change one thing at a time. Document other differences and allow the conclusion **insufficient evidence** when the measurement is not enough.
+
+A good routine is small, recoverable, and adapted to the project's risks. It helps you choose the next step, check the result, and save what has actually proved useful. This concludes the main course. Read the deep dives and glossary separately when you want to investigate a particular area further.

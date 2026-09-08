@@ -3,224 +3,90 @@ title: Ordlista
 description: Viktiga termer och begrepp för kursen Token Economy
 ---
 
-## A–B
+### Acceptanskriterier
 
-### Agentläge (Agent mode)
+Villkor som beskriver när en uppgift räknas som klar. Exempel: ett test ska vara grönt och en viss fil ska vara uppdaterad. Första genomgång: [Ge ett tydligt uppdrag och rätt kontext](/vibe-on-budget/sv/prompts-and-context).
 
-Ett av tre Copilot Chat-lägen. I Agent mode planerar, utför och itererar Copilot självständigt kring uppgifter i flera steg med hjälp av verktygsanrop. Det har högst tokekostnad per uppgift men är det mest kapabla läget.
+### Agent (agent)
 
-### Agentisk loop (Agentic loop)
+Ett arbetssätt där modellen kan planera, använda verktyg och genomföra flera steg i en uppgift. Exempel: agenten undersöker en kodbas, ändrar en fil och kör ett test. Första genomgång: [Avgränsa agentens arbete](/vibe-on-budget/sv/agents-and-tools).
 
-Den femstegscykel som agenter följer: Analyze → Plan → Execute → Test → Iterate. Varje cykel ökar den sammanlagda tokenskostnaden.
+### Agentläge (agent mode)
 
-### Agentiskt arbetsflöde (Agentic workflow)
+Ett läge där Copilot kan använda verktyg och fortsätta genom flera arbetssteg i samma uppgift. Exempel: agentläge kan läsa relevanta filer, föreslå en ändring och verifiera den. Första genomgång: [Välj arbetssätt och hantera sessionen](/vibe-on-budget/sv/sessions-and-models).
 
-Ett strukturerat arbetssätt där AI-verktyg används inom tekniska discipliner som formella specifikationer, acceptanskriterier, säkerhetsgranskningar och kontinuerliga testcykler. Det står i kontrast till vibe coding.
+### AI Credit (credit)
 
-### AI Credits
+En enhet som GitHub Copilot använder för att beskriva förbrukning i vissa planer och modeller. Exempel: en interaktion kan registreras med ett antal AI Credits beroende på modell och användning. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-GitHub Copilots förbrukningsenhet för Usage-Based Billing. Varje chatt, agent eller API-interaktion drar credits från en pott. Överförbrukning debiteras med 0,01 dollar per credit.
+### Arbetsinsats kontra resultatkvalitet
 
-### Alltid-på-skatt (Always-on tax)
+En jämförelse mellan den tid och uppmärksamhet en uppgift kräver och hur väl resultatet uppfyller kraven. Exempel: två lösningar kan ge samma testresultat men kräva olika mycket granskning. Första genomgång: [Jämför och bygg din arbetsrutin](/vibe-on-budget/sv/working-routine).
 
-Tokenöverhead som betalas i varje förfrågan på grund av filer som läses in utan villkor, till exempel `copilot-instructions.md`, `AGENTS.md` och öppna flikar. Att minska denna baslinje är den mest effektiva optimeringen.
+### Arbetskopia
 
-### AGENTS.md
+En separat eller återställningsbar kopia av projektet där du kan prova en ändring. Exempel: skapa en gren eller kopia innan du låter Copilot ändra kod. Första genomgång: [Gör ett första, kontrollerat försök](/vibe-on-budget/sv/first-task).
 
-En beteendekontraktfil som definierar hur Copilot ska bete sig i agentläge. När den finns läses den in som systemkontext för varje agentsteg. Håll den kort (cirka 80 tokens) med regler för läge, omfång och utdataformat.
+### Baslinje
 
-### Frågeläge (Ask mode)
+En dokumenterad utgångspunkt för en uppgift, till exempel förbrukning, tid, omarbete och kvalitet. Exempel: skriv ned hur en representativ uppgift går till innan du ändrar arbetsprocessen. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-Ett chattbaserat Copilot-läge för frågor och förklaringar. Det kör inga verktyg och har lägst tokenskostnad, cirka 500 tokens per tur.
+### Cache
 
-### Batchning av bakgrundsarbete (Background work batching)
+Lagrade delar av tidigare bearbetad kontext som kan återanvändas när en senare förfrågan matchar. Exempel: ett stabilt promptprefix kan finnas kvar i en cache mellan förfrågningar. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-En optimering i harnesset som köar hämtning av kontext, beräkning av embeddings och indexering i en enda batch under inaktiva perioder i stället för separata rundresor.
+### Cachning
 
-### BPE (Byte-Pair Encoding)
+Processen att spara och återanvända kontext eller annat bearbetat innehåll. Exempel: promptcachning kan återanvända samma instruktioner när prefixet är oförändrat. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-En tokeniseringsalgoritm som delar upp text i delord. Den påverkar hur effektivt olika språk tokeniseras; engelska är mer BPE-effektivt än svenska.
+### Input-token
 
-## C
+En token i materialet som skickas till modellen, till exempel en prompt, filinnehåll eller historik. Exempel: texten i en bifogad kodfil blir input-token när den skickas i förfrågan. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-### Cache-brytpunkt (Cache breakpoint)
+### Instruktionsfil (`.github/copilot-instructions.md`, `AGENTS.md`)
 
-En uttrycklig markör i Anthropics API som anger vilka prefixdelar modellen ska cacha. Cache-träffar är ungefär 90 procent billigare än ny beräkning.
+En fil som beskriver regler eller projektkontext för AI-verktyget. Exempel: filen kan ange vilka tester som ska köras eller vilka kataloger som inte ska ändras. Första genomgång: [Spara det som fungerar i projektet](/vibe-on-budget/sv/project-instructions).
 
-### Caveman-språk (Caveman-speak)
+### Komprimering
 
-En teknik för promptkomprimering som tar bort artiklar, prepositioner och grammatik men behåller semantiska nyckelord. Oberoende tester visar cirka 8,5 procents besparing av tokens.
+Att göra kontext eller ett svar kortare genom att ta bort upprepning och behålla relevant information. Exempel: en lång sessionshistorik kan sammanfattas inför fortsatt arbete. Första genomgång: [Välj arbetssätt och hantera sessionen](/vibe-on-budget/sv/sessions-and-models).
 
-### Kontextfönster (Context window)
+### Kontext
 
-Det maximala antal tokens som en modell kan bearbeta i en enda förfrågan, vanligtvis 128K–200K beroende på modell. När fönstret fylls kan modellen i praktiken glömma tidigare innehåll.
+Det samlade underlag som modellen får för en förfrågan, till exempel prompt, filer, instruktioner och sessionshistorik. Exempel: samma prompt kan ge olika resultat beroende på vilken kod som finns i kontexten. Första genomgång: [Ge ett tydligt uppdrag och rätt kontext](/vibe-on-budget/sv/prompts-and-context).
 
-### .copilotignore
+### Kontextfönster
 
-En konfigurationsfil i projektroten som utesluter angivna kataloger och filmönster från Copilots arbetsytekontext. Den minskar inputtokenförbrukningen med 20–40 procent genom att filtrera bort byggartefakter, testfixturer och stora datafiler.
-
-### Kontinuerlig batchning (Continuous batching)
-
-Att gruppera flera inferensförfrågningar i batcher om 64–128 för att maximera GPU-utnyttjandet. Det minskar kostnaden per token kraftigt jämfört med inferens för en enda förfrågan.
-
-### Anpassad agent (Custom agent)
-
-En användardefinierad Copilot-agent med avgränsad kontext och verktyg. Den är effektivare än `@workspace` eftersom färre verktygsdefinitioner och ett mindre filträd läses in.
-
-## E–F
-
-### Redigeringsläge (Edit mode)
-
-Ett Copilot-läge för redigering av en enda fil. Det har måttlig tokenskostnad, cirka 1–2K tokens per tur, och använder inga verktygsslingor.
-
-### Effektiva tokens (Effective Tokens, ET)
-
-Formeln `m × (1.0×I + 0.1×C + 4.0×O)` normaliserar kostnader för input-, cache- och outputtokens. Den är mer användbar för jämförelser än ett rått tokenantal.
-
-### Embeddingvektorer (Embedding vectors)
-
-Numeriska representationer av text som används för semantisk sökning. Tool Search använder embeddings för att hitta relevanta verktyg för varje förfrågan.
-
-## G–H
-
-### Limkod (Glue code)
-
-Integrationskod som kopplar samman befintliga system, bibliotek eller tjänster. Den passar bra för agentisk kodning eftersom den följer etablerade mönster.
-
-### GPU-utnyttjandegrad (GPU utilization rate)
-
-Andelen tid som en GPU faktiskt beräknar. Under ungefär 72 procents utnyttjande är serverless-infrastruktur billigare än dedikerad hårdvara.
-
-### Skyddsräcken (Guardrails)
-
-Metoder som hindrar AI-genererad kod från att samla på sig teknisk skuld, till exempel lätta specifikationer, TDD, arkitekturöversyn och uttryckliga stoppvillkor.
-
-### Harness
-
-Det agentiska ramverket i VS Code som samlar kontext, hanterar verktyg och dirigerar förfrågningar innan de når modellleverantören.
-
-## I–L
-
-### Avsiktskommentar (Intent comment)
-
-En `// AI:`-kommentar i källkod som beskriver utvecklarens avsikt för modellen att läsa tillsammans med koden. Den kan ersätta en fullständig förklaring i chatten.
-
-### K/V-cache (Key/Value cache)
-
-Modellens interna tillstånd som beräknas från promptprefixet. Cachade K/V-tensorer kan återanvändas när prefixet förblir identiskt, vilket gör senare turer betydligt billigare.
-
-### Lazy-loading (instructions)
-
-Att använda `.prompt.md`-filer som läses in vid behov genom `#file:`-referenser i stället för att lägga all vägledning i den alltid inlästa `copilot-instructions.md`.
-
-### .prompt.md-filer
-
-Domänspecifika vägledningsfiler som läses in vid behov via `#file:`-referenser. Lagra arkitekturspecifikationer, konventioner och kända problem utan att betala alltid-på-skatten i varje förfrågan.
-
-## M
+Den mängd tokens som modellen kan hantera inom en förfrågan eller ett arbetssteg. Exempel: när en session fyller fönstret måste äldre kontext sammanfattas, tas bort eller ersättas. Första genomgång: [Ge ett tydligt uppdrag och rätt kontext](/vibe-on-budget/sv/prompts-and-context).
 
 ### MCP (Model Context Protocol)
 
-Ett öppet protokoll som låter AI-modeller interagera med externa verktyg genom standardiserade servrar. Varje MCP-server registrerar verktyg som visas i agentens verktygsregister.
+Ett protokoll för hur AI-modeller kan kopplas till externa verktyg och datakällor via MCP-servrar. Exempel: en MCP-server kan erbjuda ett verktyg som läser information från ett annat system. Första genomgång: [Agenter, verktyg och MCP](/vibe-on-budget/sv/agents-and-tools).
 
-### Metaprompt (Meta-prompt)
+### Modell
 
-En prompt som styr utdataformatet i stället för att begära innehåll. Exempel är “Svara med högst tre punktlistor” och “Bara kod, ingen förklaring”.
+Den språkmodell som tolkar kontext och genererar ett svar eller en åtgärd. Exempel: samma uppgift kan ge olika svar när du byter modell. Första genomgång: [Välj arbetssätt och hantera sessionen](/vibe-on-budget/sv/sessions-and-models).
 
-### Modellmultiplikator (Model multiplier, m)
+### Output-token
 
-Ett värde i formeln Effective Tokens som normaliserar prisskillnader när du byter mellan modeller med olika kostnad per token.
+En token i modellens genererade svar, till exempel kod, text eller ett verktygsanrop. Exempel: en lång förklaring och en stor kodpatch innehåller fler output-tokens än en kort sammanfattning. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-## O
+### Prompt
 
-### Optimeringsloop (Optimization loop)
+Den instruktion eller fråga som du skickar till modellen, tillsammans med eventuella angivna begränsningar och önskat resultat. Exempel: en prompt kan ange mål, relevanta filer, acceptanskriterier och format för svaret. Första genomgång: [Ge ett tydligt uppdrag och rätt kontext](/vibe-on-budget/sv/prompts-and-context).
 
-Cykeln Mät baslinje → Ändra en variabel → Upprepa uppgiften → Jämför → Behåll den bättre konfigurationen. Den är kursens centrala metod.
+### Session
 
-### Outputkomprimering (Output compression)
-
-En optimering i harnesset som normaliserar blanksteg, tar bort radnummer och strukturerar utförliga utdata. Den sparar i genomsnitt cirka 5,5 procent av outputtokens.
-
-## P
-
-### Prefixcachning (Prefix caching)
-
-När början, eller prefixet, av flera förfrågningar är identiskt återanvänder leverantören det beräknade tillståndet i stället för att beräkna om det. Cache-träffar är ungefär 90 procent billigare än nya tokens.
-
-### Promptprefix (Prompt prefix)
-
-Början som upprepas i varje förfrågan i en session: systeminstruktioner, verktygsdefinitioner och konversationshistorik. Att hålla den stabil är den viktigaste hävstången för tokenoptimering.
-
-## Q–S
-
-### Kvalitetströskel (Quality threshold)
-
-Fördefinierade framgångskriterier, till exempel godkända tester, ändrade obligatoriska filer, inga kritiska fel och högst en liten korrigering. De används för att bedöma om en kostnadsoptimering bevarade resultatets kvalitet.
-
-### Dedikerad GPU (Dedicated GPU)
-
-Provisionerad GPU-hårdvara för modellinferens som debiteras per timme oavsett användning. Den är kostnadseffektiv först över cirka 72 procents ihållande utnyttjande. Den står i kontrast till serverless-infrastruktur med betalning per användning.
-
-### Serverless (GPU)
-
-GPU-infrastruktur med betalning per användning där du debiteras per token. Den passar bäst för burstiga, asynkrona agentsessioner och står i kontrast till dedikerade GPU-instanser.
-
-### Systemprompt (System prompt)
-
-Instruktioner på modellnivå som definierar modellens roll, förmågor och beteende. Skickas med varje förfrågan och omfattar vanligtvis cirka 500 tokens. Ingår i den fasta baskostnaden.
-
-### Stoppvillkor (Stop condition)
-
-En uttrycklig gräns i agentinstruktioner som anger när agenten ska stanna, till exempel “Om testerna går igenom, stanna och invänta granskning”. Den förhindrar kostsamma oändliga iterationsloopar.
-
-## T
+En sammanhängande arbetsdialog där tidigare meddelanden och resultat kan ingå i senare steg. Exempel: en session kan börja med undersökning och fortsätta med ändring och verifiering. Första genomgång: [Välj arbetssätt och hantera sessionen](/vibe-on-budget/sv/sessions-and-models).
 
 ### Token
 
-Den grundläggande textenhet som en språkmodell bearbetar. En token motsvarar ungefär tre fjärdedelar av ett engelskt ord. Modeller prissätts per miljon tokens (input och output). Tokens kan vara input (din prompt), output (modellens svar) eller cachade (återanvända från tidigare förfrågningar).
+En textenhet som modellen använder när den bearbetar språk och kod. En token kan ingå i input, output eller återanvänd kontext. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-### Teknisk skuld (Technical debt)
+### Uppgiftskostnad
 
-Den underförstådda kostnaden för omarbete som uppstår när snabba lösningar väljs framför robusta. AI-genererad kod kan samla skuld genom duplicerad logik, oavsiktlig arkitektur och svällande funktioner.
+Den samlade resursåtgången för att slutföra en uppgift, till exempel tokens, AI Credits, väntan, granskning och omarbete. Exempel: en kort prompt kan ändå leda till hög uppgiftskostnad om uppgiften kräver många agentsteg. Första genomgång: [Förstå förbrukningen](/vibe-on-budget/sv/understand-usage).
 
-### Thinking effort
+### Verktyg
 
-En VS Code-inställning som styr hur mycket resonemang en modell använder per förfrågan. Högre ansträngning innebär fler thinking tokens, högre fördröjning och fler credits, så använd standardvärden för rutinuppgifter.
-
-### Tokeniserare (Tokenizer)
-
-Algoritmen som delar upp text i tokens före modellbearbetningen. Olika modeller använder olika tokeniserare, och effektiviteten varierar mellan språk.
-
-### Verktygsregister (Tool Registry)
-
-Den alltid närvarande katalogen över verktygsnamn och korta beskrivningar. Med Tool Search läses fullständiga verktygsscheman in vid behov i stället för att alltid uppta kontext.
-
-### Tool Search
-
-En optimering i VS Code, tillgänglig från mitten av 2025, som bara läser in fullständiga verktygsscheman när modellen begär dem i stället för att läsa in alla verktygsdefinitioner i varje steg. Den minskar verktygsoverhead med ungefär 60–75 procent.
-
-### TTFT (Time-To-First-Token)
-
-Fördröjningen mellan att en förfrågan skickas och den första svarstoken tas emot. WebSocket-anslutningar minskade median-TTFT med ungefär 19 procent under 2026.
-
-### TLS (Transport Layer Security)
-
-Ett kryptografiskt protokoll som skyddar HTTPS-anslutningar. WebSocket-användning eliminerar upprepade TLS-handskakningar och minskar overhead per tur.
-
-## U–W
-
-### UBB (Usage-Based Billing)
-
-GitHub Copilots debiteringsmodell sedan juni 2026. Du betalar för det du använder, mätt i förbrukade tokens, i stället för en fast avgift per plats.
-
-### Unified diff
-
-Ett diff-format som bara visar ändrade rader med markörerna `+` och `-` samt tre kontextrader. Det tvingar modeller att returnera minimal output i stället för att skapa om hela filer.
-
-### Vibe coding
-
-En utvecklingsstil där utvecklaren beskriver avsikten och låter AI generera kod med minimal översyn. Den passar för utforskning och prototyper men är riskabel för produktionskritisk kod.
-
-### Verifiering kontra upptäckt (Verification vs Discovery)
-
-Ett ramverk för att välja mellan agentiska arbetsflöden och vibe coding. Använd verifiering för affärskritisk kod med skyddsräcken och upptäckt för prototyper och experiment.
+En funktion som modellen kan anropa för att läsa, ändra, söka eller verifiera något utanför själva textsvaret. Exempel: ett verktyg kan läsa en fil eller köra ett test. Första genomgång: [Avgränsa agentens arbete](/vibe-on-budget/sv/agents-and-tools).

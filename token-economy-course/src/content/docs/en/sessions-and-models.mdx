@@ -1,0 +1,76 @@
+---
+title: Choose a workflow and manage the session
+description: Learn to choose a workflow, model, and session boundary based on the task and the context it actually needs
+---
+
+## Which workflow fits the next step?
+
+In [part 3](/vibe-on-budget/en/prompts-and-context), you saw how a clear assignment and relevant context reduce the risk of misunderstandings. The next question is how Copilot should work on the assignment. Do you first need to understand the problem, make a plan, change files, or let tools investigate and check the project?
+
+No workflow is best for every task. A small decision may need a short explanation. A change with several dependencies often needs a plan before code changes. A well-bounded change can go straight to editing. If the answer depends on the project's actual files, tests, or commands, tool work is needed.
+
+Think of the workflow as a sequence, not a permanent session identity:
+
+- **Explain:** use this when you need to understand a concept, file, or error before acting.
+- **Plan:** use this when the goal is clear but the path includes several decisions or files.
+- **Edit:** use this when the change is bounded and you already know what needs to happen.
+- **Work with tools:** use this when the task requires searching, running tests, changing files, or another project check.
+
+### An example
+
+Suppose you want to add an optional filter to a list. You might begin with an explanation: where is the list query built and how is the filter passed through? Once you understand the flow, ask for a short plan with affected files, validation, and tests. Then ask for the edit. Finally, use tools to run relevant tests and review the diff.
+
+If you know the project well and the change is one line in a clear function, the planning step may be unnecessary. If an error message suggests several possible causes, an explanation or investigation is often cheaper than changing things at random. The goal is not to use more modes, but to choose the next step that reduces uncertainty.
+
+## Practical choices and limitations
+
+### Model choice is a decision under uncertainty
+
+Do not choose a model using a fixed table where every task type always belongs to one model. Task difficulty, project size, available context, and the models' current capabilities affect the result. A simple change can require a lot of understanding if it lies in a sensitive flow. A large file can be easy to change when the requirement is exact and well tested.
+
+**Auto** can be a reasonable default when you have no clear reason to choose manually. It can reduce the need to make a model decision before every question. But Auto does not promise the best result, lowest usage, or the same model every time. Assess the whole task: result quality, verification, time, retries, and usage.
+
+Change models when you have a concrete hypothesis, such as a particular model producing fewer corrections in your project. Change one thing at a time where possible and compare equivalent tasks. If you cannot keep the starting state and requirements similar enough, call the conclusion preliminary instead of making a general recommendation.
+
+### When should you keep the session?
+
+Keep the session when it contains relevant history that helps the next step: decisions you have made, error messages, assumptions, an ongoing plan, or the result of a check. History can save you from repeating important context, but it is valuable only while it still applies.
+
+Start a new session when the task is unrelated, when old assumptions could mislead the work, or when the conversation has become so long that current requirements are hard to separate from old attempts. A new session can also make it easier to give a clean, bounded description of the task. Bring over relevant results, not the entire old conversation.
+
+The session boundary is therefore a workflow decision, not just a cost setting. Keeping an unrelated session only for a possible cache benefit can create worse relevance and more rework than it saves.
+
+### What compression does
+
+Compression summarizes older parts of a session so work can continue with less history. Its purpose is to preserve the information needed going forward and reduce growing context. It is not the same as archiving a complete copy of everything said.
+
+A summary can miss a condition, a failed attempt, an exact file path, or why a decision was made. Check the compressed context before asking for a change that depends on it. Rewrite important acceptance criteria, security requirements, and verification steps if they are no longer clear. Compression helps continued work; it does not guarantee that all important information remains.
+
+## Optional exercise: choose a workflow
+
+Choose the next small task in your own project and justify the workflow before starting. Write, for example:
+
+1. What do I need to understand first?
+2. Do I need a plan, or is the change already clearly bounded?
+3. Which files or tools are needed to carry out and check the task?
+4. Should I keep the current session or start over? Why?
+5. What sign would make me change workflows?
+
+A model comparison is not required. The goal is to connect the workflow to the task's uncertainty, not to find a universal favorite model.
+
+## Situation question
+
+**A new task is unrelated to the old one. Should you keep the session only for the cache?**
+
+<details>
+<summary>Show answer</summary>
+
+No, not for that reason alone. Relevant material and task results come before isolated cache optimization. An old session may contain assumptions, files, or goals that do not belong to the new task, increasing the risk of irrelevant context and rework. Start a new session and bring over only what is actually needed, such as a verified result or a decision that still applies.
+
+</details>
+
+## Summary
+
+Choose a workflow based on what is still uncertain: understand, plan, edit, or investigate and check with tools. Auto can be a practical default, but the result still needs evaluation. Keep relevant history and start over when the task or conditions change. Compress to reduce growing context, but check that important requirements and results survived.
+
+The next section looks at what happens when the workflow includes agent-like tool work. In [part 5: Limit the agent's work](/vibe-on-budget/en/agents-and-tools), you connect the assignment, required tools, and clear conditions for continuing or stopping.

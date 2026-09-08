@@ -1,0 +1,92 @@
+---
+title: Limit the agent's work
+description: Learn to set understandable boundaries for an agent's tools, feedback, and stopping conditions
+---
+
+## What work should the agent be allowed to do?
+
+In [part 4](/vibe-on-budget/en/sessions-and-models), you compared workflows and learned to manage session history. The next question is what an agent should actually be allowed to do when working independently: which parts should it investigate, which changes may it make, and when should it hand control back to you?
+
+An agent is not just a response written once. It works in a feedback loop between **investigation, action, and checking**:
+
+1. It investigates relevant code, files, or error messages.
+2. It suggests or performs an action.
+3. It checks the result, for example by reading a file or running a test.
+4. It uses the result to decide whether another step is needed.
+
+The loop is useful when each step provides new information. It becomes expensive and difficult to control when the agent continues without the situation changing.
+
+Suppose you want to change the text on a button in a small web component. A reasonable assignment is for the agent to read the component, change the text, run the relevant check, and stop for review. It does not need to search the entire project, install packages, or change a shared design file if the task does not require it.
+
+## Tools are part of the boundary
+
+An agent can use different tools, but not every task needs every tool.
+
+**Built-in tools** are functions already available in the agent environment, such as reading and editing files, searching the project, or running a command. Which tools exist and how they are controlled depends on your environment.
+
+**External tools through MCP** come from a separate MCP server. Such a server can give the agent access to, for example, an issue tracker, a database, or a web service. MCP can make a task possible, but it also gives the agent more possible actions and can send information outside the local workspace according to the server's configuration.
+
+Start with the smallest set of tools the task needs. For the button text, file access and a simple local check may be enough. A database tool or a tool that publishes changes would only increase risk without helping the task.
+
+It is useful to separate three questions:
+
+- **Assignment:** What should be different when the work is complete?
+- **Tool permissions:** What may the agent read, change, or run to reach the goal?
+- **Stopping condition:** Which result means that the agent should continue, ask you, or stop?
+
+The three parts must fit together. A small assignment with broad permissions gives the agent more ways to make unrelated changes. An assignment with permissions that are too narrow can leave the agent stuck without being able to explain why.
+
+## Define conditions for continuing, asking, or stopping
+
+Arbitrary rules such as “use no more than three calls” can be a rough emergency brake, but they do not describe when the work is actually complete. One call can read the right file and provide everything needed, while five calls can be reasonable for a change that must be verified.
+
+Instead, write conditions that make sense in the situation:
+
+- **Continue** when the result provides new information or the next step directly belongs to the assignment.
+- **Ask** when the requirement is unclear, when a change affects more files than expected, or when a choice needs your decision.
+- **Stop** when the goal is reached and the relevant check is complete.
+- **Stop and report** when a tool is missing, a check fails without a clear solution, or the same attempt provides no new information.
+
+For the button text, a stopping condition could be:
+
+> Change only the button text in the specified component. Check that the file still builds. If another file needs to change, ask first. When the change is made and the check is complete, stop for review.
+
+This makes the next step understandable for both you and the agent. It also gives you a clearer boundary for what to review afterward.
+
+## Instructions help, but do not protect you by themselves
+
+Instruction files and the assignment text can guide the model toward the right files, tools, and order of work. They are not a security barrier by themselves. An instruction can be misunderstood, be weighed against other information, or fail to cover a new situation. It does not replace actual permissions, isolated working copies, version control, or human review.
+
+Be especially careful with tasks involving authentication, payments, production data, secrets, or destructive commands. The boundary should not only appear in text; it also needs support from the environment and clear approval before changes are made.
+
+## Optional exercise in your project
+
+Choose a small task, such as adjusting a label, updating a simple test, or fixing a local bug. Write down:
+
+1. Which files the agent needs to read.
+2. Which changes it may make.
+3. Which tools are not needed.
+4. When it should continue, ask, or stop.
+
+Then ask the agent to work within these boundaries. No MCP installation is required. Review afterward whether it stayed within the assignment and whether the stopping condition made the result easier to judge.
+
+## Situation question
+
+The agent repeats the same failed attempt without new information. What should happen?
+
+<details>
+<summary>Show answer</summary>
+
+The agent should stop, report the obstacle, and reconsider the approach instead of continuing the same loop. You can then clarify the requirement, provide relevant new information, change tool permissions, or take over the next step.
+
+</details>
+
+## Summary
+
+- An agent works through a feedback loop between investigation, action, and checking.
+- Built-in tools and external tools through MCP should be selected for the task, not because they happen to be available.
+- The assignment, permissions, and stopping conditions need to describe the same boundary.
+- Understandable conditions for continuing, asking, or stopping are more useful than an arbitrary call limit.
+- Instructions guide the model but do not replace real permissions and human review.
+
+Once you have found boundaries that work in practice, you can save them as project-wide instructions. In [part 6](/vibe-on-budget/en/project-instructions), you do that by starting with a recurring need rather than a large collection of rules.

@@ -8,76 +8,81 @@ import { CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 # Tokenekonomi för Vibe Coding
 
-Lär dig spara tokens och AI Credits när du kodar med GitHub Copilot. Kursen täcker allt från grunderna i användningsbaserad debitering till avancerade tekniker för promptoptimering, projektkonfiguration och agenthygien.
+Lär dig att slutföra koduppgifter med bibehållen kvalitet, ett begripligt arbetssätt och en rimlig förbrukning av tokens och AI Credits.
 
-## Vad du kommer lära dig
+Du behöver inte kunna GitHub Copilot i förväg. Kursen börjar med hur du kan förstå förbrukningen och bygger sedan stegvis upp en arbetsrutin som är lätt att följa och förbättra.
+
+## För att läsa
+
+Du behöver:
+
+- grundläggande programmeringsvana
+- kunna läsa och ändra kod i ett projekt
+
+Du behöver inte ha använt GitHub Copilot tidigare. Begrepp och arbetssätt introduceras när de behövs.
+
+## För att prova
+
+Om du vill göra övningarna behöver du dessutom:
+
+- en stabil installation av VS Code
+- tillgång till GitHub Copilot
+- en säker arbetskopia av ett eget projekt där du kan prova utan att riskera originalet
+
+Övningarna är frivilliga. Du kan läsa hela kursen utan att följa dem steg för steg.
+
+## Så är kursen upplagd
+
+Huvudspåret går i ordningen nedan. Börja med förbrukningen, prova sedan ett avgränsat arbetssätt och bygg därefter vidare mot bättre promptar, sessioner, projektinstruktioner och en egen rutin.
+
+Varje modul innehåller det som behövs för nästa steg. Övningar är valfria och kan hoppas över. **Fördjupningar** ger mer teknisk bakgrund, men kan också hoppas över när du vill hålla fokus på arbetssättet.
+
+## Kursens moduler
 
 <CardGrid>
   <LinkCard
-    title="1. Den dolda skatten"
-    href="/vibe-on-budget/sv/01-hidden-tax"
+    title="1. Förstå förbrukningen"
+    href="/vibe-on-budget/sv/understand-usage"
   >
-    Förstå användningsbaserad debitering, AI Credits och den verkliga kostnaden för Copilot.
+    Se vad som påverkar förbrukningen och varför en koduppgift kan kosta mer än den först verkar göra.
   </LinkCard>
   <LinkCard
-    title="2. Hur Copilot bygger kontext"
-    href="/vibe-on-budget/sv/02-context-model"
+    title="2. Gör ett första, kontrollerat försök"
+    href="/vibe-on-budget/sv/first-task"
   >
-    Vad ingår i varje förfrågan och hur kontextfönstret fylls.
+    Börja med en liten uppgift, tydliga gränser och ett sätt att kontrollera resultatet.
   </LinkCard>
   <LinkCard
-    title="3. Mät innan du kapar"
-    href="/vibe-on-budget/sv/03-measure-before-you-cut"
+    title="3. Ge ett tydligt uppdrag och rätt kontext"
+    href="/vibe-on-budget/sv/prompts-and-context"
   >
-    Använd VS Codes inbyggda verktyg för att se exakt vart dina credits tar vägen — per förfrågan, per session och per månad.
+    Formulera uppgifter som går att förstå, genomföra och granska utan onödig kontext.
   </LinkCard>
   <LinkCard
-    title="4. Snabba vinster"
-    href="/vibe-on-budget/sv/04-quick-wins"
+    title="4. Välj arbetssätt och hantera sessionen"
+    href="/vibe-on-budget/sv/sessions-and-models"
   >
-    Sex saker du kan göra imorgon för att börja spara tokens direkt — inklusive unified diff output.
+    Välj rätt arbetssätt för uppgiften och avsluta eller byt session innan den blir svår att överblicka.
   </LinkCard>
   <LinkCard
-    title="5. Skriva promptar som kostar mindre"
-    href="/vibe-on-budget/sv/05-cheaper-prompts"
+    title="5. Avgränsa agentens arbete"
+    href="/vibe-on-budget/sv/agents-and-tools"
   >
-    Skriv fokuserade promptar som ger bättre resultat med färre tokens.
+    Bestäm vilka verktyg, filer och beslut agenten får använda så att arbetet förblir kontrollerbart.
   </LinkCard>
   <LinkCard
-    title="6. Projektinställningar för tokeneffektivitet"
-    href="/vibe-on-budget/sv/06-project-setup"
+    title="6. Spara det som fungerar i projektet"
+    href="/vibe-on-budget/sv/project-instructions"
   >
-    Konfigurera instruktionsfiler, AGENTS.md och VS Code för maximal effektivitet.
+    Gör återkommande regler och beslut till projektinstruktioner som hjälper nästa session.
   </LinkCard>
   <LinkCard
-    title="7. Agenter, verktyg och MCP-hygien"
-    href="/vibe-on-budget/sv/07-agents-mcp"
+    title="7. Jämför och bygg din arbetsrutin"
+    href="/vibe-on-budget/sv/working-routine"
   >
-    Använd agenter och MCP-servrar utan att slösa credits.
-  </LinkCard>
-  <LinkCard
-    title="8. Vibe coding utan teknisk skuld"
-    href="/vibe-on-budget/sv/08-vibe-coding-guardrails"
-  >
-    Behåll flowen utan att samla på dig teknisk skuld.
-  </LinkCard>
-  <LinkCard
-    title="9. Helhetsbilden"
-    href="/vibe-on-budget/sv/09-under-the-hood"
-  >
-    Hur Copilot sparar tokens internt — output-komprimering, batchning, WebSocket-förbättringar och infrastrukturekonomi.
+    Jämför vad som fungerar för olika uppgifter och forma en rutin som ger jämn kvalitet utan onödig förbrukning.
   </LinkCard>
 </CardGrid>
-
-## Förkunskaper
-
-- Ett GitHub Copilot-abonnemang (Free, Pro eller Enterprise)
-- VS Code med GitHub Copilot-tillägget installerat
-- Grundläggande kännedom om Copilot chatt-gränssnittet
-
-## Hur du använder kursen
-
-Varje modul är fristående och tar cirka 5–10 minuter att läsa. Modulerna bygger på varandra men kan även läsas oberoende. Håll utkik efter **fördjupningsavsnitt** om du vill ha alla tekniska detaljer.
 
 ## Referens
 

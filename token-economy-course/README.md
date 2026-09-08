@@ -1,6 +1,6 @@
 # Token Economy for Vibe Coding
 
-A modular, i18n-ready course teaching developers how to save tokens and AI Credits when vibe coding with GitHub Copilot.
+A modular, i18n-ready course teaching developers to complete coding tasks with maintained quality, an understandable workflow, and reasonable consumption.
 
 Built with [Astro](https://astro.build) + [Starlight](https://starlight.astro.build).
 
@@ -24,29 +24,33 @@ npm run preview
 
 ```
 src/content/docs/
-├── en/          # English modules (default locale)
+├── sv/          # Swedish pilot and current source structure
 │   ├── index.mdx
-│   ├── 01-hidden-tax.mdx
-│   ├── 02-context-model.mdx
-│   ├── 03-measure-before-you-cut.mdx
-│   ├── 04-quick-wins.mdx
-│   ├── 05-cheaper-prompts.mdx
-│   ├── 06-project-setup.mdx
-│   ├── 07-agents-mcp.mdx
-│   ├── 08-vibe-coding-guardrails.mdx
-│   └── 09-under-the-hood.mdx
-└── sv/          # Swedish translations
+│   ├── understand-usage.mdx
+│   ├── first-task.mdx
+│   ├── prompts-and-context.mdx
+│   ├── sessions-and-models.mdx
+│   ├── agents-and-tools.mdx
+│   ├── project-instructions.mdx
+│   ├── working-routine.mdx
+│   ├── glossary.mdx
+│   └── deep-dives/
+│       ├── copilot-internals.mdx
+│       └── diagnose-usage.mdx
+└── en/          # English translation of the same course structure
     └── ...
 ```
 
+The two deep-dives live in the `deep-dives/` subdirectory rather than alongside the main modules.
+
 ## Contributing Translations
 
-Translations are welcome. To add or improve a translation:
+Translations follow a shared fact base and course structure:
 
-1. Copy the English file from `src/content/docs/en/` to `src/content/docs/{lang}/`
-2. Translate the content, keeping frontmatter and MDX structure intact
-3. Add the locale to `locales` in `astro.config.mts`
-4. Add translated sidebar labels under `sidebar[0].translations`
+1. Develop and test the Swedish pilot first.
+2. Translate the approved Swedish material to English from the common fact base, rather than introducing a separate content direction.
+3. Verify the Swedish and English versions pairwise against the same goals, claims, examples, and course structure.
+4. Keep frontmatter and MDX structure intact, then add or update the locale and translated sidebar labels in `astro.config.mts`.
 
 See the [Starlight i18n guide](https://starlight.astro.build/guides/i18n/) for details.
 

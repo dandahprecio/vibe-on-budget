@@ -1,0 +1,120 @@
+---
+title: Ge ett tydligt uppdrag och rätt kontext
+description: Skriv tydliga uppgifter med relevant kontext, begränsningar och förväntat resultat
+---
+
+## Vilken fråga besvarar den här delen?
+
+Hur beskriver du en uppgift så att Copilot förstår både **vad** som ska göras och **hur resultatet ska bedömas**?
+
+I [del 2 gjorde du ett första, kontrollerat försök](/vibe-on-budget/sv/first-task). Där avgränsade du uppgiften och kontrollerade ändringen. Nu förbättrar du själva beskrivningen av uppgiften. Det gör det lättare att börja på rätt plats och minskar risken för omtag.
+
+Ett tydligt uppdrag består av fyra delar:
+
+1. **Mål** – vad ska bli annorlunda?
+2. **Relevant underlag** – vilka filer, felmeddelanden eller exempel behöver Copilot se?
+3. **Begränsningar** – vad får inte ändras, och vilka villkor måste gälla?
+4. **Förväntat resultat** – hur ska svaret eller ändringen se ut, och hur ska den kontrolleras?
+
+Det betyder inte att varje prompt måste bli lång. Det betyder att varje del som påverkar uppgiften bör vara tydlig.
+
+---
+
+## Från önskemål till uppdrag
+
+Tänk dig att en testsvit misslyckas när ett datum saknas i ett API-svar.
+
+En kort beskrivning kan vara:
+
+> Fixa datumfelet i API:t och lägg till tester.
+
+Den lämnar flera frågor öppna. Vilket API? Vilket datumformat? Vad ska hända när datumet saknas? Ska databasen ändras? Vilka tester är relevanta?
+
+En tydligare version kan vara:
+
+> Målet är att rätta felet där `GET /api/orders/{id}` kastar ett undantag när `shippedAt` saknas. Utgå från `src/api/orders.ts` och det befintliga testet i `tests/orders.test.ts`. Behåll det nuvarande JSON-formatet och ändra inte databasschemat. När `shippedAt` saknas ska svaret innehålla `shippedAt: null` och fortfarande ha status 200. Lägg till ett test för saknat datum och kör den berörda testsuiten. Visa vilka filer du ändrade och sammanfatta resultatet.
+
+Uppgiften är fortfarande densamma: rätta datumfelet och lägg till tester. Den längre versionen lägger inte till nya krav. Den gör befintliga krav synliga.
+
+Filer gör uppdraget konkret. Ett filnamn visar var problemet sannolikt finns och vilket material som är relevant. Ett felmeddelande ger ännu mer information:
+
+- Vad hände?
+- I vilket steg hände det?
+- Vilken fil och rad pekar felet på?
+- Kan felet återskapas?
+
+Ta med den information du faktiskt har, till exempel ett kort felmeddelande från testkörningen. Klistra inte in hela loggen om bara tre rader förklarar problemet. Om felet innehåller sökvägar, tokens eller personuppgifter ska du ta bort eller maskera det som inte behövs.
+
+---
+
+## Rätt kontext, inte minsta möjliga kontext
+
+Det är frestande att tänka att en kort prompt alltid är billigare och bättre. Men irrelevant eller saknad kontext kan i stället leda till felaktiga antaganden, fler frågor och fler korrigeringar.
+
+Välj kontext efter uppgiften:
+
+- Ta med den fil där ändringen ska göras.
+- Ta med närliggande typer, gränssnitt eller tester om de styr beteendet.
+- Ta med ett konkret felmeddelande när du felsöker.
+- Ta med projektets begränsningar när de påverkar lösningen, till exempel att databasschemat inte får ändras.
+- Lämna ute stora filer som inte påverkar beslutet.
+
+Det relevanta underlaget kan alltså vara både en fil och en förklaring av varför filen är viktig. Skriv hellre “använd detta test som acceptanskriterium” än att bara lista fem filer utan sammanhang.
+
+Generella regler behöver också anpassas till situationen. “Skriv bara kod” kan vara rimligt om du redan vet exakt vad som ska ändras och vill undvika en lång förklaring. Vid felsökning kan en kort redogörelse för hypotesen vara viktigare än kod direkt. “Byt alltid språk” kan vara rimligt om projektet kräver ett visst språk, men annars bör du ange språkbyte bara när det behövs. Be om en förklaring när du behöver kunna granska lösningen; be om ett kort svar när du redan känner till bakgrunden.
+
+Samma uppgift kan därför behöva olika instruktioner beroende på om du vill undersöka ett fel, planera en förändring, redigera kod eller verifiera ett resultat.
+
+---
+
+## Valfria praktiska val
+
+Börja med den minsta kompletta beskrivningen. Kontrollera sedan om något av följande saknas:
+
+- Kan läsaren eller modellen identifiera rätt del av projektet?
+- Är önskat beteende beskrivet, även för fel- och tomfall?
+- Finns det något som uttryckligen inte får ändras?
+- Vet du hur resultatet ska kontrolleras?
+
+Om du inte vet svaret på någon punkt, skriv det som en öppen fråga i stället för att låtsas att kravet är bestämt. Till exempel: “Föreslå två alternativ och beskriv skillnaden innan du ändrar kod.” Det är särskilt användbart när flera lösningar kan vara rimliga.
+
+Mer kontext är inte automatiskt bättre. En hel kodbas kan göra det svårare att se vad som är relevant. Begränsa därför materialet efter uppgiftens beslutspunkter, inte efter ett generellt mål att skicka så lite som möjligt.
+
+---
+
+## Valfritt moment i ditt eget projekt
+
+**Förbättra beskrivningen av den egna uppgiften utan att ändra dess krav.**
+
+Välj en liten kommande uppgift. Skriv först den beskrivning du spontant skulle ha skickat. Skriv sedan om den med rubrikerna mål, relevant underlag, begränsningar och förväntat resultat.
+
+Jämför versionerna: Har du lagt till tydlighet, eller råkade du lägga till nya krav? Om du använder den förbättrade versionen, notera också vilka filer och kontroller som faktiskt behövdes.
+
+---
+
+## En situationsfråga
+
+**Den tydligare prompten är längre. Är det en försämring?**
+
+<details>
+<summary>Visa facit och förklaring</summary>
+
+Nej, inte i sig. Extra information kan minska felaktiga antaganden, följdfrågor och manuellt omarbete. Bedöm därför hela uppgiften: slutresultat, antal korrigeringar, tid och förbrukning — inte bara antalet ord i den första prompten.
+
+Men varje tillägg ska vara relevant. En lång prompt med orelaterad information kan göra uppgiften svårare. Målet är inte maximal längd, utan tillräckligt underlag för att förstå uppgiften och kontrollera resultatet.
+
+</details>
+
+---
+
+## Sammanfattning
+
+- Beskriv uppgiften med **mål, relevant underlag, begränsningar och förväntat resultat**.
+- Använd filnamn, tester och felmeddelanden för att göra problemet konkret.
+- Välj **relevant** kontext, inte automatiskt så lite kontext som möjligt.
+- Anpassa regler om kod, förklaringar och språk efter situationen.
+- Bedöm hela uppgiften: ett bättre första uppdrag kan minska både fel och omarbete.
+
+När uppdraget är tydligt behöver du välja hur arbetet ska genomföras. I [del 4 väljer du arbetssätt och hanterar sessionen](/vibe-on-budget/sv/sessions-and-models).
+
+*Beräknad lästid: 7 minuter*

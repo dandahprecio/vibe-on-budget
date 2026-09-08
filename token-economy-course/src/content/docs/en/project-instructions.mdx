@@ -1,0 +1,75 @@
+---
+title: Save what works in the project
+description: Save recurring, proven instructions in the project without making every task heavier
+---
+
+## Which rule should you stop repeating?
+
+In [part 5](/vibe-on-budget/en/agents-and-tools), you saw how an agent task can be bounded with a clear goal, suitable tools, and a stopping condition. The next step is to save things you notice yourself saying again and again.
+
+Do not start by creating a complete set of special files. Start with a real recurring need. Perhaps every change in the project should have a test, a certain directory should not be changed without asking first, or an important security boundary is easy to forget. A good saved instruction removes repetition without replacing your judgment.
+
+## Save the right thing in the right place
+
+Think about four different kinds of information:
+
+- **Project-wide rules** apply to almost all work in the project. Example: do not change generated files, and run the relevant project check before finishing.
+- **Conditional instructions** apply only when a condition is met. Example: use frontend rules when changing files under `src/components/`.
+- **Documentation** explains how the system works and why decisions were made. It is for people and can be longer than an instruction.
+- **Reusable tasks** describe an activity you run when needed, such as a template for a safe code review or release check.
+
+The difference matters. An architecture description is not automatically a rule. A rule for one part of the project should not need to follow you everywhere else. And a workflow you use only occasionally does not need to become a rule for every task.
+
+Suppose you have repeatedly received a component change without a test. A reasonable first instruction could be:
+
+```text
+When you change behavior in src/components/, suggest or update a relevant test.
+If no test is appropriate, explain why before finishing.
+```
+
+It is concrete, connected to an observed need, and leaves room for an exception that must be justified. It does not say that every response must be long, that every file must be tested in the same way, or that the instruction is a security barrier.
+
+## Choose the smallest suitable scope
+
+Place a rule as narrowly as possible, but not so narrowly that it misses the tasks where it is needed. A project-wide rule can live in the project's shared instructions, for example `.github/copilot-instructions.md` or a `*.instructions.md` file. A rule for a particular file type or directory should be conditional if your environment supports path-based instructions. A workflow you rarely use can be a prompt file or another reusable task, if that feature exists and is enabled in your chosen environment.
+
+Always check two things:
+
+1. **When does the rule activate?** Read the documentation for the VS Code and Copilot environment you use. Names, paths, and loading conditions can change between tools and versions.
+2. **What happens when it activates?** Try it with a small, harmless task and check that the rule actually appears in the work. A file that happens to be in the project is not proof that the agent read it.
+
+Prompt files can be useful for instructions you want to add when needed. Skills can provide a more structured form in environments that explicitly support them. Do not assume that a file with a particular name works everywhere. If your chosen environment does not document support, treat the file as ordinary documentation until you verify otherwise.
+
+Brevity is not the highest goal. A short rule that leaves out an important quality, privacy, or security requirement is worse than a slightly longer rule that preserves it. Remove repetition and ambiguity, not necessary constraints. Never put secrets, personal data, or sensitive material in instructions just to make them convenient.
+
+## Optional exercise in your project
+
+**Improve or propose a recurring instruction and check that it is used when it should be.**
+
+Choose a task you have done at least twice. First write down what recurs and which error or extra work the rule should prevent. Then formulate one instruction with a clear scope.
+
+Test it on a small working copy:
+
+1. Run a task where the rule should apply.
+2. Check which sign of activation you can see, such as the agent's plan, selected instruction, or resulting change.
+3. Run a nearby task where the rule should not apply.
+4. Review the changes and note whether the rule helped, interfered, or did not activate.
+
+If activation cannot be checked, record that as the result. Do not improve the rule by adding more files before you understand the problem.
+
+## A rule applies only to frontend work. Should it be sent with every task?
+
+<details>
+<summary>Show answer</summary>
+
+No. Choose the narrowest suitable scope, such as the frontend directory or the task type where the rule is needed. Then check that activation works when you change frontend code; do not treat the file's location as proof by itself.
+
+If the rule also contains a project-wide security requirement, that part may need a broader scope. In that case, split the rules by responsibility instead of sending the complete frontend rule everywhere.
+
+</details>
+
+## Summary
+
+First save things that have proved necessary in real tasks. Separate project-wide rules from conditional instructions, documentation, and reusable workflows. Start with one relevant instruction and check both when it activates and what it actually changes. Keep it short where possible, but do not let brevity remove important quality and security requirements.
+
+In [part 7](/vibe-on-budget/en/working-routine), you bring the lessons together. You compare complete tasks — result, verification, usage, and rework — and build a workflow that fits your project.

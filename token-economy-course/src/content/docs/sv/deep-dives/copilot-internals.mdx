@@ -1,0 +1,69 @@
+---
+title: "Förstå det som sker bakom gränssnittet"
+description: "En valfri fördjupning om hur GitHub Copilot hanterar kontext, verktyg och agentloopar bakom gränssnittet."
+---
+
+:::note[Valfri fördjupning]
+Det här är en deep-dive, inte en del av huvudspåret. Läs den när du vill förstå varför Copilot ibland läser, söker och provar flera saker innan du får ett svar. Du behöver inte kunna den här modellen för att använda kursens praktiska arbetssätt.
+:::
+
+## 1. Vad den här deep-dive:n täcker
+
+Copilot är inte bara en modell som får en fråga och skriver tillbaka text. Runt modellen finns ett kodningsharness: ett lager som väljer relevant kontext, gör verktyg tillgängliga, skickar förfrågningar och tolkar resultaten.
+
+Här följer du den förenklade vägen från din instruktion till en ändring i projektet. Målet är inte att återskapa Copilots interna implementation. Målet är att få en användbar mental modell för tre frågor:
+
+- Varför läser agenten vissa filer men inte andra?
+- Varför blir en uppgift ibland flera modellturner?
+- Vilka optimeringar sker redan innan du själv kortar en prompt?
+
+## 2. Kodningsharnesset: lagret mellan editor och modell
+
+När du skriver i editorn finns ett system mellan din text och modellens svar. Harnesset samlar signaler från arbetsytan, till exempel aktuell fil, markerad kod, instruktioner, tidigare meddelanden och tillgängliga verktyg. Det skickar sedan en sammanställd förfrågan till modellen.
+
+En förenklad kedja ser ut så här:
+
+1. Du beskriver en uppgift.
+2. Harnesset bygger ett kontextpaket.
+3. Modellen föreslår text eller ett verktygsanrop.
+4. Harnesset kör verktyget och samlar resultatet.
+5. Resultatet går tillbaka till nästa modelltur.
+6. Harnesset visar svaret eller ändringen i editorn.
+
+Det är därför samma modell kan bete sig olika i olika lägen. Ask, Edit och Agent ger olika arbetsyta, verktyg och återkoppling. Ett agentläge har större handlingsutrymme, men också fler möjliga turer och mer koordinering.
+
+## 3. Så sammanställs kontext och verktyg väljs
+
+Kontext är inte en enda stor kopia av projektet. Harnesset behöver välja vad som är relevant inom modellens kontextfönster. Filreferenser, instruktioner, diagnostik, sökresultat och tidigare verktygsresultat konkurrerar om utrymmet.
+
+Verktyg väljs på liknande sätt. I stället för att skicka varje verktygs fullständiga definition i varje förfrågan kan systemet söka fram verktyg när uppgiften kräver dem. Det är den pedagogiska kärnan i Tool Search: mindre fast bagage i varje tur och mer information först när den behövs.
+
+Avancerade agentuppsättningar med många specialagenter eller MCP-servrar kan därför ge bättre räckvidd, men de har en samordningskostnad. Fler verktyg betyder fler definitioner, fler möjliga vägar och ibland fler turer för att välja rätt väg. Lägg bara till en agent eller server när dess kapacitet faktiskt behövs.
+
+## 4. Så fungerar agentloopen
+
+Agenten arbetar iterativt. Den första turen behöver inte lösa hela uppgiften. Den kan läsa en fil, söka efter en symbol, köra ett test och därefter besluta vad nästa tur behöver göra.
+
+Återkopplingen är central. Ett lyckat verktygsresultat ger ny kontext. Ett testfel eller en tom sökning ändrar nästa beslut. Harnesset håller ihop denna loop och begränsar vilka resultat som går vidare, så att senare turer inte behöver bära med sig allt ofiltrerat.
+
+Det här är en förenklad pedagogisk modell. Den säger inte exakt vilka interna komponenter Copilot använder, i vilken ordning de körs eller hur varje prioritering görs. Den förklarar däremot varför en kort användarprompt kan leda till många interna steg.
+
+## 5. Optimeringar Copilot gör åt dig
+
+Copilot-harnesset innehåller optimeringar som du inte behöver skriva manuellt:
+
+- **Outputkomprimering:** onödig formatering, till exempel radnummer som inte tillför betydelse, kan tas bort från modellens output. Det minskar mängden data som behöver skickas vidare.
+- **Tool Search:** verktygsdefinitioner kan laddas efter behov i stället för att alltid följa med.
+- **Bakgrundsarbete och batchning:** kontext- och verktygshantering kan samordnas under inaktiva perioder, så att allt arbete inte ligger i den synliga väntetiden.
+- **WebSocket-förbättringar:** beständiga anslutningar minskar transportens startkostnad och kan ge snabbare tid till första token. Det minskar främst latens, inte automatiskt antalet tokens.
+- **Evidensbaserad utveckling:** förändringar bör jämföras med A/B-tester och offline-tester. En optimering räknas bara som lyckad om uppgiften fortfarande håller rätt kvalitet samtidigt som resursanvändningen förbättras.
+
+Dessa förbättringar kompletterar ditt eget arbete. Relevant kontext, tydliga instruktioner och rätt agentläge påverkar fortfarande hur mycket arbete loopen behöver göra.
+
+## 6. Begränsningar: vad vi vet och vad vi drar slutsatser om
+
+Det finns en viktig gräns mellan dokumenterad produktinformation och en förenklad modell. Vi kan beskriva att Copilot använder ett harness för kontext, verktyg, agentloop och återkoppling när detta är dokumenterat. Vi kan också återge publicerade mätningar för till exempel outputkomprimering och transportlatens.
+
+Däremot ska du inte läsa diagrammet som en exakt ritning av Copilots interna tjänster. Exakta urvalsregler, prioriteringar, cachegränser och modellbeslut kan ändras utan att användargränssnittet ändras. När en beskrivning här säger “kan” eller “en förenklad modell” markerar den just den gränsen.
+
+Använd därför deep-dive:n som ett sätt att ställa bättre frågor och göra rimliga hypoteser. När du vill optimera ditt eget arbetsflöde: mät uppgiften, jämför kvalitet och credits, och ändra en sak i taget.

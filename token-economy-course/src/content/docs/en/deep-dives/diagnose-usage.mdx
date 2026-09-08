@@ -1,0 +1,71 @@
+---
+title: "Investigate high usage"
+description: Learn to diagnose high credit usage through symptoms, Agent Debug Logs, cache analysis, and careful interpretation of measurements.
+---
+
+:::note[Optional deep dive]
+This is an optional deep dive for anyone who wants to investigate unexpectedly high usage. It is not required reading and is not needed to follow the main track.
+:::
+
+## 1. What this deep dive covers
+
+This section helps you move from a symptom to a reasonable hypothesis. You get a method for investigating extra retries, growing session cost, and differences between similar tasks. You also get a foundation for reading cache information and interpreting measurements without drawing conclusions that the evidence cannot support.
+
+This is not an exact price calculator and does not guarantee how a particular service counts credits. The display, level of detail, and definitions can differ between plans, models, and tools. Use your environment's own data as observations and check the service's current terms.
+
+## 2. Common symptoms and what they might indicate
+
+Start by describing what has actually changed:
+
+| Symptom | Possible explanations to investigate |
+| --- | --- |
+| More retries or repeated attempts | An unclear task, incorrect context, test failure, or a model that needs several corrections |
+| A session becomes progressively more expensive | Growing history, more tool results, or large files carried between turns |
+| A small change produces unexpectedly high usage | Broad context, extra instructions, longer output, or work outside the visible change |
+| The same task varies a lot | Different model choice, workflow, starting state, cache hit, or randomness in the result |
+| High usage without longer answers | Large input, many tool steps, or repeated requests rather than longer output |
+
+Treat the table as a set of hypotheses, not diagnoses. Change one thing at a time if you want to compare against a baseline.
+
+## 3. How to use Agent Debug Logs
+
+Detailed logs are useful when the normal usage view does not explain a difference. Start with a specific session and note the task's starting state, model, and approximate number of turns. Then look for:
+
+- how many model requests were made,
+- which tool calls and results followed,
+- whether the same instructions or files appeared repeatedly,
+- whether errors caused retries,
+- how input and output changed between turns.
+
+Preferably compare two similar tasks: a normal session and a high-usage session. Do not ask only “which line cost the most?” Also ask “which workflow created the extra turns?”
+
+<details>
+<summary>A simple investigation order</summary>
+
+1. Confirm that the sessions are comparable.
+2. Count turns, tool steps, and retries.
+3. Look for growing context or repeated results.
+4. Check the cache information.
+5. Formulate a small change and test again.
+
+</details>
+
+## 4. Cache analysis basics
+
+Cache analysis can show whether parts of recurring input were reused. A high cache hit can mean that much of the material was unchanged; a low hit can mean that the context changed, the material could not be reused, or that the service uses different rules.
+
+A cache hit is not the same as low total cost. A session can reuse a lot of input and still be expensive because of many turns, large output, or retries. Compare cache information with the number of requests, input, output, and result quality.
+
+## 5. Limits of measurements
+
+Measurements tell you what a particular view or log recorded. They do not always tell you why the work was needed or whether the result was good. Credits can be affected by the model, plan, workflow, cache, tools, and internal handling that is not visible in the interface.
+
+Use numbers to find patterns, not to pretend that the evidence gives you more precision than it does. For example, write “this session had more turns and a lower cache hit” before writing “the cache miss caused the entire increase.” The latter conclusion requires a controlled comparison.
+
+## 6. Security note
+
+Agent Debug Logs can contain code, file paths, prompts, instructions, tool results, and other sensitive information. Do not share them casually in chats, tickets, or public forums.
+
+Redact secrets, personal data, customer data, and proprietary code before sharing an excerpt. Also limit the excerpt to the lines needed for the question. Store logs according to your organization's rules and delete copies that are no longer needed.
+
+**In short:** start with the symptom, compare equivalent sessions, use logs and cache as clues, and treat every log as potentially sensitive.

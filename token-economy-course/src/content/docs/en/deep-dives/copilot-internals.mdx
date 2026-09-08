@@ -1,0 +1,69 @@
+---
+title: "Understand what happens behind the interface"
+description: "An optional deep dive into how GitHub Copilot handles context, tools, and agent loops behind the interface."
+---
+
+:::note[Optional deep dive]
+This is a deep dive, not part of the main track. Read it when you want to understand why Copilot sometimes reads, searches, and tries several things before you get an answer. You do not need this model to use the course's practical workflows.
+:::
+
+## 1. What this deep dive covers
+
+Copilot is not just a model that receives a question and writes text back. Around the model is a coding harness: a layer that selects relevant context, makes tools available, sends requests, and interprets results.
+
+Here you follow a simplified path from your instruction to a change in the project. The goal is not to recreate Copilot's internal implementation. The goal is to build a useful mental model for three questions:
+
+- Why does the agent read some files but not others?
+- Why does a task sometimes become several model turns?
+- Which optimizations happen before you shorten a prompt yourself?
+
+## 2. The coding harness: the layer between editor and model
+
+When you write in the editor, a system sits between your text and the model's response. The harness collects signals from the workspace, such as the current file, selected code, instructions, previous messages, and available tools. It then sends a consolidated request to the model.
+
+A simplified chain looks like this:
+
+1. You describe a task.
+2. The harness builds a context package.
+3. The model suggests text or a tool call.
+4. The harness runs the tool and collects the result.
+5. The result goes back into the next model turn.
+6. The harness shows the answer or change in the editor.
+
+That is why the same model can behave differently in different modes. Ask, Edit, and Agent provide different workspace context, tools, and feedback. An agent mode offers more freedom to act, but also more possible turns and more coordination.
+
+## 3. How context is assembled and tools are selected
+
+Context is not one large copy of the project. The harness needs to choose what is relevant within the model's context window. File references, instructions, diagnostics, search results, and previous tool results compete for space.
+
+Tools are selected in a similar way. Instead of sending every tool's full definition in every request, the system can search for tools when the task requires them. That is the teaching core of Tool Search: less fixed baggage in every turn and more information only when it is needed.
+
+Advanced agent setups with many specialized agents or MCP servers can therefore provide more reach, but they have a coordination cost. More tools mean more definitions, more possible paths, and sometimes more turns to choose the right path. Add an agent or server only when its capability is actually needed.
+
+## 4. How the agent loop works
+
+The agent works iteratively. The first turn does not have to solve the entire task. It can read a file, search for a symbol, run a test, and then decide what the next turn needs to do.
+
+Feedback is central. A successful tool result provides new context. A test failure or empty search changes the next decision. The harness keeps the loop together and limits which results continue forward, so later turns do not have to carry everything unfiltered.
+
+This is a simplified teaching model. It does not say exactly which internal components Copilot uses, in which order they run, or how each priority is decided. It does explain why a short user prompt can lead to many internal steps.
+
+## 5. Optimizations Copilot performs for you
+
+The Copilot harness includes optimizations that you do not have to write manually:
+
+- **Output compression:** unnecessary formatting, such as line numbers that add no meaning, can be removed from model output. This reduces the amount of data that needs to be sent onward.
+- **Tool Search:** tool definitions can be loaded when needed instead of always being included.
+- **Background work and batching:** context and tool handling can be coordinated during idle periods, so not all work appears in the visible wait.
+- **WebSocket improvements:** persistent connections reduce transport setup cost and can improve time to first token. This mainly reduces latency, not automatically the number of tokens.
+- **Evidence-based development:** changes should be compared with A/B tests and offline tests. An optimization counts as successful only when the task still meets the required quality while resource use improves.
+
+These improvements complement your own work. Relevant context, clear instructions, and the right agent mode still affect how much work the loop needs to do.
+
+## 6. Limits: what we know and what we infer
+
+There is an important boundary between documented product information and a simplified model. We can describe that Copilot uses a harness for context, tools, agent loops, and feedback when this is documented. We can also report published measurements for things such as output compression and transport latency.
+
+Do not read the diagram as an exact blueprint of Copilot's internal services. Exact selection rules, priorities, cache limits, and model decisions can change without the user interface changing. When this deep dive says “can” or “a simplified model,” it marks that boundary.
+
+Use the deep dive as a way to ask better questions and form reasonable hypotheses. When you want to optimize your own workflow, measure the task, compare quality and credits, and change one thing at a time.

@@ -1,0 +1,120 @@
+---
+title: Give a clear assignment and the right context
+description: Write clear tasks with relevant context, constraints, and an expected result
+---
+
+## What question does this section answer?
+
+How do you describe a task so that Copilot understands both **what** to do and **how the result will be judged**?
+
+In [part 2 you made a first, controlled attempt](/vibe-on-budget/en/first-task). You bounded the task and checked the change. Now you improve the description of the task itself. This makes it easier to start in the right place and reduces the risk of rework.
+
+A clear assignment has four parts:
+
+1. **Goal** — what should become different?
+2. **Relevant material** — which files, error messages, or examples does Copilot need to see?
+3. **Constraints** — what must not change, and which conditions must hold?
+4. **Expected result** — what should the response or change look like, and how should it be checked?
+
+This does not mean that every prompt must be long. It means that every part that affects the task should be clear.
+
+---
+
+## From request to assignment
+
+Imagine that a test suite fails when a date is missing from an API response.
+
+A short description might be:
+
+> Fix the date bug in the API and add tests.
+
+It leaves several questions open. Which API? Which date format? What should happen when the date is missing? Should the database change? Which tests are relevant?
+
+A clearer version might be:
+
+> The goal is to fix the error where `GET /api/orders/{id}` throws an exception when `shippedAt` is missing. Use `src/api/orders.ts` and the existing test in `tests/orders.test.ts`. Keep the current JSON format and do not change the database schema. When `shippedAt` is missing, the response must contain `shippedAt: null` and still have status 200. Add a test for the missing date and run the affected test suite. Show which files you changed and summarize the result.
+
+The task is still the same: fix the date bug and add tests. The longer version does not add new requirements. It makes existing requirements visible.
+
+Files make an assignment concrete. A filename shows where the problem probably is and which material is relevant. An error message provides even more information:
+
+- What happened?
+- At which step did it happen?
+- Which file and line does the error point to?
+- Can the error be reproduced?
+
+Include the information you actually have, such as a short error message from the test run. Do not paste the entire log when three lines explain the problem. If the error contains paths, tokens, or personal data, remove or mask what is not needed.
+
+---
+
+## The right context, not the smallest possible context
+
+It is tempting to think that a shorter prompt is always cheaper and better. But irrelevant or missing context can instead lead to incorrect assumptions, more questions, and more corrections.
+
+Choose context based on the task:
+
+- Include the file where the change belongs.
+- Include nearby types, interfaces, or tests when they control the behavior.
+- Include a concrete error message when you are debugging.
+- Include project constraints when they affect the solution, such as a rule that the database schema must not change.
+- Leave out large files that do not affect the decision.
+
+Relevant material can therefore be both a file and an explanation of why the file matters. Write “use this test as the acceptance criterion” rather than simply listing five files without context.
+
+General rules also need to fit the situation. “Write code only” can be reasonable when you already know exactly what should change and want to avoid a long explanation. During debugging, a short account of the hypothesis may matter more than code immediately. “Always change the language” can be reasonable when the project requires a particular language, but otherwise mention a language change only when needed. Ask for an explanation when you need to review the solution; ask for a short response when you already know the background.
+
+The same task can therefore need different instructions depending on whether you want to investigate a bug, plan a change, edit code, or verify a result.
+
+---
+
+## Optional practical choices
+
+Start with the smallest complete description. Then check whether any of these are missing:
+
+- Can the reader or model identify the right part of the project?
+- Is the desired behavior described, including error and empty cases?
+- Is there anything that must explicitly not change?
+- Do you know how the result will be checked?
+
+If you do not know the answer to a point, write it as an open question instead of pretending that the requirement is decided. For example: “Suggest two alternatives and describe the difference before changing code.” This is especially useful when several solutions could be reasonable.
+
+More context is not automatically better. An entire codebase can make it harder to see what matters. Limit material according to the task's decision points, not according to a general goal of sending as little as possible.
+
+---
+
+## Optional exercise in your own project
+
+**Improve the description of your own task without changing its requirements.**
+
+Choose a small upcoming task. First write the description you would have sent spontaneously. Then rewrite it using the headings goal, relevant material, constraints, and expected result.
+
+Compare the versions: Did you add clarity, or did you accidentally add new requirements? If you use the improved version, also note which files and checks were actually needed.
+
+---
+
+## A situation question
+
+**The clearer prompt is longer. Is that a problem?**
+
+<details>
+<summary>Show answer and explanation</summary>
+
+No, not by itself. Extra information can reduce incorrect assumptions, follow-up questions, and manual rework. Assess the whole task instead: final result, number of corrections, time, and usage — not just the number of words in the first prompt.
+
+But every addition should be relevant. A long prompt with unrelated information can make the task harder. The goal is not maximum length, but enough material to understand the task and check the result.
+
+</details>
+
+---
+
+## Summary
+
+- Describe the task with a **goal, relevant material, constraints, and expected result**.
+- Use filenames, tests, and error messages to make the problem concrete.
+- Choose **relevant** context, not automatically as little context as possible.
+- Adapt rules about code, explanations, and language to the situation.
+- Assess the whole task: a better initial assignment can reduce both errors and rework.
+
+Once the assignment is clear, you need to choose how the work will be done. In [part 4 you choose a workflow and manage the session](/vibe-on-budget/en/sessions-and-models).
+
+*Estimated reading time: 7 minutes*

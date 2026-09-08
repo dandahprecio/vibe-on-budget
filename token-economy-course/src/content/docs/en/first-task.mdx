@@ -1,0 +1,83 @@
+---
+title: Make a first, controlled attempt
+description: Choose a small task, prepare a working copy, and learn the basics of asking, planning, and reviewing before letting Copilot change code.
+---
+
+In part 1, you saw that a task can cost more than the first question suggests. Usage is affected by context, responses, repeated attempts, and follow-up work. The next step is therefore not to give Copilot a large task, but to try a small task where you can understand both the result and the path to it.
+
+## The question this module answers
+
+**How do you make a first attempt that is small enough to control and clear enough to learn from?**
+
+Choose a task with an understandable result, such as adding simple validation, changing interface text, or writing a test for an existing function. Avoid authentication, payments, production data, secrets, and other sensitive or difficult-to-restore code for your first exercise. If something goes wrong, you should be able to understand the change, restore the working copy, and try again without risking real users or important information.
+
+## Explanation: from question to reviewed change
+
+Start with a simple note. Write what you want to change, where the change belongs, and how you will decide that it is complete. For example:
+
+> Add validation that shows a clear error message when the email field has no `@`. Change only the form and its existing tests. Check it with the tests and review the diff afterward.
+
+This request gives Copilot a goal, a boundary, and a check. Ask for help understanding or planning the task first if you do not know where the change belongs. Once the plan is clear, ask Copilot to make the change. You remain responsible for approving what changes; a suggestion or completed edit is not the same as a finished result.
+
+Prepare the working copy before the first change:
+
+1. Make sure you are in the right project and on a safe copy, such as your own branch or another recoverable working copy.
+2. Check the starting state. Note whether tests are already passing and whether there are changes you want to keep.
+3. Write down the task and boundary: which files may change, and which parts must stay untouched?
+4. Decide how to verify the result before you start. This might be a test, a manual interface check, or both.
+5. Let Copilot suggest or make a small change. Stop and ask for an explanation if the result is no longer understandable.
+6. Run the planned verification and then review the changes. Check both the content and the scope.
+
+A green test suite is important, but it does not answer every question. Tests can miss an unrelated file, an unintended interface change, or a requirement that was never turned into a test. Compare the changes with the task and check whether every changed file has a clear reason.
+
+## Practical choices and limitations
+
+A first attempt can start with a question, a plan, or a direct request for a small edit. Choose what fits your knowledge of the code:
+
+- **Ask first** when you do not know the files, dependencies, or existing conventions.
+- **Ask for a plan** when several small steps are needed and you want to approve the direction before code changes.
+- **Ask for the change** when the location, requirements, and verification are already clear.
+
+Keep the boundary concrete. “Improve the whole form” is difficult to control. “Change email validation in this component and update its test” is easier to compare with the diff. The boundary does not make the result safe by itself; you still need to read the changes and check the working copy.
+
+Result and effort are different things. A good result meets the requirements and has been verified. Effort can still include several questions, waiting, corrections, and cost. If cost is not shown in your environment, write **not available**, rather than estimating a number of credits.
+
+Use this shared note for the exercise:
+
+- **Task:**
+- **Starting state:**
+- **Requirements:**
+- **Verification:**
+- **Workflow:** ask, plan, or change first
+- **Changed variable:** what you change compared with an earlier run, if any
+- **Result:**
+- **Cost:** value or *not available*
+- **Time:**
+- **Corrections:**
+
+The note does not need to be long. It makes it possible to distinguish what actually happened from what you assume happened.
+
+## Optional exercise in your own project
+
+### Complete a bounded task and record the result, verification, available cost, time, and corrections.
+
+Choose a small change with an understandable result. Save the starting state, formulate the requirements, and decide how to check them before asking Copilot. Afterward, read the diff, check that only intended files changed, and complete the note template. You do not need to run an expensive comparison. If a measurement is missing, mark it as **not available**.
+
+## Understanding question
+
+### Question: The tests pass, but an unrelated file changed. Is the task complete?
+
+<details>
+<summary>Show answer</summary>
+
+No, not yet. Tests are part of verification, but you also need to review the scope and intent of the changes. An unrelated file may be harmless, but it may also indicate that the task was unclear or that Copilot changed more than you asked for.
+
+Identify why the file changed. If the change is not needed, remove it safely or restore the working copy without losing your own work. Run the verification again and check the diff once more. The task is complete only when the result meets the requirements, the check is relevant, and the changes are understandable and intended.
+
+</details>
+
+## Summary and next step
+
+A controlled first attempt has a small task, a safe working copy, a clear boundary, and planned verification. You can start by asking, planning, or requesting a bounded change, but you must always review the result yourself. Also record cost, time, and corrections without inventing missing measurements.
+
+Now you have a workflow to build on. In [part 3: Give a clear assignment and the right context](/vibe-on-budget/en/prompts-and-context), you make the request more precise by describing the goal, relevant material, constraints, and expected result.

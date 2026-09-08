@@ -1,0 +1,74 @@
+---
+title: Förstå förbrukningen
+description: Lär dig vad tokens, credits och kontext betyder — och varför en kort prompt inte alltid är billig.
+---
+
+## Frågan modulen besvarar
+
+Vad är det egentligen som förbrukas när du ber en AI-modell om hjälp?
+
+Det här är kursens första del. Därför finns ingen föregående del att knyta an till. Målet är att skapa en enkel mental modell som vi kan använda genom resten av kursen: bedöm hela den korrekt slutförda uppgiften, inte bara längden på din första prompt eller hur snabbt det första svaret kom.
+
+## Förklaring
+
+Vi börjar med orden i små steg.
+
+En **prompt** är det du ber modellen att göra, till exempel: ”Lägg till ett test för funktionen som sorterar kundlistan.” En **modell** är den AI-tjänst som tolkar prompten och formulerar ett svar. Olika modeller kan ha olika styrkor, arbetssätt och förbrukning.
+
+För att bearbeta text delas den upp i mindre delar som kallas [**tokens**](/vibe-on-budget/sv/glossary). En token är inte samma sak som ett ord: ett ord, en del av ett ord, ett mellanslag eller ett skiljetecken kan bidra på olika sätt. Du behöver inte räkna tokens manuellt för att förstå principen. Det viktiga är att både din prompt och materialet runt den kan bidra till mängden som behandlas.
+
+Det som skickas till modellen kallas **input**. Det kan vara prompten, relevanta delar av en fil, tidigare meddelanden eller instruktioner som gäller för arbetsytan. Det som modellen skickar tillbaka kallas **output**. Det kan vara en förklaring, kod, en fråga till dig eller ett förslag på nästa steg.
+
+Tillsammans bildar materialet som modellen får använda uppgiftens [**kontext**](/vibe-on-budget/sv/glossary). Kontexten är alltså större än själva prompten. En kort fråga i en stor eller lång session kan fortfarande ha mycket kontext.
+
+Tänk på en liten uppgift i ett projekt. Du skriver en kort prompt: ”Fixa det här testet.” För att göra ett bra jobb kan arbetsflödet ändå innehålla flera förfrågningar:
+
+1. Modellen undersöker testet och den kod som testas.
+2. Du svarar på en följdfråga eller förtydligar vilket beteende som ska gälla.
+3. Modellen föreslår eller gör en ändring.
+4. Ett test visar ett nytt fel, så modellen behöver läsa felet och korrigera ändringen.
+5. Modellen sammanfattar vad som ändrades och vad som kontrollerades.
+
+Den korta första prompten beskriver inte hela arbetet. Varje steg kan använda input och skapa output. Därför kan en korrekt slutförd uppgift förbruka mer än den första raden antyder — men också vara mer värdefull än ett snabbt, felaktigt svar.
+
+**Credits** är i det här sammanhanget ett mått på användning eller förbrukning. De ska skiljas från abonnemangsavgiften. Abonnemanget är kostnaden för själva planen; inkluderade credits beskriver hur mycket användning planen omfattar. Om en tjänst visar ytterligare debitering beror den på tjänstens aktuella villkor. Kontrollera därför den vy och plan som gäller för din miljö i stället för att anta att alla användare har samma gränser.
+
+I vissa arbetsflöden kan delar av återkommande material återanvändas genom **cache**. Det betyder förenklat att systemet kan slippa behandla exakt samma del från början igen. Cache är en möjlig återanvändning, inte en besparing som du kan räkna med i varje förfrågan. Vad som återanvänds beror på tjänsten och arbetsflödet.
+
+## Praktiska vägval och begränsningar
+
+När du jämför två arbetssätt, titta på hela uppgiften:
+
+- **Resultatkvalitet:** Uppfylldes kraven? Verifierades ändringen? Är resultatet granskat?
+- **Arbetsinsats:** Hur många förfrågningar, credits, minuter, korrigeringar och manuella omtag krävdes?
+- **Förutsättningar:** Användes samma startläge, kontext och ungefär samma uppgift?
+
+En kortare prompt kan vara bättre om den är tydlig och ger rätt underlag. En längre prompt kan vara mer effektiv om den minskar missförstånd och omarbete. Det finns ingen allmän procentsats som avgör vad som är ”billigt” eller ”effektivt”.
+
+Även den synliga användningen har begränsningar. Alla miljöer visar inte samma detaljer, och en lokal känsla av snabbhet är inte ett säkert mått på credits. Om en användningsvy finns, använd den som observation för din miljö — inte som ett löfte om hur en annan plan, modell eller session fungerar.
+
+## Valfritt moment i eget projekt
+
+**Identifiera var den egna användningen visas, om funktionen finns.**
+
+Gör så här:
+
+1. Öppna den användnings- eller kontovy som hör till din AI-tjänst.
+2. Notera vilka uppgifter som faktiskt visas, till exempel credits, meddelanden eller modell.
+3. Markera sådant som inte visas. Skriv ”inte tillgängligt” i stället för att uppskatta faktiska credits.
+4. Jämför inte resultat ännu. Målet är bara att veta vilka observationer du kan göra senare.
+
+## Fråga: Två lika långa frågor kostar olika mycket. Hur kan det komma sig?
+
+<details>
+<summary>Visa svar</summary>
+
+Promptlängden säger inte vilken **kontext**, **modell** eller mängd efterföljande arbete som användes. Den ena frågan kan skickas med mer filinnehåll och längre historik. Den kan också använda en annan modell, ge ett längre svar eller leda till flera följdfrågor och korrigeringar. Därför behöver du bedöma hela korrekt slutförda uppgiften, inte bara antalet tecken i den första frågan.
+
+</details>
+
+## Sammanfattning
+
+En prompt är din instruktion, modellen bearbetar den, tokens beskriver textens mindre delar, input är materialet som skickas in och output är det som kommer tillbaka. Kontexten omfattar prompten och annat relevant material runt den. En uppgift kan bestå av flera förfrågningar, och credits beskriver användning medan abonnemangsavgiften beskriver planen. Cache kan ibland återanvända material, men är inte garanterad.
+
+Nästa del går från begrepp till handling: du får prova en liten, kontrollerad uppgift och lära dig vad som behöver kontrolleras före och efter en ändring. Då kan du börja koppla ihop kvalitet, tidsåtgång och faktisk arbetsinsats i stället för att bara titta på promptens längd.

@@ -1,0 +1,83 @@
+---
+title: Gör ett första, kontrollerat försök
+description: Välj en liten uppgift, förbered arbetskopian och lär dig grunderna i att fråga, planera och granska innan du låter Copilot ändra kod.
+---
+
+I del 1 såg du att en uppgift kan kosta mer än den första frågan antyder. Förbrukningen påverkas av kontext, svar, upprepade försök och efterföljande arbete. Nästa steg är därför inte att ge Copilot en stor uppgift, utan att prova en liten uppgift där du kan förstå både resultatet och vägen dit.
+
+## Frågan modulen besvarar
+
+**Hur gör du ett första försök som är litet nog att kontrollera och tydligt nog att lära dig av?**
+
+Välj en uppgift med ett begripligt resultat, till exempel att lägga till en enkel validering, ändra texten i ett gränssnitt eller skriva ett test för en befintlig funktion. Undvik autentisering, betalningar, produktionsdata, hemligheter och annan känslig eller svåråterställd kod som första övning. Om något går fel ska du kunna förstå ändringen, återställa arbetskopian och försöka igen utan att riskera riktiga användare eller viktig information.
+
+## Förklaring: från fråga till granskad ändring
+
+Börja med en enkel anteckning. Skriv vad du vill ändra, var ändringen hör hemma och hur du avgör att den är klar. Exempel:
+
+> Lägg till en validering som visar ett tydligt felmeddelande när e-postfältet saknar `@`. Ändra bara formuläret och dess befintliga tester. Kontrollera med testerna och granska diffen efteråt.
+
+Den frågan ger Copilot ett mål, en avgränsning och en kontroll. Be först om hjälp att förstå eller planera uppgiften om du inte vet var ändringen ska göras. När planen är begriplig kan du be Copilot genomföra ändringen. Då har du fortfarande ansvaret för att godkänna vad som ändras; ett förslag eller en genomförd redigering är inte samma sak som ett färdigt resultat.
+
+Förbered arbetskopian före första ändringen:
+
+1. Se till att du arbetar i rätt projekt och på en säker kopia, till exempel en egen arbetsgren eller en annan återställningsbar arbetskopia.
+2. Kontrollera startläget. Notera om tester redan är gröna och om det finns ändringar som du själv vill behålla.
+3. Skriv uppgiften och gränsen: vilka filer får ändras, och vilka delar ska lämnas orörda?
+4. Bestäm verifieringen innan du börjar. Det kan vara ett test, en manuell kontroll i gränssnittet eller båda.
+5. Låt Copilot föreslå eller genomföra en liten ändring. Stoppa och be om förklaring om resultatet inte längre är begripligt.
+6. Kör den planerade verifieringen och granska sedan ändringarna. Kontrollera både innehållet och omfattningen.
+
+En grön testsvit är viktig, men den svarar inte på alla frågor. Testerna kan missa en orelaterad fil, en oavsiktlig ändring av gränssnittet eller ett krav som aldrig blev ett test. Jämför därför ändringarna med uppgiften och undersök om varje ändrad fil har en tydlig anledning.
+
+## Praktiska vägval och begränsningar
+
+Ett första försök kan börja med en fråga, en plan eller en direkt begäran om en liten redigering. Välj det som passar din kunskap om koden:
+
+- **Fråga först** när du inte känner till filerna, beroendena eller befintliga konventionerna.
+- **Be om en plan** när flera små steg behövs och du vill godkänna riktningen innan koden ändras.
+- **Be om ändringen** när platsen, kraven och verifieringen redan är tydliga.
+
+Håll gränsen konkret. ”Förbättra hela formuläret” är svårt att kontrollera. ”Ändra valideringen av e-postfältet i den här komponenten och uppdatera dess test” är lättare att jämföra med diffen. Begränsningen gör inte resultatet säkert av sig själv; du behöver ändå läsa ändringarna och kontrollera arbetskopian.
+
+Resultat och arbetsinsats är olika saker. Ett bra resultat uppfyller kraven och är verifierat. Arbetsinsatsen kan samtidigt bestå av flera frågor, väntetid, korrigeringar och kostnad. Om kostnaden inte visas i din miljö ska du skriva **inte tillgängliga**, inte uppskatta ett antal credits.
+
+Använd denna gemensamma anteckning för övningen:
+
+- **Uppgift:**
+- **Startläge:**
+- **Krav:**
+- **Verifiering:**
+- **Arbetssätt:** fråga, plan eller ändring först
+- **Ändrad variabel:** vad du ändrar jämfört med en tidigare körning, om någon
+- **Resultat:**
+- **Kostnad:** värde eller *inte tillgängliga*
+- **Tid:**
+- **Korrigeringar:**
+
+Anteckningen behöver inte vara lång. Den gör det möjligt att skilja vad som faktiskt hände från vad du antar hände.
+
+## Valfritt moment i eget projekt
+
+### Genomför en avgränsad uppgift och notera resultat, verifiering, tillgänglig kostnad, tid och korrigeringar.
+
+Välj en liten ändring med begripligt resultat. Spara startläget, formulera kraven och bestäm kontrollen innan du frågar Copilot. Efteråt läser du diffen, kontrollerar att bara avsedda filer ändrats och fyller i anteckningsmallen. Du behöver inte göra en dyr jämförelsekörning. Om ett mätvärde saknas, markera det som **inte tillgängliga**.
+
+## Förståelsefråga
+
+### Fråga: Tester är gröna, men en orelaterad fil har ändrats. Är uppgiften färdig?
+
+<details>
+<summary>Visa svar</summary>
+
+Nej, inte ännu. Testerna är en del av verifieringen, men du behöver också granska omfattningen och ändringarnas avsikt. En orelaterad fil kan vara ofarlig, men den kan också tyda på att uppgiften var otydlig eller att Copilot ändrade mer än du bad om.
+
+Identifiera varför filen ändrades. Om ändringen inte behövs, ta bort den på ett säkert sätt eller återställ arbetskopian utan att förlora eget arbete. Kör sedan verifieringen igen och kontrollera diffen på nytt. Uppgiften är färdig först när resultatet uppfyller kraven, kontrollen är relevant och ändringarna är begripliga och avsedda.
+
+</details>
+
+## Sammanfattning och nästa steg
+
+Ett kontrollerat första försök har en liten uppgift, en säker arbetskopia, en tydlig gräns och en planerad verifiering. Du kan börja med att fråga, planera eller be om en avgränsad ändring, men du behöver alltid granska resultatet själv. Anteckna också kostnad, tid och korrigeringar utan att hitta på saknade mätvärden.
+
+Nu har du en arbetsprocess att bygga vidare på. I [del 3: Ge ett tydligt uppdrag och rätt kontext](/vibe-on-budget/sv/prompts-and-context) gör du frågan mer precis genom att beskriva mål, relevant underlag, begränsningar och förväntat resultat.
