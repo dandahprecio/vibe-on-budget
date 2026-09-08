@@ -1,6 +1,6 @@
 ---
 title: Token Economy for Vibe Coding
-description: A course about completing coding tasks with quality, a clear workflow, and reasonable token and AI Credit usage
+description: A comprehensive course on saving AI Credits and tokens when using GitHub Copilot
 template: splash
 ---
 
@@ -8,81 +8,76 @@ import { CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 # Token Economy for Vibe Coding
 
-Learn to complete coding tasks while keeping quality high, your workflow understandable, and token and AI Credit usage reasonable.
+Learn how to save tokens and AI Credits when coding with GitHub Copilot. This course covers everything from the basics of usage-based billing to advanced techniques for prompt optimization, project setup, and agent hygiene.
 
-You do not need prior GitHub Copilot experience. The course starts with understanding usage, then gradually builds a practical workflow that you can follow and improve.
-
-## To read
-
-You need:
-
-- basic programming experience
-- the ability to read and change code in a project
-
-You do not need to have used GitHub Copilot before. The course introduces concepts and workflows when you need them.
-
-## To try
-
-If you want to do the exercises, you also need:
-
-- a stable VS Code installation
-- access to GitHub Copilot
-- a safe working copy of a project where you can experiment without risking the original
-
-The exercises are optional. You can read the entire course without following them step by step.
-
-## How the course is structured
-
-The main track follows the order below. Start with usage, try a controlled workflow, and then build on it with better prompts, sessions, project instructions, and your own routine.
-
-Each module contains what you need for the next step. You can skip the optional exercises. **Deep dives** provide additional technical background, but you can also skip them when you want to stay focused on the workflow.
-
-## Course modules
+## What You'll Learn
 
 <CardGrid>
   <LinkCard
-    title="1. Understand usage"
-    href="/vibe-on-budget/en/understand-usage"
+    title="1. The Hidden Tax"
+    href="/vibe-on-budget/en/01-hidden-tax"
   >
-    See what affects usage and why a coding task can cost more than it first appears.
+    Understand UBB, AI Credits, the Effective Tokens formula, and infrastructure cost trade-offs.
   </LinkCard>
   <LinkCard
-    title="2. Make a first, controlled attempt"
-    href="/vibe-on-budget/en/first-task"
+    title="2. How Copilot Builds Context"
+    href="/vibe-on-budget/en/02-context-model"
   >
-    Start with a small task, clear boundaries, and a way to check the result.
+    What goes into every request and how the context window fills up.
   </LinkCard>
   <LinkCard
-    title="3. Give a clear assignment and the right context"
-    href="/vibe-on-budget/en/prompts-and-context"
+    title="3. Measure Before You Cut"
+    href="/vibe-on-budget/en/03-measure-before-you-cut"
   >
-    Describe tasks so they can be understood, completed, and reviewed without unnecessary context.
+    Use built-in VS Code tools to see exactly where your credits go — per request, per session, and per month.
   </LinkCard>
   <LinkCard
-    title="4. Choose a workflow and manage the session"
-    href="/vibe-on-budget/en/sessions-and-models"
+    title="4. Quick Wins"
+    href="/vibe-on-budget/en/04-quick-wins"
   >
-    Choose a suitable workflow and end or restart a session before it becomes hard to understand.
+    Six things you can do tomorrow to start saving tokens — including unified diff output.
   </LinkCard>
   <LinkCard
-    title="5. Limit the agent's work"
-    href="/vibe-on-budget/en/agents-and-tools"
+    title="5. Writing Prompts That Cost Less"
+    href="/vibe-on-budget/en/05-cheaper-prompts"
   >
-    Decide which tools, files, and decisions the agent may use so the work stays controllable.
+    Write focused prompts that get better results with fewer tokens — and which popular tools actually deliver.
   </LinkCard>
   <LinkCard
-    title="6. Save what works in the project"
-    href="/vibe-on-budget/en/project-instructions"
+    title="6. Project Setup for Token Efficiency"
+    href="/vibe-on-budget/en/06-project-setup"
   >
-    Turn recurring rules and decisions into project instructions that help the next session.
+    Configure lean instruction files, the AGENTS.md behavioral contract, and VS Code for maximum efficiency.
   </LinkCard>
   <LinkCard
-    title="7. Compare and build your workflow"
-    href="/vibe-on-budget/en/working-routine"
+    title="7. Agents, Tools & MCP Hygiene"
+    href="/vibe-on-budget/en/07-agents-mcp"
   >
-    Compare what works for different tasks and shape a routine that delivers consistent quality without unnecessary usage.
+    Use agents, MCP servers, model routing, and sub-agent patterns without wasting credits. Includes the model-switching cache trap.
+  </LinkCard>
+  <LinkCard
+    title="8. Vibe Coding Without the Debt"
+    href="/vibe-on-budget/en/08-vibe-coding-guardrails"
+  >
+    Apply the decision framework, prevent Winchester Mystery House architecture, and keep the flow.
+  </LinkCard>
+  <LinkCard
+    title="9. The Big Picture"
+    href="/vibe-on-budget/en/09-under-the-hood"
+  >
+    How Copilot saves tokens internally — output compression, batching, WebSocket improvements, and infrastructure economics.
   </LinkCard>
 </CardGrid>
+
+## Prerequisites
+
+- A GitHub Copilot subscription (Free, Pro, or Enterprise)
+- VS Code with GitHub Copilot extension installed
+- Basic familiarity with the Copilot chat interface
+
+## How to Use This Course
+
+Each module is self-contained and takes about 8–12 minutes to read. Modules build on each other but can also be consumed independently. Look out for **deep dive** sections if you want the full technical details.
 
 ## Reference
 
@@ -90,5 +85,5 @@ Each module contains what you need for the next step. You can skip the optional 
   title="Glossary"
   href="/vibe-on-budget/en/glossary"
 >
-  Definitions of key terms and concepts: tokens, context windows, MCP, prompt caching, and more.
+  Key terms and concepts defined: tokens, context windows, MCP, prompt caching, and more.
 </LinkCard>

@@ -3,90 +3,224 @@ title: Glossary
 description: Key terms and concepts for the Token Economy course
 ---
 
-### Acceptance criteria
-
-Conditions that describe when a task counts as complete. Example: a test must pass and a specific file must be updated. First covered in [Give a clear assignment and the right context](/vibe-on-budget/en/prompts-and-context).
-
-### Agent
-
-A workflow in which the model can plan, use tools, and carry out several steps in a task. Example: the agent investigates a codebase, changes a file, and runs a test. First covered in [Limit the agent's work](/vibe-on-budget/en/agents-and-tools).
+## A–B
 
 ### Agent mode
 
-A mode in which Copilot can use tools and continue through several work steps in the same task. Example: agent mode can read relevant files, suggest a change, and verify it. First covered in [Choose a workflow and manage the session](/vibe-on-budget/en/sessions-and-models).
+One of three Copilot Chat modes. In Agent mode, Copilot autonomously plans, executes, and iterates on multi-step tasks using tool calls. It has the highest token cost per task but is the most capable mode.
 
-### AI Credit (credit)
+### Agentic loop
 
-A unit GitHub Copilot uses to describe usage in some plans and models. Example: an interaction can be recorded as a number of AI Credits depending on the model and usage. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+The five-step cycle agents follow: Analyze → Plan → Execute → Test → Iterate. Each cycle compounds token cost.
 
-### Working copy
+### Agentic workflow
 
-A separate or recoverable copy of a project where you can try a change. Example: create a branch or copy before letting Copilot change code. First covered in [Make a first, controlled attempt](/vibe-on-budget/en/first-task).
+A structured approach where AI tools operate within engineering disciplines such as formal specifications, acceptance criteria, security reviews, and continuous test cycles. It contrasts with vibe coding.
 
-### Effort versus result quality
+### AI Credits
 
-A comparison between the time and attention a task requires and how well the result meets its requirements. Example: two solutions can produce the same test result but require different amounts of review. First covered in [Compare and build your workflow](/vibe-on-budget/en/working-routine).
+GitHub Copilot's consumption unit for usage-based billing. Each chat, agent, or API interaction deducts credits from a pool. Overage is billed at $0.01 per credit.
 
-### Baseline
+### Always-on tax
 
-A documented starting point for a task, such as usage, time, rework, and quality. Example: write down how a representative task works before changing your process. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+Token overhead paid on every request from files loaded unconditionally, such as `copilot-instructions.md`, `AGENTS.md`, and open tabs. Reducing this baseline is the highest-leverage optimization.
 
-### Cache
+### AGENTS.md
 
-Stored parts of previously processed context that can be reused when a later request matches. Example: a stable prompt prefix can remain in a cache between requests. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+A behavioral contract file that defines how Copilot should behave in agent mode. When present, loaded as system context for every agent step. Should be kept lean (~80 tokens) with mode, scope, and output format rules.
 
-### Caching
+### Ask mode
 
-The process of saving and reusing context or other processed content. Example: prompt caching can reuse the same instructions when the prefix is unchanged. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+Chat-only Copilot mode for questions and explanations. It does not execute tools and has the lowest token cost, at roughly 500 tokens per turn.
 
-### Input token
+### Background work batching
 
-A token in the material sent to the model, such as a prompt, file content, or history. Example: the text in an attached code file becomes input tokens when it is sent in a request. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+A harness optimization that queues context fetching, embedding computation, and indexing into a single batch during idle periods rather than using separate round-trips.
 
-### Instruction file (`.github/copilot-instructions.md`, `AGENTS.md`)
+### BPE (Byte-Pair Encoding)
 
-A file that describes rules or project context for an AI tool. Example: the file can state which tests to run or which directories must not be changed. First covered in [Save what works in the project](/vibe-on-budget/en/project-instructions).
+A tokenization algorithm that splits text into subword units. It affects how efficiently different languages tokenize; English is more BPE-efficient than Swedish.
 
-### Compression
+## C
 
-Making context or a response shorter by removing repetition while retaining relevant information. Example: a long session history can be summarized before work continues. First covered in [Choose a workflow and manage the session](/vibe-on-budget/en/sessions-and-models).
+### Cache breakpoint
 
-### Context
+An explicit marker in Anthropic's API that tells the model which prefix sections to cache. Cache hits are roughly 90% cheaper than fresh computation.
 
-The combined material a model receives for a request, such as the prompt, files, instructions, and session history. Example: the same prompt can produce different results depending on which code is in context. First covered in [Give a clear assignment and the right context](/vibe-on-budget/en/prompts-and-context).
+### Caveman-speak
+
+A prompt compression technique that strips articles, prepositions, and grammar while keeping semantic keywords. Independent testing shows roughly 8.5% token savings.
 
 ### Context window
 
-The amount of tokens a model can handle within a request or work step. Example: when a session fills the window, older context must be summarized, removed, or replaced. First covered in [Give a clear assignment and the right context](/vibe-on-budget/en/prompts-and-context).
+The maximum number of tokens a model can process in a single request, typically 128K–200K depending on the model. When it fills, the model may effectively forget earlier content.
+
+### .copilotignore
+
+A project-root configuration file that excludes specified directories and file patterns from Copilot's workspace context. Reduces input token consumption by 20–40% by filtering build artifacts, test fixtures, and large data files.
+
+### Continuous batching
+
+Grouping multiple inference requests into batches of 64–128 to maximize GPU utilization. It reduces per-token cost dramatically compared with single-request inference.
+
+### Custom agent
+
+A user-defined Copilot agent with scoped context and tools. It is more efficient than `@workspace` because it loads fewer tool definitions and a smaller file tree.
+
+## E–F
+
+### Edit mode
+
+Copilot mode for single-file edits. It has moderate token cost, roughly 1–2K tokens per turn, and does not use tool loops.
+
+### Effective Tokens (ET)
+
+A formula, `m × (1.0×I + 0.1×C + 4.0×O)`, that normalizes costs across input, cached, and output tokens. It is more meaningful for comparisons than raw token count.
+
+### Embedding vectors
+
+Numerical representations of text used for semantic search. Tool Search uses embeddings to find relevant tools for each request.
+
+## G–H
+
+### Glue code
+
+Integration code that connects existing systems, libraries, or services. It is well-suited to agentic coding because it follows established patterns.
+
+### GPU utilization rate
+
+The percentage of time a GPU is actively computing. Below roughly 72% utilization, serverless infrastructure is cheaper than dedicated hardware.
+
+### Guardrails
+
+Practices that prevent AI-generated code from accumulating technical debt, including lightweight specifications, TDD, architectural oversight, and explicit stop conditions.
+
+### Harness
+
+The VS Code agentic framework that assembles context, manages tools, and routes requests before they reach the model provider.
+
+## I–L
+
+### Intent comment
+
+An `// AI:` comment embedded in source code that captures the developer's intent for the model to read alongside the code. It can save a full explanation in chat.
+
+### K/V cache (Key/Value cache)
+
+The model's internal state computed from the prompt prefix. Cached K/V tensors can be reused when the prefix stays identical, making subsequent turns dramatically cheaper.
+
+### Lazy-loading (instructions)
+
+Using `.prompt.md` files loaded on demand through `#file:` references instead of putting all guidance in the always-loaded `copilot-instructions.md`.
+
+### .prompt.md files
+
+Domain-specific guidance files loaded on demand via `#file:` references. Store architecture specs, conventions, and known issues without paying the always-on tax on every request.
+
+## M
 
 ### MCP (Model Context Protocol)
 
-A protocol for connecting AI models to external tools and data sources through MCP servers. Example: an MCP server can offer a tool that reads information from another system. First covered in [Limit the agent's work](/vibe-on-budget/en/agents-and-tools).
+An open protocol that lets AI models interact with external tools through standardized servers. Each MCP server registers tools that appear in the agent's tool registry.
 
-### Model
+### Meta-prompt
 
-The language model that interprets context and generates a response or action. Example: the same task can produce different answers when you change the model. First covered in [Choose a workflow and manage the session](/vibe-on-budget/en/sessions-and-models).
+A prompt that controls the output format rather than requesting content. Examples include “Answer in a maximum of three bullet points” and “Code only, no explanation.”
 
-### Output token
+### Model multiplier (m)
 
-A token in the model's generated response, such as code, text, or a tool call. Example: a long explanation and a large code patch contain more output tokens than a short summary. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+In the Effective Tokens formula, a value that normalizes price differences when switching between models with different per-token costs.
 
-### Prompt
+## O
 
-The instruction or question you send to the model, together with any stated constraints and desired result. Example: a prompt can specify the goal, relevant files, acceptance criteria, and response format. First covered in [Give a clear assignment and the right context](/vibe-on-budget/en/prompts-and-context).
+### Optimization loop
 
-### Session
+The cycle Measure baseline → Change one variable → Repeat task → Compare → Keep the better configuration. It is the core methodology of this course.
 
-A continuous work dialogue in which previous messages and results can be included in later steps. Example: a session can begin with investigation and continue with a change and verification. First covered in [Choose a workflow and manage the session](/vibe-on-budget/en/sessions-and-models).
+### Output compression
+
+Harness-level optimization that normalizes whitespace, removes line numbers, and structures verbose output. It saves roughly 5.5% of output tokens on average.
+
+## P
+
+### Prefix caching
+
+When the beginning, or prefix, of multiple requests is identical, the provider reuses computed state instead of recomputing it. Cache hits are roughly 90% cheaper than fresh tokens.
+
+### Prompt prefix
+
+The repeated beginning of every request in a session: system instructions, tool definitions, and conversation history. Keeping it stable is the single biggest lever for token optimization.
+
+## Q–S
+
+### Quality threshold
+
+Pre-defined success criteria, such as passing tests, changing required files, having no critical errors, and needing no more than one small correction. They evaluate whether a cost optimization maintained result quality.
+
+### Dedicated GPU
+
+Provisioned GPU hardware for model inference, billed by the hour regardless of usage. Only cost-effective above ~72% sustained utilization. Contrasts with serverless (pay-per-use) infrastructure.
+
+### Serverless (GPU)
+
+Pay-per-use GPU infrastructure where you are billed per token. It wins for bursty, asynchronous agent sessions and contrasts with dedicated GPU instances.
+
+### System prompt
+
+Model-level instructions that define the model's role, capabilities, and behavior. Sent with every request and typically ~500 tokens. Part of the fixed baseline cost.
+
+### Stop condition
+
+An explicit boundary in agent instructions that tells the agent when to halt, such as “If tests pass, stop and wait for review.” It prevents costly infinite iteration loops.
+
+## T
 
 ### Token
 
-A text unit the model uses when processing language and code. A token can be part of input, output, or reused context. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+The basic unit of text that a language model processes. One token is roughly ¾ of an English word. Models are priced per million tokens (input and output). Tokens can be input (your prompt), output (model response), or cached (reused from prior requests).
 
-### Task cost
+### Technical debt
 
-The combined resources needed to complete a task, such as tokens, AI Credits, waiting, review, and rework. Example: a short prompt can still lead to high task cost if the task requires many agent steps. First covered in [Understand usage](/vibe-on-budget/en/understand-usage).
+The implied cost of rework caused by choosing quick solutions over robust ones. AI-generated code can accumulate debt through duplicated logic, accidental architecture, and bloated functions.
 
-### Tool
+### Thinking effort
 
-A function the model can call to read, change, search, or verify something outside the text response itself. Example: a tool can read a file or run a test. First covered in [Limit the agent's work](/vibe-on-budget/en/agents-and-tools).
+A VS Code setting controlling how much reasoning a model applies per request. Higher effort means more thinking tokens, latency, and credits, so use defaults for routine tasks.
+
+### Tokenizer
+
+The algorithm that splits text into tokens before model processing. Different models use different tokenizers, and efficiency varies by language.
+
+### Tool Registry
+
+The always-present catalog of tool names and short descriptions. With Tool Search, full tool schemas load on demand rather than occupying context permanently.
+
+### Tool Search
+
+An optimization in VS Code, available from mid-2025 onward, that loads full tool schemas only when the model requests them instead of loading all tool definitions at every step. It reduces tool overhead by roughly 60–75%.
+
+### TTFT (Time-To-First-Token)
+
+The latency between sending a request and receiving the first response token. WebSocket connections reduced median TTFT by roughly 19% in 2026.
+
+### TLS (Transport Layer Security)
+
+A cryptographic protocol that secures HTTPS connections. WebSocket adoption eliminates repeated TLS handshakes, reducing overhead per turn.
+
+## U–W
+
+### UBB (Usage-Based Billing)
+
+GitHub Copilot's billing model since June 2026. You pay for what you use, measured in tokens consumed, rather than a flat per-seat fee.
+
+### Unified diff
+
+A diff format showing only changed lines with `+` and `-` markers and three context lines. It forces models to return minimal output instead of regenerating entire files.
+
+### Vibe coding
+
+A development style where the developer describes intent and lets AI generate code with minimal oversight. It is optimal for exploration and prototyping but risky for production-critical code.
+
+### Verification vs Discovery
+
+A framework for choosing between agentic workflows and vibe coding. Use verification for business-critical code with guardrails, and discovery for prototypes and experiments.

@@ -30,66 +30,56 @@ export default defineConfig({
 			],
 			sidebar: [
 				{
-					label: "Main Track",
-					translations: { sv: "Huvudspår" },
+					label: "Modules",
+					translations: {
+						sv: "Moduler",
+					},
 					items: [
 						{
-							label: "Understand Usage",
-							translations: { sv: "Förstå förbrukningen" },
-							slug: "understand-usage",
+							label: "1. The Hidden Tax",
+							translations: { sv: "1. Den dolda skatten" },
+							slug: "01-hidden-tax",
 						},
 						{
-							label: "First Controlled Attempt",
-							translations: { sv: "Gör ett första, kontrollerat försök" },
-							slug: "first-task",
+							label: "2. How Copilot Builds Context",
+							translations: { sv: "2. Hur Copilot bygger kontext" },
+							slug: "02-context-model",
 						},
 						{
-							label: "Clear Tasks and Right Context",
-							translations: { sv: "Ge ett tydligt uppdrag och rätt kontext" },
-							slug: "prompts-and-context",
+							label: "3. Measure Before You Cut",
+							translations: { sv: "3. Mät innan du kapar" },
+							slug: "03-measure-before-you-cut",
 						},
 						{
-							label: "Work Modes and Sessions",
-							translations: { sv: "Välj arbetssätt och hantera sessionen" },
-							slug: "sessions-and-models",
+							label: "4. Quick Wins",
+							translations: { sv: "4. Snabba vinster" },
+							slug: "04-quick-wins",
 						},
 						{
-							label: "Agent Boundaries",
-							translations: { sv: "Avgränsa agentens arbete" },
-							slug: "agents-and-tools",
+							label: "5. Writing Prompts That Cost Less",
+							translations: { sv: "5. Skriva promptar som kostar mindre" },
+							slug: "05-cheaper-prompts",
 						},
 						{
-							label: "Save What Works",
-							translations: { sv: "Spara det som fungerar i projektet" },
-							slug: "project-instructions",
+							label: "6. Project Setup for Token Efficiency",
+							translations: { sv: "6. Projektinställningar för tokeneffektivitet" },
+							slug: "06-project-setup",
 						},
 						{
-							label: "Compare and Build Your Routine",
-							translations: { sv: "Jämför och bygg din arbetsrutin" },
-							slug: "working-routine",
-						},
-					],
-				},
-				{
-					label: "Deep Dives",
-					translations: { sv: "Fördjupning" },
-					items: [
-						{
-							label: "Diagnose High Usage",
-							translations: { sv: "Undersök hög förbrukning" },
-							slug: "deep-dives/diagnose-usage",
+							label: "7. Agents, Tools & MCP Hygiene",
+							translations: { sv: "7. Agenter, verktyg och MCP-hygien" },
+							slug: "07-agents-mcp",
 						},
 						{
-							label: "Behind the Interface",
-							translations: { sv: "Förstå det som sker bakom gränssnittet" },
-							slug: "deep-dives/copilot-internals",
+							label: "8. Vibe Coding Without the Debt",
+							translations: { sv: "8. Vibe coding utan teknisk skuld" },
+							slug: "08-vibe-coding-guardrails",
 						},
-					],
-				},
-				{
-					label: "Reference",
-					translations: { sv: "Referens" },
-					items: [
+						{
+							label: "9. The Big Picture",
+							translations: { sv: "9. Helhetsbilden" },
+							slug: "09-under-the-hood",
+						},
 						{
 							label: "Glossary",
 							translations: { sv: "Ordlista" },

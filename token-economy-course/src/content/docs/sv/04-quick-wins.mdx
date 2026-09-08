@@ -1,7 +1,200 @@
 ---
-
-title: "4. Snabba vinster"
-pagefind: false
+title: 4. Snabba vinster
+description: Sex saker du kan göra imorgon för att börja spara tokens direkt
 ---
 
-Innehållet har flyttats till den nya kursstrukturen. [Gå till startsidan](/vibe-on-budget/sv/) för att hitta det du söker.
+import { Steps } from "@astrojs/starlight/components";
+
+# Snabba vinster
+
+Sex saker du kan göra **imorgon bitti** för att börja spara tokens. Var och en tar 5 minuter eller mindre och har omedelbar effekt.
+Det här är engångskonfigurationer. För den löpande färdigheten att skriva effektiva prompter, se [Modul 5](/vibe-on-budget/sv/05-cheaper-prompts).[^m4-1]
+
+:::note[Besparingsuppskattningar]
+Besparingsuppskattningarna är författarens beräkningar baserade på tokenmekanik (förhållandet mellan input- och output-tokens, cache-ekonomi och modellpriser). Faktiska besparingar varierar beroende på projektets storlek, modell och arbetsflöde. Externa riktmärken anges där sådana finns.[^m4-2]
+:::
+
+---
+
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av BPE, unified diff och .copilotignore.)*
+
+## 1. Lägg till en Code-Only-instruktion 🟢
+
+**Problemet:** Varje chatsvar inkluderar artighetsfraser, förklaringar och markdown-omslag kring oförändrad kod. Output-tokens kostar 5x input — denna svullnad är dyr.[^m4-2][^m4-3]
+
+**Åtgärden:** Lägg till detta i din `.github/copilot-instructions.md` (en fil i `.github/`-mappen i ditt projekts rot — Copilot läser den vid varje förfrågan):
+
+```
+# Output-format
+- Returnera endast kodblock. Ta bort all text, hälsningar, förklaringar.
+- Ingen markdown-text utanför kodblocket.
+- Ersätt oförändrad kod med: // ... existing code ...
+```
+
+**Besparingen:** 50–70% minskning av output-tokens per svar.[^m4-2]
+
+---
+
+## 2. Rensa din chattråd regelbundet 🟢
+
+**Problemet:** Varje meddelande i en pågående tråd skickar hela konversationshistoriken som input-tokens.
+
+**Åtgärden:**
+- **Samma uppgift, 10+ steg?** Använd [`/compact`](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) för att sammanfatta äldre delar.
+- **Uppgiften klar?** Starta ny chatt med `Ctrl+N` (Windows/Linux) eller `⌘N` (Mac).
+
+Se [Modul 2](/vibe-on-budget/sv/02-context-model) för en komplett beslutsmatris: när du ska stanna i sessionen, när du ska rensa, och när du ska förgrena.
+
+**Besparingen:** 40–60% minskning av input-tokens för sessioner med ackumulerad historik.[^m4-4]
+
+---
+
+## 3. Stäng onödiga editorflikar 🟢
+
+**Problemet:** Copilot läser dina öppna editorflikar som kontext. Att ha 15 filer öppna när du frågar om en funktion skickar 14 irrelevanta filer som input-tokens med varje förfrågan.[^m4-5]
+
+**Åtgärden:**
+
+1. Innan du ställer en fråga, stäng filer du inte arbetar med
+2. Håll bara filen/filerna direkt relevanta för din uppgift öppna
+3. Använd `#file:filnamn.mjs` för att explicit referera till en fil — då slipper du ha den öppen som flik[^m4-5]
+
+**Besparingen:** 20–40% minskning av input-tokens per förfrågan. Än viktigare: du får **bättre svar** eftersom modellen ser mindre brus.[^m4-4]
+
+---
+
+## 4. Skapa en [`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore)-fil 🟢
+
+**Problemet:** Copilot skannar din arbetsyta efter kontext. Byggartefakter, testfixturer, mockdata, CSV-filer och `node_modules` inkluderas alla som potentiell kontext — trots att de aldrig är användbara för kodgenerering.[^m4-5][^m4-6]
+
+**Åtgärden:** Skapa `.copilotignore` i projektroten:
+
+```
+# .copilotignore
+dist/
+build/
+node_modules/
+tests/mock-data/
+*.svg
+*.csv
+*.json
+package-lock.json
+```
+
+**Besparingen:** 20–40% mindre input-tokenförbrukning. Bonus: snabbare svarstider.[^m4-4]
+
+:::caution[Inte en säkerhetsgräns]
+[`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore) är ett verktyg för att spara tokens, inte en säkerhetsåtgärd. Anta inte att det förhindrar data från att lämna din maskin.[^m4-6]
+:::
+
+---
+
+## 5. Använd Auto modellval 🟢
+
+**Problemet:** Varje chattförfrågan använder som standard samma modell. Att använda Claude Opus (output: $75/M tokens) för en regex-genereringsfråga är som att hyra en lastbil för att flytta en kaffekopp.[^m4-3]
+
+**Åtgärden:**
+
+För en underhållsfri standard, använd **[auto modellval](https://code.visualstudio.com/docs/agent-customization/language-models)**. VS Code dirigerar automatiskt varje förfrågan till en effektiv modell baserat på uppgiftens komplexitet, modellens hälsa och tillgänglighet.[^m4-7]
+
+Som ett avancerat alternativ kan du manuellt välja modell. Använd lätta modeller (Haiku eller GPT-mini) för:
+- Regex-mönster
+- Generering av dokumentationssträngar
+- Enkel kodformatering
+- Strängmanipulering
+- Generering av boilerplate
+
+Använd premiummodeller (Sonnet, Opus) endast för:
+- Arkitekturbeslut
+- Komplex refaktorering
+- Ändringar över flera filer
+- Säkerhetsgranskningar
+
+**Besparingen:** 5–15x kostnadsminskning per förfrågan (beräknat utifrån pris per modell). En enkel fråga kostar $0,0001 på Haiku vs $0,0015 på Sonnet — och du märker förmodligen inte kvalitetsskillnaden för rutinuppgifter.[^m4-3][^m4-7]
+
+---
+
+## 6. Tvinga unified diff-utdata 🟢
+
+**Problemet:** LLM:er returnerar ofta hela filen när du ber om redigeringar — även om bara några få rader ändrats. Detta är "lathetsproblemet": modellen tycker det är enklare att regenerera en hel fil än att beräkna en diff. Resultatet är massivt slöseri med output-tokens, eftersom varje oförändrad rad skickas tillbaka som output-tokens till 5x input-kostnad.[^m4-8]
+
+**Åtgärden:** Lägg till denna metaprompt i din `.github/copilot-instructions.md` eller i början av relevanta sessioner:
+
+```
+Use unified diff. Only changed lines +/- with 3 context lines. No full file output.
+```
+
+Detta tvingar modellen att endast returnera de rader som ändrats, med några få raders kontext runt varje ändring för läsbarhet.
+
+**Besparingen:** 70–80% minskning av output-tokens vid kodredigeringsuppgifter.[^m4-8]
+
+:::note[Maximala besparingar]
+Kombinera med Code-Only-instruktionerna från Quick Win #1 för maximala besparingar.[^m4-2][^m4-8]
+:::
+
+---
+
+:::tip[Validera dina besparingar]
+Använd mätverktygen från [Modul 3](/vibe-on-budget/sv/03-measure-before-you-cut) — hover, context window control och Agent Debug Logs — för att bekräfta att varje snabb vinst faktiskt minskar din tokenförbrukning.
+:::
+
+---
+
+:::tip[Fortsätt lära dig]
+För större besparingar, se [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts) och [Projektuppsättning för tokeneffektivitet](/vibe-on-budget/sv/06-project-setup). För avancerad modellval och agentmönster, se [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp).
+:::
+
+---
+
+## Snabbreferenskort 🟢
+
+| # | Åtgärd | Installationstid | Tokenbesparing |
+|---|--------|-----------------|----------------|
+| 1 | Code-only-instruktion | 2 min | 50–70% output ↓ |
+| 2 | `/compact` och sessionsgränser | 0 min | 40–60% input ↓ |
+| 3 | Stäng oanvända flikar | 0 min | 20–40% input ↓ |
+| 4 | `.copilotignore`-fil | 5 min | 20–40% input ↓ |
+| 5 | Auto modellval | 0 min | 5–15x kostnad/fråga ↓ |
+| 6 | Unified diff-utdata | 1 min | 70–80% output ↓ |
+
+Se respektive quick win ovan för detaljerade besparingsuppskattningar och källor.
+
+Börja med #1 och #4 — de är engångsinstallationer med högsta löpande avkastning.[^m4-2][^m4-6]
+
+---
+
+## Övning 🟢
+
+Använd din representativa uppgift och baslinje från Modul 3. Efter varje övning, kör om uppgiften och jämför credits, tokens och kvalitet mot din baslinje.
+
+1. Lägg till instruktionen om endast kod i `.github/copilot-instructions.md` (Snabb vinst #1). Skicka samma prompt som du använde för baslinjen i Modul 3. Jämför creditkostnaden.[^m4-2][^m4-9]
+2. Skapa en `.copilotignore`-fil i ditt aktuella projekt (Snabb vinst #4). Använd mallen från den här modulen.[^m4-6]
+3. Kontrollera modellväljaren. Är den inställd på Auto? Om inte, byt till Auto nu. (Snabb vinst #5)[^m4-7]
+
+## Viktiga slutsatser 🟢
+
+- **Code-only-instruktioner** tar bort text och omslag och sparar **50–70% output-tokens**[^m4-2]
+- **`/compact` och nya chattrådar** hindrar gammal historik från att byggas på och sparar **40–60% input-tokens** i längre sessioner[^m4-1][^m4-4]
+- **Färre öppna flikar** håller den automatiska kontexten fokuserad och sparar **20–40% input-tokens** per förfrågan[^m4-4][^m4-5]
+- En **`.copilotignore`-fil** tar bort irrelevant arbetsytekontext och sparar **20–40% input-tokens**[^m4-4][^m4-6]
+- **Lätta modeller** minskar kostnaden för rutinuppgifter med **5–15x per förfrågan**[^m4-7]
+- **Unified diff-utdata** stoppar regenerering av hela filer och sparar **70–80% output-tokens** vid redigeringsuppgifter[^m4-8]
+
+---
+
+*Beräknad lästid: 8 minuter*
+
+[^m4-1]: [Hantera agentsessioner i VS Code](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions) — Visual Studio Code, hämtad 2026-09-07.
+[^m4-2]: [Output Control — Token Optimization Guide](https://olivomarco.github.io/github-copilot-token-optimization/05-output-control/) — Olivio Marco, hämtad 2026-09-07.
+[^m4-3]: [Modeller och priser för GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs, hämtad 2026-09-07.
+[^m4-4]: [Prompt Compression — Token Optimization Guide](https://olivomarco.github.io/github-copilot-token-optimization/02-prompt-compression/) — Olivio Marco, hämtad 2026-09-07.
+[^m4-5]: [Lägg till kontext i chatten](https://code.visualstudio.com/docs/chat/copilot-chat-context) — Visual Studio Code, hämtad 2026-09-07.
+[^m4-6]: [Så förstår Copilot din arbetsyta](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code, hämtad 2026-09-07.
+[^m4-7]: [Om Copilots automatiska modellval](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub Docs, hämtad 2026-09-07.
+[^m4-8]: [To Diff or Not to Diff? Structure-Aware and Adaptive Output Formats for Efficient LLM-based Code Editing](https://aclanthology.org/2026.findings-acl.1483/) — Cheng et al., Findings of ACL 2026, Association for Computational Linguistics.
+[^m4-9]: [Felsök chattinteraktioner](https://code.visualstudio.com/docs/agents/agent-troubleshooting/chat-debug-view) — Visual Studio Code, hämtad 2026-09-07.
+[^m4-10]: [Tokalator — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=vfaraji89.tokalator) — Microsoft Marketplace-listning, hämtad 2026-09-07.
+[^m4-11]: [Token-Track — Copilot Usage Tracker](https://marketplace.visualstudio.com/items?itemName=Token-Track.token-track) — Microsoft Marketplace-listning, hämtad 2026-09-07.
+[^m4-12]: [Copilot Token Monitor](https://github.com/burke-dev/copilot-token-monitor) — burke-dev, GitHub-arkiv, hämtat 2026-09-07.
+[^m4-13]: [Optimera AI-creditanvändning i VS Code](https://code.visualstudio.com/docs/agents/guides/optimize-usage) — Visual Studio Code, hämtad 2026-09-07.
+[^m4-14]: [AI-inställningsreferens](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code, hämtad 2026-09-07.

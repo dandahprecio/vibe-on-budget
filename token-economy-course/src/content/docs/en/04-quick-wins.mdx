@@ -1,7 +1,213 @@
 ---
-
-title: "4. Quick Wins"
-pagefind: false
+title: 4. Quick Wins
+description: Six things you can do tomorrow to start saving tokens immediately
 ---
 
-This content has moved to the new course structure. [Go to the start page](/vibe-on-budget/en/) to find what you're looking for.
+import { Steps } from "@astrojs/starlight/components";
+
+# Quick Wins
+
+Six practical changes can reduce unnecessary context or output in Copilot workflows. These are configuration and workflow changes; for prompt-writing techniques, see [Module 5](/vibe-on-budget/en/05-cheaper-prompts).[^m4-1]
+
+:::note[Evidence note]
+The percentages in this module come from the cited token-optimization guide, while product behavior and pricing come from VS Code or GitHub documentation. Treat every range as workload-dependent rather than as a guarantee.[^m4-2]
+:::
+
+---
+
+*(See [Glossary](/vibe-on-budget/en/glossary) for BPE, unified diff, and .copilotignore definitions.)*
+
+## 1. Add a Code-Only Instruction 🟢
+
+**The problem:** Unrequested explanations and unchanged code add output tokens. GitHub Copilot bills input, output, and cached tokens at model-specific rates; the cited optimization guide reports output at 5× the input rate in its pricing model (see also [Module 1](/vibe-on-budget/en/01-hidden-tax)).[^m4-2][^m4-3]
+
+**The action:** Add this to your `.github/copilot-instructions.md`:
+
+```
+# Output format
+- Return code blocks only. Strip all prose, greetings, explanations.
+- No markdown text outside the codeblock.
+- Replace unchanged code with: // ... existing code ...
+```
+
+**The savings:** The cited guide reports **40–70% fewer output tokens** for code-generation tasks when using a code-only instruction.[^m4-2]
+
+---
+
+## 2. Clear Your Chat Thread Regularly 🟢
+
+**The problem:** A VS Code session contains a sequence of prompts, responses, and associated context in its context window; as a conversation grows, its context usage grows. VS Code recommends starting a new session when changing topics, and `/compact` summarizes older context to free space.[^m4-1]
+
+**The action:**
+
+- **Same task, multiple steps?** Stay in the session when the context remains relevant. VS Code sessions are designed to retain prompts, responses, and associated context.[^m4-1]
+- **Task complete or topic changed?** Start a new session; VS Code specifically recommends a new session when you change topics.[^m4-1]
+- **Context is getting large?** Use [`/compact`](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) to summarize older conversation context and free context-window space.[^m4-1]
+
+```
+/compact focus on the API design decisions
+```
+
+- **Switching tasks?** Use the manual method instead: summarize the key context, start a new chat session, and paste the summary into it. Use `Ctrl+N` (Windows/Linux) or `⌘N` (Mac) to start a new chat session. This is for a new topic, not for compacting the same task. See [Compact conversation context](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context).[^m4-1]
+
+**The savings:** The cited optimization guide reports **40–60% input-token savings** from prompt/context compression practices; measure your own session because the result depends on the conversation and files included.[^m4-4]
+
+---
+
+## 3. Close Unnecessary Editor Tabs 🟢
+
+**The problem:** VS Code can use workspace-indexed files as context and lets users add files explicitly; irrelevant files increase the context available to the model.[^m4-5]
+
+**The action:**
+
+1. Before asking a question, close files you're not working on
+2. Only keep open the file(s) directly relevant to your task
+3. Use a `#` file mention for explicit references instead of relying only on automatic context.[^m4-5]
+
+If your VS Code build exposes automatic open-tab context, review `github.copilot.chat.experimental.context.autoOpenTabs.max` in the [AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings).[^m4-14]
+
+**The savings:** The cited optimization guide reports **20–40% input-token savings** from reducing unnecessary context; the same guide describes the quality trade-off as less irrelevant material, not as a guaranteed accuracy improvement.[^m4-4]
+
+---
+
+## 4. Create a [`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore) File 🟢
+
+**The problem:** Workspace indexing can make repository files available as context. Excluding generated or irrelevant paths reduces the material considered by Copilot; whether a path is relevant depends on the project.[^m4-5][^m4-6]
+
+**The action:** Create `.copilotignore` in your project root:
+
+```
+# .copilotignore
+dist/
+build/
+node_modules/
+tests/mock-data/
+*.svg
+*.csv
+*.json
+package-lock.json
+```
+
+**The savings:** The cited optimization guide reports **20–40% less input-token consumption** for context-reduction practices; it is not a universal benchmark for every repository.[^m4-4]
+
+:::caution[Not a security boundary]
+[`.copilotignore`](https://code.visualstudio.com/docs/agents/reference/workspace-context) controls context selection; it should not be treated as a substitute for GitHub Copilot content-exclusion policies or broader secret/data-loss controls.[^m4-6]
+:::
+
+---
+
+## 5. Use Lightweight Models for Routine Tasks 🟢
+
+**The problem:** Copilot model cost depends on the selected model and token volume. GitHub publishes prices per one million tokens; the current pricing table lists Claude Opus output pricing, which can change over time.[^m4-3]
+
+**The action:**
+
+For a maintenance-free default, use **[auto model selection](https://docs.github.com/en/copilot/concepts/models/auto-model-selection)**. GitHub says Auto uses task complexity plus real-time system health and availability to route requests; paid plans receive a 10% model-cost discount while using Auto in supported Copilot products.[^m4-7]
+
+As an advanced option, manually select a lightweight model (Haiku or GPT-mini) for:
+1. Use lightweight models for:
+   - Regex patterns
+   - Docstring generation
+   - Simple code formatting
+   - String manipulation
+   - Boilerplate generation
+2. Only use premium models for:
+   - Architecture decisions
+   - Complex refactoring
+   - Cross-file changes
+   - Security audits
+
+**The savings:** Model pricing varies by model and token counts, so there is no universal multiple. Auto’s documented discount is **10% for eligible paid plans**; compare the current pricing table before choosing a model.[^m4-3][^m4-7]
+
+---
+
+## 6. Force Unified Diff Output 🟢
+
+**The problem:** Full-code generation can be less efficient than an edit representation for long-code editing. A 2026 ACL Findings paper describes this efficiency bottleneck and evaluates structure-aware diff formats.[^m4-8]
+
+**The action:** Add this meta-prompt to your `.github/copilot-instructions.md` or at the start of relevant sessions:
+
+```
+Use unified diff. Only changed lines +/- with 3 context lines. No full file output.
+```
+
+This requests only the changed lines, with a small amount of context for readability. It is a prompt convention, not a guarantee that every model will comply.
+
+**The savings:** The ACL 2026 study reports that its adaptive, structure-aware diff approach reduced latency and cost by **over 30%** on long-code editing tasks while matching full-code accuracy in its experiments; that result should not be generalized to every unified-diff prompt.[^m4-8]
+
+:::note[Maximum savings]
+Combine with code-only instructions from Quick Win #1 when both constraints fit the task.[^m4-2][^m4-8]
+:::
+
+---
+
+## Bonus: Measure Your Impact 🟢
+
+Turn on **Copilot debug logging** to inspect actual session statistics, including token usage:
+
+1. Enable the setting: `github.copilot.chat.agentDebugLog.fileLogging.enabled`
+2. Open Chat view → **...** → **Show Agent Debug Logs**
+3. Open the **Summary** tab to see aggregate token usage and other session statistics.[^m4-9]
+
+The same VS Code settings reference documents AI configuration areas; settings commonly used in model and agent experiments include `github.copilot.chat.defaultModel` and `github.copilot.chat.agent.experimental.maxRequests`. Verify availability in your installed VS Code version because experimental settings can change.[^m4-14]
+
+Use these numbers to validate your savings.[^m4-9]
+
+If you want additional local tooling, community projects include [**Tokalator**](https://marketplace.visualstudio.com/items?itemName=vfaraji89.tokalator), which advertises real-time context-budget and token monitoring; [**Token-Track**](https://marketplace.visualstudio.com/items?itemName=Token-Track.token-track), which advertises local debug-log parsing; and [**Copilot Token Monitor**](https://github.com/burke-dev/copilot-token-monitor), which advertises a rolling-window status-bar monitor.[^m4-10][^m4-11][^m4-12]
+
+These are community tools rather than GitHub products, so review their maintenance, permissions, and data-handling statements before installation.[^m4-10][^m4-11][^m4-12]
+
+---
+
+:::tip[Continue Learning]
+For deeper savings, see [Writing Prompts That Cost Less](/vibe-on-budget/en/05-cheaper-prompts) and [Project Setup for Token Efficiency](/vibe-on-budget/en/06-project-setup).
+:::
+
+---
+
+## Quick Reference Card 🟢
+
+| # | Action | Setup Time | Token Savings |
+|---|--------|------------|---------------|
+| 1 | Code-only instruction | — | 40–70% output ↓[^m4-2] |
+| 2 | `/compact` and task-boundary sessions | — | 40–60% input ↓[^m4-4] |
+| 3 | Close unused tabs | — | 20–40% input ↓[^m4-4] |
+| 4 | `.copilotignore` file | — | 20–40% input ↓[^m4-4] |
+| 5 | Auto model selection | — | 10% model-cost discount[^m4-7] |
+| 6 | Unified diff output | — | Over 30% cost ↓ in ACL experiments[^m4-8] |
+
+The ranges in this table are the externally reported figures cited above; actual results depend on model, context, and task.[^m4-2][^m4-4][^m4-8]
+
+Start with #1 and #4 if they match your workflow; the first changes response format, while the second changes workspace context selection.[^m4-2][^m4-6]
+
+---
+
+## Practice 🟢
+
+1. Add the code-only instruction to your `.github/copilot-instructions.md` (Quick Win #1). Send the same prompt you used in Module 3's baseline and compare the resulting usage in the debug summary.[^m4-2][^m4-9]
+2. Create a `.copilotignore` file in your current project (Quick Win #4), using the documented exclusion guidance.[^m4-6]
+3. Check your model selector. If Auto is available for your plan and workspace, compare it with your current selection.[^m4-7]
+
+## Key Takeaways 🟢
+
+- **Code-only instructions** can reduce output tokens by **40–70%** in the cited code-generation guide.[^m4-2]
+- **`/compact` and fresh sessions** manage accumulated context; the cited guide reports **40–60% input-token savings** for context-compression practices.[^m4-1][^m4-4]
+- **Fewer irrelevant files** can reduce context; the cited guide reports **20–40% input-token savings** for context reduction.[^m4-4][^m4-5]
+- **A `.copilotignore` file** can trim excluded workspace context; the cited guide reports **20–40% input-token savings** for this class of reduction.[^m4-4][^m4-6]
+- **Auto model selection** provides a documented **10% model-cost discount** for eligible paid plans; it is not a universal cost multiplier.[^m4-7]
+- **Structure-aware diff formats** reduced cost by **over 30%** in the ACL 2026 long-code editing experiments.[^m4-8]
+
+[^m4-1]: [Manage agent sessions in VS Code](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions) — Visual Studio Code, accessed 2026-09-07.
+[^m4-2]: [Output Control — Token Optimization Guide](https://olivomarco.github.io/github-copilot-token-optimization/05-output-control/) — Olivio Marco, accessed 2026-09-07.
+[^m4-3]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs, accessed 2026-09-07.
+[^m4-4]: [Prompt Compression — Token Optimization Guide](https://olivomarco.github.io/github-copilot-token-optimization/02-prompt-compression/) — Olivio Marco, accessed 2026-09-07.
+[^m4-5]: [Add context to chat](https://code.visualstudio.com/docs/chat/copilot-chat-context) — Visual Studio Code, accessed 2026-09-07.
+[^m4-6]: [How Copilot understands your workspace](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code, accessed 2026-09-07.
+[^m4-7]: [About Copilot auto model selection](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub Docs, accessed 2026-09-07.
+[^m4-8]: [To Diff or Not to Diff? Structure-Aware and Adaptive Output Formats for Efficient LLM-based Code Editing](https://aclanthology.org/2026.findings-acl.1483/) — Cheng et al., Findings of ACL 2026, Association for Computational Linguistics.
+[^m4-9]: [Debug chat interactions](https://code.visualstudio.com/docs/agents/agent-troubleshooting/chat-debug-view) — Visual Studio Code, accessed 2026-09-07.
+[^m4-10]: [Tokalator — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=vfaraji89.tokalator) — Microsoft Marketplace listing, accessed 2026-09-07.
+[^m4-11]: [Token-Track — Copilot Usage Tracker](https://marketplace.visualstudio.com/items?itemName=Token-Track.token-track) — Microsoft Marketplace listing, accessed 2026-09-07.
+[^m4-12]: [Copilot Token Monitor](https://github.com/burke-dev/copilot-token-monitor) — burke-dev, GitHub repository, accessed 2026-09-07.
+[^m4-13]: [Optimize AI credit usage in VS Code](https://code.visualstudio.com/docs/agents/guides/optimize-usage) — Visual Studio Code, accessed 2026-09-07.
+[^m4-14]: [AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code, accessed 2026-09-07.

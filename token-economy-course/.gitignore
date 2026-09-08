@@ -15,4 +15,4 @@ node_modules/
 .DS_Store
 
 # VS Code
-.vscode/settings.jsonbuild-output.txt
+.vscode/settings.json

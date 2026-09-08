@@ -1,7 +1,330 @@
 ---
-
-title: "6. Projektinställningar för tokeneffektivitet"
-pagefind: false
+title: 6. Projektinställningar för tokeneffektivitet
+description: Konfigurera instruktionsfiler, AGENTS.md och VS Code för maximal effektivitet
 ---
 
-Innehållet har flyttats till den nya kursstrukturen. [Gå till startsidan](/vibe-on-budget/sv/) för att hitta det du söker.
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+# Projektinställningar för tokeneffektivitet
+
+Filerna du skapar (eller inte skapar) i ditt projekt bestämmer hur många tokens Copilot spenderar på **varje** förfrågan. Denna modul går igenom exakta filer och konfigurationer som minskar tokenförbrukningen i hela projektet.[^m6-1]
+
+---
+
+## Alltid-på-skatten 🟢
+
+Dessa filer laddas vid **varje chattinteraktion**:[^m6-1][^m6-2]
+
+| Fil | Laddas när | Tokenkostnad (typisk) |
+|---|---|---|
+| `.github/copilot-instructions.md` | Alltid | 50–2000+ tokens |
+| [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions) | Agentläge | 200–5000+ tokens |
+| Öppna editorflikar | Alltid | 500–10 000+ tokens |
+| VS Code-inställningar (Copilot-sektionen) | Alltid | ~50 tokens |
+
+*(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av alltid-på-skatt, lazy-loading och AGENTS.md.)*
+
+Huvudinsikten: **varje alltid-på-instruktion som är "bra-att-ha" men inte "kritisk just nu" är bortkastade tokens**.
+
+## Så använder du den här modulen 🟢
+
+Gör dessa tre steg först — de ger ~80% av besparingen på under 30 minuter:
+
+1. **Minimal `copilot-instructions.md`** — 18 rader, ~50 tokens (→ Steg 1 nedan)
+2. **`.copilotignore`** — en fil som filtrerar bort brus (→ Steg 4)
+3. **`AGENTS.md`-kontrakt** — ~80 tokens, beteende endast (→ Steg 3)
+
+Resterande steg (lazy-loading, VS Code-inställningar, budgetmodellen) är fördjupning — gör dem när du har tid och vill finjustera.
+
+---
+
+## Sikta på ~600 tokens fast overhead 🟡
+
+Använd detta som en tumregel, inte ett hårt tak: **sikta på ≤100 tokens i dina anpassade instruktioner**, så att den alltid påslagna basnivån (systemprompt + instruktioner) hålls nära 600 tokens innan kontext från öppna filer och konversationshistorik. Målet är att hålla det *fasta påslaget* så litet som möjligt, inte att dyrka en godtycklig siffra.
+
+- Anpassade instruktioner: ≤ 100 tokens
+- Systemprompt: ~500 tokens (oundvikligt)
+- Ytterligare kontext: öppna filer, historik, verktygsdefinitioner — varierar, minimera där det är möjligt
+
+:::note[Heuristik, inte handbojor]
+Om en värdefull regel tar dig lite över 100 tokens, behåll regeln och ta bort något mindre viktigt. Det viktiga är att vara kompakt som standard, inte att träffa ett magiskt tal.
+:::
+
+:::tip[Granska dina filer]
+Kör ett tokenräkningsskript mot dina instruktionsfiler. En grov uppskattning: 1 token ≈ 4 tecken på engelska. För precis mätning, använd [Copilot SDK](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) eller `gh copilot`.
+:::
+
+---
+
+## 1. Den minimala `copilot-instructions.md`
+
+De flesta team överfyller denna fil med arkitekturdokument, stilguider och teamnormer. Allt skickas som systemkontext vid varje förfrågan — även den om att byta namn på en variabel.
+
+### Mall: Minimal (tokenoptimerad)
+
+```markdown
+# Output-format
+- Endast kodblock. Ta bort text, hälsningar, förklaringar.
+- Ersätt oförändrad kod med: // ... existing code ...
+- Ingen markdown-text utanför kodblocket.
+
+# Språk
+- Engelska för alla promptar och svar (1,7x tokenbesparing vs svenska)
+```
+
+**Det är allt.** 18 rader, ~50 tokens. Täcker output-komprimering (den enskilt största besparingen) och språkval.[^m6-1]
+
+### Mall: Medium (balanserad)
+
+```markdown
+# Output-format
+- Endast kodblock. Ta bort text, hälsningar, förklaringar.
+- Ersätt oförändrad kod med: // ... existing code ...
+
+# Språk
+- Engelska för alla promptar och svar
+
+# Projektkontext
+- Ramverk: Astro 5 + Starlight
+- Pakethanterare: npm
+- Tester: Vitest med @testing-library/dom
+- Ingen TypeScript — använd JSDoc för typer
+```
+
+~80 tokens. Lägger till tillräckligt med kontext för att modellen ska generera relevant kod utan att måla upp en full arkitekturbild.
+
+### Vad du INTE ska ha här
+
+- ❌ API-nycklar eller hemligheter (dessa skickas till modellen!)
+- ❌ Arkitekturdokumentation på flera sidor
+- ❌ Full komponentbiblioteksdokumentation
+- ❌ Teamkodningskonventioner ("vi skriver ren kod")
+- ❌ Föråldrade beslut som inte längre gäller
+
+:::caution[Instruktionssvällning är evig skuld]
+Varje rad du lägger till i `copilot-instructions.md` betalas på **varje enskild förfrågan** av **varje teammedlem**. En 1000-rads instruktionsfil kostar 500+ tokens × tusentals förfrågningar per dag.
+:::
+
+### Tak på 200 rader 🟡
+
+Forskning visar att instruktionsfiler inte förblir små särskilt länge. Chakrabarti med flera (arXiv:2608.11095, augusti 2026) fann att instruktioner växte med **+226 %** under sin livstid när team fortsatte lägga till ytterligare ett undantag, en brasklapp eller en "tillfällig" regel. Daniel Vaughan, som tolkar artikeln, rekommenderar ett praktiskt tak: om filen överstiger några hundra rader är det dags att rensa.[^m6-3][^m6-4]
+
+> Siffran 200 rader är praktisk vägledning från Vaughans analys, inte ett resultat från originalartikeln, som rapporterar ett medianvärde på 39 instruktioner och 90:e percentilen på 131.[^m6-3][^m6-4]
+
+- **200 rader ≈ 1 500–2 000 tokens** — tillräckligt litet för att förbli synligt i förgrunden, men stort nog för identitet, 2–3 hårda regler och hänvisningar till djupare dokumentation.
+- **Över 200 rader** börjar modellen ägna mindre uppmärksamhet åt det tidiga innehållet. Filen blir osynlig ansamling: dyr, bekant och sällan omläst från början till slut.[^m6-4]
+- **Tokenmatematik:** En fil på 1 247 rader (~9 400 tokens) över 1 000 turer förbrukar **9,4 miljoner alltid-på-tokens**. Flytta samma vägledning till filsökvägsstyrda filer + skills, sänk alltid-på-lagret till 250 tokens och kostnaden sjunker till **250 000 tokens** — en **37× minskning** med identiska funktioner.[^m6-5]
+
+<Steps>
+1. Granska dina instruktionsfiler med en tokenräknare.
+2. Flytta ämnesspecifik vägledning till skills eller `.prompt.md`-filer.
+3. Håll alltid-på-lagret så kort att en människa fortfarande kan läsa om och rensa det i ett enda sittningstillfälle.
+</Steps>
+
+### Promptkommentarer: bekämpa instruktionssvällning 🟡
+
+Forskning tyder också på att instruktioner ansamlas eftersom **latent resonemang** — anledningen till att en regel finns — försvagas med tiden. När "varför" försvinner känns det riskabelt att radera gamla instruktioner, så de blir kvar för alltid.
+
+Lösningen är enkel: kommentera viktiga regler med en HTML-kommentar som dokumenterar felet, hypotesen och resultatet.
+
+```markdown
+# Output-format
+- Endast kodblock. Ta bort text, hälsningar, förklaringar.
+<!-- FAILURE: 2026-06, utförliga svar förbrukade 3x budgeten för output-tokens.
+  HYPOTHESIS: kodutdata utan text minskar output med 50–70 %.
+  OUTCOME: 62 % färre output-tokens, ingen kvalitetsförlust. Behåll. -->
+```
+
+I verktyg som [Claude Code](https://docs.anthropic.com/en/docs/claude-code) och [Codex CLI](https://github.com/openai/codex) tas HTML-kommentarer bort före injicering, så du bevarar resonemanget till **noll tokenkostnad**. I Chakrabartis fältdata från 2026 minskade promptkommentarer överdriven instruktionstillväxt med **99,3 %**.[^m6-4][^m6-6][^m6-3]
+
+---
+
+## 2. Lazy-loading med `.prompt.md`-filer 🟡
+
+Istället för att svälla din alltid-på-fil, skapa specialiserade promptfiler som laddas endast när det behövs:[^m6-7]
+
+| Fil | Innehåll | När ska användas |
+|---|---|---|
+| `frontend-style.prompt.md` | CSS-konventioner, komponentmönster | Bygger UI |
+| `db-schema.prompt.md` | Tabelldefinitioner, relationer | Skriver frågor |
+| `testing.prompt.md` | Testkonventioner, mock-mönster | Skriver tester |
+
+**Användning i chatten:**
+```
+Applicera regler från #file:frontend-style.prompt.md på denna komponent.
+```
+
+Modellen läser filen och tillämpar reglerna för denna förfrågan endast. Ingen alltid-på-skatt.[^m6-7]
+
+---
+
+## 3. [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions)-kontraktet 🟢
+
+`AGENTS.md` definierar hur Copilot ska bete sig i **agentläge**. När den finns, laddas den som systemkontext för varje agentsteg.[^m6-2][^m6-4]
+
+`AGENTS.md` = **beteendekontrakt** (läge, omfattning, outputformat) — laddas alltid  
+`.prompt.md`-filer = **domänkunskap** (arkitektur, konventioner, kända problem) — laddas vid behov via `#file:`
+
+### Minimal token-effektiv mall
+
+```markdown
+# .github/AGENTS.md (eller .copilot/agents.md)
+
+- Läge: Fråga först. Vägra flerstegs rekursiva mappgenomsökningar.
+- Språk: Engelska (sparar 1,7x tokenizer-inflation).
+- Omfattning: Utför åtgärder lokalt via CLI/terminal istället för agentiska sökslingor.
+- Output: Endast ändrade kodblock. Returnera inte orörda omslag/imports/setups.
+- Format: Täta punkter endast. Prosaförklaringar max 2 meningar.
+```
+
+:::note[Arkitektur och specar hör hemma i `.prompt.md`-filer]
+Lägg arkitekturdokumentation, återkommande funktionsspecar och historiska "kända problem" i `.prompt.md`-filer — inte i `AGENTS.md`. Ladda dem vid behov med `#file:`-referenser. Då hålls `AGENTS.md` smal (~80 tokens) och du slipper betala alltid-på-skatten för innehåll du sällan behöver.
+
+Se [Lazy-loading med `.prompt.md`-filer](#2-lazy-loading-med-promptmd-filer) ovan.[^m6-2][^m6-4]
+:::
+
+| Egenskap | `AGENTS.md` | `.prompt.md`-filer |
+|---|---|---|
+| **Laddas** | Alltid, varje agentsteg | Endast vid `#file:`-referens |
+| **Innehåll** | Beteende: läge, omfång, output | Kunskap: arkitektur, konventioner, kända misstag |
+| **Max storlek** | ~80 tokens | Ingen hård gräns — laddas sällan |
+| **Exempel** | "Läge: Fråga först. Output: Endast kod." | "API: alla routes i src/api/. Auth i src/middleware/auth.ts" |
+
+~80 tokens. Täcker kritiska skyddsräcken utan arkitekturbrus.
+
+---
+
+## 4. Innehållsexkludering med [`.copilotignore`](https://code.visualstudio.com/docs/agents/optimize-usage-guide#_exclude-files-with-copilotignore) 🟢
+
+Copilot läser din arbetsytas filer för kontext. Exkludera filer som aldrig är användbara:
+
+```gitignore
+# .copilotignore
+dist/
+build/
+node_modules/
+tests/mock-data/
+*.svg
+*.csv
+*.json
+package-lock.json
+*.lock
+```
+
+:::note[Vad ska exkluderas]
+- **Byggartefakter** — aldrig användbara, kan vara stora
+- **Mock/testdata** — sväller kontext, lägger till brus
+- **Stora låsfiler** — package-lock.json ensam kan vara 10K+ tokens
+- **Genererad kod** — auto-genererade filer, GraphQL-scheman, OpenAPI-specar
+- **Binära/resursfiler** — bilder, ljud, typsnitt (kan inte bearbetas ändå)
+:::
+
+Din `.gitignore` påverkar också agenten: matchande filer exkluderas från arbetsytans index och från agentens textsökning/grep. Se den som ett första lager av exkludering.[^m6-8]
+
+**Besparing:** 20–40% minskning av input-tokenförbrukning. Bonus: snabbare svar och färre hallucinationer från irrelevant kontext.
+
+### VS Code-inställningar för exkludering
+
+VS Code har två inställningar för mer finjusterad exkludering.[^m6-9]
+
+| Inställning | Effekt |
+|---|---|
+| [`files.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Döljer filer helt från Explorer, arbetsytans index och agentsökning |
+| [`search.exclude`](https://code.visualstudio.com/docs/getstarted/settings#_settings-editor) | Döljer filer från agentens textsökning/grep men behåller dem synliga i Explorer |
+
+```json
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/*.log": true
+  }
+}
+```
+
+Använd `files.exclude` för sådant du aldrig vill se. Använd `search.exclude` för loggfiler som du ibland vill öppna manuellt men inte vill ha i sökresultaten. Se [Förbättra agentsökning med exkluderingsinställningar](https://code.visualstudio.com/docs/agents/reference/workspace-context#_improve-agent-search-with-exclusion-settings).[^m6-9]
+
+| Mekanism | Påverkar arbetsytans index | Påverkar agentsökning | Påverkar Explorer | Rekommenderas för |
+|---|---|---|---|---|
+| `.gitignore` | ✅ | ✅ | ❌ | Byggartefakter, dependencies |
+| `.copilotignore` | ✅ | ✅ | ❌ | Mockdata, stora JSON/CSV-filer |
+| `files.exclude` | ✅ | ✅ | ✅ | node_modules, dist |
+| `search.exclude` | ❌ | ✅ | ❌ | Loggfiler |
+
+---
+
+## 5. VS Code-inställningar för tokeneffektivitet
+
+```json
+{
+  // Begränsa öppna filer som skickas som kontext
+  "github.copilot.chat.experimental.context.autoOpenTabs.max": 5,
+
+  // Aktivera token-felsökningsloggning
+  "github.copilot.chat.agentDebugLog.fileLogging.enabled": true,
+
+  // Standardmodell för nya chattar
+  "github.copilot.chat.defaultModel": "claude-haiku-4.5",
+
+  // Agentlägesinställningar
+  "github.copilot.chat.agent.experimental.maxRequests": 20,
+  "github.copilot.chat.agent.experimental.maxToolCallsPerStep": 10
+}
+```
+
+| Inställning | Effekt |
+|---|---|
+| `autoOpenTabs.max: 5` | Skicka endast 5 öppna filer som kontext |
+| `defaultModel: haiku` | Börja med billigaste modellen som standard |
+| `maxRequests: 20` | Begränsa agentloopdjup |
+| `maxToolCallsPerStep: 10` | Förhindra skenande verktygskedjor |
+
+---
+
+## 6. LLM-genererade kontextfiler: en varning
+
+Forskning tyder på att LLM-genererade instruktionsfiler ofta försämrar agentens korrekthet samtidigt som de ökar tokenkostnaden. Skriv dina instruktionsfiler manuellt — AI:n känner inte till projektets problem bättre än du gör.
+
+---
+
+:::tip[Fortsätt lära]
+En stabil projektuppsättning gör [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) mer effektiv.
+:::
+
+---
+
+## Övning
+
+Innan du börjar: kör din representativa uppgift från Modul 3 en gång till så du har en färsk baslinje. Efter varje övning, kör om uppgiften och jämför.
+
+1. Öppna din `.github/copilot-instructions.md`. Räkna raderna. Om den har fler än 200 rader, identifiera vilka avsnitt som kan flyttas till `.prompt.md`-filer. Om du inte har en sådan fil, skapa den med den minimala mallen.
+2. Skapa filen `docs/architecture.prompt.md` med 5–10 rader om projektets viktigaste konventioner. Testa den: starta en ny chatt och använd `#file:docs/architecture.prompt.md`.
+3. Uppskatta din alltid-på-baslinje: 1 token ≈ 4 tecken på engelska. Räkna tecken i dina instruktionsfiler och dividera med 4. Hur stor är din fasta overhead?
+4. Efter att du implementerat en minimal instruktionsfil och `.copilotignore`, kör om din representativa uppgift. Hur mycket minskade din tokenförbrukning jämfört med baslinjen?
+
+## Viktiga slutsatser
+
+- **Håll `copilot-instructions.md` under 100 tokens** — endast outputkontroll
+- **Håll alltid-på-instruktionsfiler korta nog att läsa om** — omkring 200 rader maximalt innan uppmärksamheten försämras
+- **Använd `.prompt.md`-filer** för specialiserade regler som laddas på begäran
+- **`AGENTS.md`** bör vara ett smalt kontrakt (~80 tokens), inte ett arkitekturdokument
+- **Bevara "varför" med HTML-promptkommentarer** — institutionellt minne till noll tokenkostnad
+- **`.copilotignore`** eliminerar irrelevant kontext med en enda fil
+- **VS Code-inställningar** sätter tak för den största rörliga kostnaden (kontext från öppna flikar)
+- **600 tokens fast overhead** (system + instruktioner) håller den alltid-på-baslinjen minimal; kontext läggs ovanpå
+- **Skriv instruktionsfiler manuellt** — automatiskt genererad kontext ökar ofta kostnaden utan att förbättra korrektheten
+
+*Beräknad lästid: 10 minuter*
+
+[^m6-1]: [Lägga till anpassade arkivreferenser för GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions) — GitHub Docs, hämtad september 2026.
+[^m6-2]: [Anpassade instruktioner](https://code.visualstudio.com/docs/agent-customization/custom-instructions) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-3]: [Varför fortsätter CLAUDE.md att växa? Katastrofalt ihågkommande i agentisk kodning](https://arxiv.org/abs/2608.11095) — arXiv, 11 augusti 2026.
+[^m6-4]: [Katastrofalt ihågkommande: varför din AGENTS.md fortsätter växa och hur promptkommentarer åtgärdar det](https://codex.danielvaughan.com/2026/08/12/catastrophic-remembering-agents-md-instruction-bloat-prompt-comments-codex-cli/) — Daniel Vaughan, 12 augusti 2026.
+[^m6-5]: [Användnings- och faktureringsmått](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) — GitHub Docs, hämtad september 2026.
+[^m6-6]: [Ta bort kommentarer från CLAUDE.md/AGENTS.md före injicering](https://github.com/anthropics/claude-code/issues/83899) — Claude Code issue tracker, hämtad september 2026.
+[^m6-7]: [Använd promptfiler i VS Code](https://code.visualstudio.com/docs/agent-customization/prompt-files) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-8]: [Så förstår Copilot din arbetsyta](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-9]: [AI-inställningsreferens](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code Documentation, hämtad september 2026.
+[^m6-10]: Tokenräkningsskripten i den här modulen är nyttoexempel, inte externa mätningar eller faktureringsuppskattningar.
