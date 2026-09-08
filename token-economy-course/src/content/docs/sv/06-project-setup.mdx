@@ -26,6 +26,34 @@ Dessa filer laddas vid **varje chattinteraktion**:[^m6-1][^m6-2]
 
 Huvudinsikten: **varje alltid-på-instruktion som är "bra-att-ha" men inte "kritisk just nu" är bortkastade tokens**.
 
+## Så använder du den här modulen 🟢
+
+Gör dessa tre steg först — de ger ~80% av besparingen på under 30 minuter:
+
+1. **Minimal `copilot-instructions.md`** — 18 rader, ~50 tokens (→ Steg 1 nedan)
+2. **`.copilotignore`** — en fil som filtrerar bort brus (→ Steg 4)
+3. **`AGENTS.md`-kontrakt** — ~80 tokens, beteende endast (→ Steg 3)
+
+Resterande steg (lazy-loading, VS Code-inställningar, budgetmodellen) är fördjupning — gör dem när du har tid och vill finjustera.
+
+---
+
+## Sikta på ~600 tokens fast overhead 🟡
+
+Använd detta som en tumregel, inte ett hårt tak: **sikta på ≤100 tokens i dina anpassade instruktioner**, så att den alltid påslagna basnivån (systemprompt + instruktioner) hålls nära 600 tokens innan kontext från öppna filer och konversationshistorik. Målet är att hålla det *fasta påslaget* så litet som möjligt, inte att dyrka en godtycklig siffra.
+
+- Anpassade instruktioner: ≤ 100 tokens
+- Systemprompt: ~500 tokens (oundvikligt)
+- Ytterligare kontext: öppna filer, historik, verktygsdefinitioner — varierar, minimera där det är möjligt
+
+:::note[Heuristik, inte handbojor]
+Om en värdefull regel tar dig lite över 100 tokens, behåll regeln och ta bort något mindre viktigt. Det viktiga är att vara kompakt som standard, inte att träffa ett magiskt tal.
+:::
+
+:::tip[Granska dina filer]
+Kör ett tokenräkningsskript mot dina instruktionsfiler. En grov uppskattning: 1 token ≈ 4 tecken på engelska. För precis mätning, använd [Copilot SDK](https://docs.github.com/en/copilot/how-tos/copilot-sdk/features/usage-and-billing) eller `gh copilot`.
+:::
+
 ---
 
 ## 1. Den minimala `copilot-instructions.md`
@@ -155,6 +183,13 @@ Lägg arkitekturdokumentation, återkommande funktionsspecar och historiska "kä
 Se [Lazy-loading med `.prompt.md`-filer](#2-lazy-loading-med-promptmd-filer) ovan.[^m6-2][^m6-4]
 :::
 
+| Egenskap | `AGENTS.md` | `.prompt.md`-filer |
+|---|---|---|
+| **Laddas** | Alltid, varje agentsteg | Endast vid `#file:`-referens |
+| **Innehåll** | Beteende: läge, omfång, output | Kunskap: arkitektur, konventioner, kända misstag |
+| **Max storlek** | ~80 tokens | Ingen hård gräns — laddas sällan |
+| **Exempel** | "Läge: Fråga först. Output: Endast kod." | "API: alla routes i src/api/. Auth i src/middleware/auth.ts" |
+
 ~80 tokens. Täcker kritiska skyddsräcken utan arkitekturbrus.
 
 ---
@@ -248,74 +283,26 @@ Använd `files.exclude` för sådant du aldrig vill se. Använd `search.exclude`
 
 ---
 
-## 6. 600-token-budgetmodellen
-
-Använd detta som en tumregel, inte ett hårt tak: **sikta på ≤100 tokens i dina anpassade instruktioner**, så att den alltid påslagna basnivån (systemprompt + instruktioner) hålls nära 600 tokens innan kontext från öppna filer och konversationshistorik. Målet är att hålla det *fasta påslaget* så litet som möjligt, inte att dyrka en godtycklig siffra.
-
-- Anpassade instruktioner: ≤ 100 tokens
-- Systemprompt: ~500 tokens (oundvikligt)
-- Ytterligare kontext: öppna filer, historik, verktygsdefinitioner — varierar, minimera där det är möjligt
-
-:::note[Heuristik, inte handbojor]
-Om en värdefull regel tar dig lite över 100 tokens, behåll regeln och ta bort något mindre viktigt. Det viktiga är att vara kompakt som standard, inte att träffa ett magiskt tal.
-:::
-
-Använd ett tokenräkningsskript för att granska dina filer:[^m6-10]
-
-```powershell
-# count-tokens.ps1 — rough estimation
-# 1 token ≈ 4 chars in English
-$files = @(".github/copilot-instructions.md", "AGENTS.md")
-foreach ($f in $files) {
-  if (Test-Path $f) {
-    $chars = (Get-Content $f -Raw).Length
-    $tokens = [math]::Floor($chars / 4)
-    Write-Output "$f : ~$tokens tokens"
-  }
-}
-```
-
-Eller en plattformsoberoende Node.js one-liner:
-
-```bash
-node -e "['.github/copilot-instructions.md','AGENTS.md'].forEach(f=>{try{const c=require('fs').readFileSync(f,'utf8').length;console.log(f+': ~'+Math.floor(c/4)+' tokens')}catch(e){}})"
-```
-
-```mermaid
-flowchart LR
-  subgraph Fixed["Fast overhead (~600 tokens)"]
-        A[Systemprompt<br/>~500 tokens] --> B[Instruktioner<br/>≤100 tokens]
-    end
-  Fixed --> C[+ Rörlig kontext<br/>filer, historik, verktyg]
-    
-    style A stroke:#bd93f9,stroke-width:2px
-    style B stroke:#50fa7b,stroke-width:2px
-    style C stroke:#ffb86c,stroke-width:2px
-```
-
-:::tip[Granska med verkliga verktyg]
-För en mer precis räkning, använd Copilot SDK eller `gh copilot` för att mäta faktisk tokenanvändning per förfrågan. Sätt ett månatligt budgetmål och gå igenom det med ditt team.[^m6-5]
-:::
-
----
-
-## 7. LLM-genererade kontextfiler: en varning
+## 6. LLM-genererade kontextfiler: en varning
 
 Forskning tyder på att LLM-genererade instruktionsfiler ofta försämrar agentens korrekthet samtidigt som de ökar tokenkostnaden. Skriv dina instruktionsfiler manuellt — AI:n känner inte till projektets problem bättre än du gör.
 
 ---
 
 :::tip[Fortsätt lära]
-En stabil projektuppsättning gör [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) mer effektiv. Gå tillbaka till [Snabba vinster](/vibe-on-budget/sv/04-quick-wins) för de snabbaste besparingarna.
+En stabil projektuppsättning gör [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) mer effektiv.
 :::
 
 ---
 
 ## Övning
 
+Innan du börjar: kör din representativa uppgift från Modul 3 en gång till så du har en färsk baslinje. Efter varje övning, kör om uppgiften och jämför.
+
 1. Öppna din `.github/copilot-instructions.md`. Räkna raderna. Om den har fler än 200 rader, identifiera vilka avsnitt som kan flyttas till `.prompt.md`-filer. Om du inte har en sådan fil, skapa den med den minimala mallen.
 2. Skapa filen `docs/architecture.prompt.md` med 5–10 rader om projektets viktigaste konventioner. Testa den: starta en ny chatt och använd `#file:docs/architecture.prompt.md`.
-3. Kör tokenräkningsskriptet (PowerShell eller Node.js) från den här modulen mot dina instruktionsfiler. Hur stor är din alltid-på-baslinje?
+3. Uppskatta din alltid-på-baslinje: 1 token ≈ 4 tecken på engelska. Räkna tecken i dina instruktionsfiler och dividera med 4. Hur stor är din fasta overhead?
+4. Efter att du implementerat en minimal instruktionsfil och `.copilotignore`, kör om din representativa uppgift. Hur mycket minskade din tokenförbrukning jämfört med baslinjen?
 
 ## Viktiga slutsatser
 

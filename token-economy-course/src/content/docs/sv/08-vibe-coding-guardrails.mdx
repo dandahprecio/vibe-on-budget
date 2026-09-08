@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Vibe coding utan skulden
 
-Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — utsågs till Collins Dictionaries årets ord 2025 [^m8-7], efter att Andrej Karpathy använde termen i ett inlägg i februari 2025 [^m8-5]. Men det finns en hake: **en CMU-studie kopplade införandet av Cursor till varaktiga ökningar av statiska analysvarningar och kodkomplexitet** [^m8-1]. GitClear rapporterade att duplicerade kodblock ökade 81% från 2023 till 2026 [^m8-2], medan deras rapport från 2025 visade att refaktoriseringsrelaterade rader minskade från 25% 2021 till under 10% 2024 [^m8-3]. Dålig kod skapar omarbete, vilket skapar fler promptar, agentloopar och tokens.
+I Modul 7 lärde du dig använda agenter effektivt och hålla MCP-servrar under kontroll. Men även en perfekt konfigurerad agent kan producera kod som ackumulerar teknisk skuld — och teknisk skuld är dold tokenkostnad. Vibe coding — att låta AI skriva din kod medan du fokuserar på intention — utsågs till Collins Dictionaries årets ord 2025 [^m8-7], efter att Andrej Karpathy använde termen i ett inlägg i februari 2025 [^m8-5]. Men det finns en hake: **en CMU-studie kopplade införandet av Cursor till varaktiga ökningar av statiska analysvarningar och kodkomplexitet** [^m8-1]. GitClear rapporterade att duplicerade kodblock ökade 81% från 2023 till 2026 [^m8-2], medan deras rapport från 2025 visade att refaktoriseringsrelaterade rader minskade från 25% 2021 till under 10% 2024 [^m8-3]. Dålig kod skapar omarbete, vilket skapar fler promptar, agentloopar och tokens.
 
 Det snabbaste sättet att bränna credits är inte en dålig prompt — det är att åtgärda buggar som aldrig borde ha funnits. Lösningen är inte att sluta vibe-coda, utan att bygga skyddsräcken som hindrar små kvalitetsgenvägar från att bli återkommande tokenkostnader.
 
@@ -50,7 +50,7 @@ Gå till [Modul 6 — Projektsetup](/vibe-on-budget/sv/06-project-setup) och kon
 
 ---
 
-## 🟡 De fyra felfelen med AI-genererad kod
+## 🟡 Varför AI-genererad kod ackumulerar skuld
 
 Att förstå var skuld ackumuleras hjälper dig att fånga den tidigt:
 
@@ -107,9 +107,7 @@ flowchart LR
 
 ---
 
-### Varför oövervakade agenter bränner credits
-
-## 🟡 Problemet med Winchester Mystery House
+### 5. Labyrintisk arkitektur: Winchester Mystery House
 
 Det finns ett särskilt arkitektoniskt antimönster som uppstår när agenter itererar utan övervakning. Det har fått sitt namn efter den berömda herrgården som byggdes utan en sammanhängande ritning — och är en av de dyraste formerna av AI-genererad teknisk skuld.
 
@@ -243,6 +241,8 @@ flowchart LR
 
 Manuell kodgranskning är flaskhalsen. Automatisera den med en andra AI-genomgång.
 
+**Börja med samma modell** för rutinmässig kodgranskning — det är billigast och fångar de flesta misstag. **Använd olika modeller** för säkerhetskritisk kod där en missad sårbarhet kostar mer än den extra inferensen.
+
 ### Granskning med samma modell
 
 Det enklaste tillvägagångssättet: efter att agenten gjort ändringar, be den granska sitt eget arbete.
@@ -328,7 +328,7 @@ Before implementing, review #file:docs/known-issues.prompt.md. Do not repeat the
 
 ## 🟢 Skyddsräcke 5: Säkerhet som hård spärr
 
-Säkerhetsbrister är den dyraste formen av AI-skuld. Gör säkerhetskontroller icke-förhandlingsbara:
+Säkerhetsbrister är dyr AI-skuld. Gör dessa kontroller obligatoriska, i linje med [OWASP:s riktlinjer för AI-assisterad kodning](https://cheatsheetseries.owasp.org/cheatsheets/Secure_Coding_with_AI_Cheat_Sheet.html):
 
 ### Vad som alltid ska kontrolleras
 
@@ -341,14 +341,6 @@ Innan du commitar AI-genererad kod, verifiera:
 - [ ] **Hemligheter** — inga API-nycklar, lösenord eller tokens i klientkod
 - [ ] **Rate limiting** — publika slutpunkter har begränsningar
 - [ ] **SQL-injektion** — alla frågor använder parameteriserade satser eller ORM
-
-### Prompt för säkerhetsgranskning
-
-```
-Säkerhetsgranska denna funktion. Kolla OWASP Top 10.
-Lista endast kritiska och allvarliga problem. Kod endast.
-```
-
 
 ---
 
@@ -366,12 +358,14 @@ Efter cirka tre månaders vibe-coding, gör en fokuserad granskning:
 ---
 
 :::tip[Fortsätt lära dig]
-Skyddsräcken fungerar bäst med [Projektsetup](/vibe-on-budget/sv/06-project-setup) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp).
+Skyddsräcken fungerar bäst tillsammans med förståelsen för Copilots interna optimeringar i [Helhetsbilden](/vibe-on-budget/sv/09-under-the-hood).
 :::
 
 ---
 
 ## Övning
+
+Använd din representativa uppgift från Modul 3. Efter varje övning, notera om kvaliteten (tester gröna, rätt filer, max 1 korrigering) förbättrades jämfört med din baslinje.
 
 1. Skriv en spec på 10 rader för din nästa funktion. Ta med datamodell, API-beteende, gränsfall och undantag. Använd den som prompt i din Copilot-begäran.
 2. Skriv testet först för din nästa kodändring. Be sedan Copilot (i Edit-läge) att implementera den. Upptäckte testet något AI missade?

@@ -22,7 +22,7 @@ Besparingsuppskattningarna är författarens beräkningar baserade på tokenmeka
 
 **Problemet:** Varje chatsvar inkluderar artighetsfraser, förklaringar och markdown-omslag kring oförändrad kod. Output-tokens kostar 5x input — denna svullnad är dyr.[^m4-2][^m4-3]
 
-**Åtgärden:** Lägg till detta i din `.github/copilot-instructions.md`:
+**Åtgärden:** Lägg till detta i din `.github/copilot-instructions.md` (en fil i `.github/`-mappen i ditt projekts rot — Copilot läser den vid varje förfrågan):
 
 ```
 # Output-format
@@ -37,19 +37,13 @@ Besparingsuppskattningarna är författarens beräkningar baserade på tokenmeka
 
 ## 2. Rensa din chattråd regelbundet 🟢
 
-**Problemet:** Varje meddelande i en pågående tråd skickar **hela** konversationshistoriken som input-tokens. En tråd med 10 meddelanden skickar alla tidigare promptar och svar — potentiellt 10 000+ tokens — med varje ny fråga.[^m4-1]
+**Problemet:** Varje meddelande i en pågående tråd skickar hela konversationshistoriken som input-tokens.
 
 **Åtgärden:**
+- **Samma uppgift, 10+ steg?** Använd [`/compact`](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) för att sammanfatta äldre delar.
+- **Uppgiften klar?** Starta ny chatt med `Ctrl+N` (Windows/Linux) eller `⌘N` (Mac).
 
-- **Samma uppgift, flera steg?** Stanna i sessionen. Cachning ackumuleras mellan steg (se [Modul 9](/vibe-on-budget/sv/09-under-the-hood)).[^m4-1]
-- **Uppgiften klar?** Börja om. Gammal historik lägger till brus och slösar tokens.[^m4-1]
-- **Har tråden passerat 10+ steg?** Använd [`/compact`](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) för att sammanfatta äldre delar av konversationen och återta utrymme i kontextfönstret. Du kan styra sammanfattningen med en instruktion som:[^m4-1]
-
-```
-/compact focus on the API design decisions
-```
-
-- **Byter du uppgift?** Använd i stället den manuella metoden: sammanfatta den viktiga kontexten, starta en ny chatsession och klistra in sammanfattningen där. Använd `Ctrl+N` (Windows/Linux) eller `⌘N` (Mac) för att starta en ny chatsession. Detta är för ett nytt ämne, inte för att komprimera samma uppgift. Se [Komprimera konversationskontext](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context).[^m4-1]
+Se [Modul 2](/vibe-on-budget/sv/02-context-model) för en komplett beslutsmatris: när du ska stanna i sessionen, när du ska rensa, och när du ska förgrena.
 
 **Besparingen:** 40–60% minskning av input-tokens för sessioner med ackumulerad historik.[^m4-4]
 
@@ -63,7 +57,7 @@ Besparingsuppskattningarna är författarens beräkningar baserade på tokenmeka
 
 1. Innan du ställer en fråga, stäng filer du inte arbetar med
 2. Håll bara filen/filerna direkt relevanta för din uppgift öppna
-3. Använd `#file:filnamn.mjs` för explicita referenser istället för att förlita dig på automatisk kontext[^m4-5][^m4-14]
+3. Använd `#file:filnamn.mjs` för att explicit referera till en fil — då slipper du ha den öppen som flik[^m4-5]
 
 **Besparingen:** 20–40% minskning av input-tokens per förfrågan. Än viktigare: du får **bättre svar** eftersom modellen ser mindre brus.[^m4-4]
 
@@ -95,26 +89,26 @@ package-lock.json
 
 ---
 
-## 5. Använd lätta modeller för rutinuppgifter 🟢
+## 5. Använd Auto modellval 🟢
 
 **Problemet:** Varje chattförfrågan använder som standard samma modell. Att använda Claude Opus (output: $75/M tokens) för en regex-genereringsfråga är som att hyra en lastbil för att flytta en kaffekopp.[^m4-3]
 
 **Åtgärden:**
 
-För en underhållsfri standard, använd **[auto modellval](https://code.visualstudio.com/docs/agent-customization/language-models)**. VS Code dirigerar automatiskt varje förfrågan till en effektiv modell baserat på uppgiftens komplexitet, modellens hälsa och tillgänglighet. För repeterbara arbetsflöden kan du konfigurera en föredragen modell i en anpassad agent.[^m4-7]
+För en underhållsfri standard, använd **[auto modellval](https://code.visualstudio.com/docs/agent-customization/language-models)**. VS Code dirigerar automatiskt varje förfrågan till en effektiv modell baserat på uppgiftens komplexitet, modellens hälsa och tillgänglighet.[^m4-7]
 
-Som ett avancerat alternativ kan du manuellt välja en lätt modell (Haiku eller GPT-mini) för:
-1. Använd lätta modeller för:
-   - Regex-mönster
-   - Generering av dokumentationssträngar
-   - Enkel kodformatering
-   - Strängmanipulering
-   - Generering av boilerplate
-2. Använd endast premiummodeller för:
-   - Arkitekturbeslut
-   - Komplex refaktorering
-   - Ändringar över flera filer
-   - Säkerhetsgranskningar
+Som ett avancerat alternativ kan du manuellt välja modell. Använd lätta modeller (Haiku eller GPT-mini) för:
+- Regex-mönster
+- Generering av dokumentationssträngar
+- Enkel kodformatering
+- Strängmanipulering
+- Generering av boilerplate
+
+Använd premiummodeller (Sonnet, Opus) endast för:
+- Arkitekturbeslut
+- Komplex refaktorering
+- Ändringar över flera filer
+- Säkerhetsgranskningar
 
 **Besparingen:** 5–15x kostnadsminskning per förfrågan (beräknat utifrån pris per modell). En enkel fråga kostar $0,0001 på Haiku vs $0,0015 på Sonnet — och du märker förmodligen inte kvalitetsskillnaden för rutinuppgifter.[^m4-3][^m4-7]
 
@@ -140,24 +134,14 @@ Kombinera med Code-Only-instruktionerna från Quick Win #1 för maximala bespari
 
 ---
 
-## Bonus: Mät din påverkan 🟢
-
-Slå på **Copilot felsökningsloggning** för att se faktiska tokenantal:
-
-1. Aktivera inställningen: `github.copilot.chat.agentDebugLog.fileLogging.enabled`
-2. Öppna Chatt-vyn → **...** → **Show Agent Debug Logs**
-3. Öppna fliken **Summary** för att se tokenantal per förfrågan[^m4-9][^m4-14]
-
-Använd dessa siffror för att validera dina besparingar.[^m4-9]
-
-Om du vill se siffrorna direkt i VS Code kan community-tillägg hjälpa till: [**Tokalator**](https://marketplace.visualstudio.com/search?term=Tokalator&target=VSCode&category=All%20categories&sortBy=Relevance) för tokenräkning med [BPE (Byte-Pair Encoding)](https://en.wikipedia.org/wiki/Byte_pair_encoding) i realtid, [**Token-Track**](https://marketplace.visualstudio.com/search?term=Token-Track&target=VSCode&category=All%20categories&sortBy=Relevance) för att tolka lokala felsökningsloggar och [**Copilot Token Monitor**](https://marketplace.visualstudio.com/search?term=Copilot%20Token%20Monitor&target=VSCode&category=All%20categories&sortBy=Relevance) som en lättviktig indikator i statusfältet.[^m4-10][^m4-11][^m4-12]
-
-Detta är community-verktyg, inte officiella GitHub-produkter.[^m4-10][^m4-11][^m4-12]
+:::tip[Validera dina besparingar]
+Använd mätverktygen från [Modul 3](/vibe-on-budget/sv/03-measure-before-you-cut) — hover, context window control och Agent Debug Logs — för att bekräfta att varje snabb vinst faktiskt minskar din tokenförbrukning.
+:::
 
 ---
 
 :::tip[Fortsätt lära dig]
-För större besparingar, se [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts) och [Projektuppsättning för tokeneffektivitet](/vibe-on-budget/sv/06-project-setup).
+För större besparingar, se [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts) och [Projektuppsättning för tokeneffektivitet](/vibe-on-budget/sv/06-project-setup). För avancerad modellval och agentmönster, se [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp).
 :::
 
 ---
@@ -166,20 +150,22 @@ För större besparingar, se [Skriva promptar som kostar mindre](/vibe-on-budget
 
 | # | Åtgärd | Installationstid | Tokenbesparing |
 |---|--------|-----------------|----------------|
-| 1 | Code-only-instruktion | 2 min | 50–70% output ↓[^m4-2] |
-| 2 | `/compact` och sessionsgränser | 0 min | 40–60% input ↓[^m4-4] |
-| 3 | Stäng oanvända flikar | 0 min | 20–40% input ↓[^m4-4] |
-| 4 | `.copilotignore`-fil | 5 min | 20–40% input ↓[^m4-4] |
-| 5 | Auto modellval | 0 min | 5–15x kostnad/fråga ↓[^m4-7] |
-| 6 | Unified diff-utdata | 1 min | 70–80% output ↓[^m4-8] |
+| 1 | Code-only-instruktion | 2 min | 50–70% output ↓ |
+| 2 | `/compact` och sessionsgränser | 0 min | 40–60% input ↓ |
+| 3 | Stäng oanvända flikar | 0 min | 20–40% input ↓ |
+| 4 | `.copilotignore`-fil | 5 min | 20–40% input ↓ |
+| 5 | Auto modellval | 0 min | 5–15x kostnad/fråga ↓ |
+| 6 | Unified diff-utdata | 1 min | 70–80% output ↓ |
 
-Se respektive fotnot för detaljer om varje besparingsuppskattning.[^m4-2][^m4-4][^m4-8]
+Se respektive quick win ovan för detaljerade besparingsuppskattningar och källor.
 
 Börja med #1 och #4 — de är engångsinstallationer med högsta löpande avkastning.[^m4-2][^m4-6]
 
 ---
 
 ## Övning 🟢
+
+Använd din representativa uppgift och baslinje från Modul 3. Efter varje övning, kör om uppgiften och jämför credits, tokens och kvalitet mot din baslinje.
 
 1. Lägg till instruktionen om endast kod i `.github/copilot-instructions.md` (Snabb vinst #1). Skicka samma prompt som du använde för baslinjen i Modul 3. Jämför creditkostnaden.[^m4-2][^m4-9]
 2. Skapa en `.copilotignore`-fil i ditt aktuella projekt (Snabb vinst #4). Använd mallen från den här modulen.[^m4-6]

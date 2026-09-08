@@ -37,41 +37,19 @@ Huvudinsikten: **all användning kostar inte lika mycket**. Uppdelningen mellan 
 
 ## Var dina tokens tar vägen 🟢
 
-Varje Copilot-förfrågan har tre token-kategorier. Men alla tokens kostar inte lika mycket. För att förstå vart dina credits faktiskt tar vägen behöver du tillämpa kostnadsvikterna från GitHubs Effective Tokens-formel.[^m1-5]
+Varje Copilot-förfrågan har tre token-kategorier. Men alla tokens kostar inte lika mycket. För att förstå vart dina credits faktiskt tar vägen börjar vi med volymen av varje kategori.
 
 ```mermaid
 pie showData
-    title Kostnadsviktad creditförbrukning
-    "Output-tokens" : 140
+    title Tokenvolymer per förfrågan
+    "Output-tokens" : 35
     "Input-tokens" : 45
-    "Cachade tokens" : 2
+    "Cachade tokens" : 20
 ```
-
-:::note[Hur du läser diagrammet]
-Diagrammet tillämpar GitHubs Effective Tokens kostnadsvikter på exempelvolymer (45 input, 35 output, 20 cachade): output ×4,0, input ×1,0, cachade ×0,1. Den faktiska fördelningen beror på modell, projekt och arbetsflöde — men output dominerar i nästan varje verklig session.
-:::
 
 - **Input-tokens** — din prompt, öppna filer, konversationshistorik, systeminstruktioner
 - **Output-tokens** — modellens svar (kod, förklaringar, verktygsanrop)
 - **Cachade tokens** — återanvänds från tidigare förfrågningar när prefix matchar
-
-Kostnadsvikterna kommer från GitHubs **Effective Tokens (ET)**-formel, som normaliserar förbrukning över tokentyper:[^m1-5]
-
-$$
-ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
-$$
-
-Där:
-- **m** — modellmultiplikator (normaliserar prisskillnader när du byter modell under arbetsflödet; använd 1,0 för en enkelmodellsbaslinje)
-- **I** — nya input-tokens (vikt 1,0×)
-- **C** — cachade input-tokens (vikt 0,1× — upp till 90 % billigare)
-- **O** — output-tokens (vikt 4,0× — den verkliga kostnadsdrivaren)
-
-[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
-
-:::note[Varför output är den verkliga kostnadsdrivaren]
-Output-tokens kostar ungefär **4–8× mer** än input-tokens per miljon, beroende på modell. I kombination med 4,0× ET-vikten bränner ett utförligt modellsvar credits långt snabbare än en lång prompt.
-:::
 
 ---
 
@@ -126,27 +104,7 @@ För kraftfulla modeller som Claude Opus 4.8: **$5,00/M input → $25,00/M outpu
 
 Slutsatsen: **vad modellen säger tillbaka kostar 5x vad du skickar**. Långa, pratiga svar är det snabbaste sättet att bränna credits.
 
----
-
-## Effektiva tokens i praktiken 🟡
-
-Som introducerat [ovan](#var-dina-tokens-tar-vagen-) normaliserar Effective Tokens-formeln tokenförbrukning efter kostnadsvikt. Så här ser det ut i verkliga arbetsflöden:
-
-```mermaid
-xychart-beta
-    title "Effective Token Cost by Component"
-    x-axis ["Input (I)", "Cached (C)", "Output (O)"]
-    y-axis "Cost Weight" 1 --> 5
-    bar [1.0, 0.1, 4.0]
-```
-
-:::tip[ET i praktiken]
-GitHub rapporterade en **62 % minskning** av effektiva tokens över 109 körningscykler i sitt arbetsflöde för automatisk ärendetria­ge — bara genom att strukturera om hur kontexten sattes samman. I alla analyserade arbetsflöden rapporterade GitHub ET-besparingar på mellan **19 % och 62 %**.
-:::
-
-Insikten: **optimering för rått tokenantal missar poängen**. En förfrågan med hög cacheåteranvändning kostar en bråkdel av en "mindre" förfrågan utan cacheträffar. Därför är det viktigare att hålla ditt promptprefix stabilt (Modul 2) än att skriva kortare prompter.
-
----
+Men det finns en till dimension: **cache**. När ditt promptprefix — de delar av din förfrågan som upprepas mellan stegen — förblir stabilt kan Copilot återanvända tidigare beräkningar. Då betalar du upp till 90% mindre. Hur detta fungerar i praktiken går vi igenom i [Modul 2](/vibe-on-budget/sv/02-context-model).
 
 ## Vad är gratis vs vad kostar [^m1-6]
 
@@ -185,8 +143,8 @@ OpenAI- och Google-modeller följer liknande mönster — lätta modeller är be
 
 [^m1-4]: [Models and pricing for GitHub Copilot](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) — GitHub Docs. Referenspriser per 1M tokens för ytterligare användning och källan till asymmetrin mellan input- och outputpriser.
 
-:::note[Auto-läge sparar automatiskt]
-Håll modellväljaren på "Auto" när möjligt. Copilot skickar enkla frågor till billigare modeller, vilket ger ditt team en rörlig rabatt. Betalda planer får 10 % rabatt på modellkostnader vid automatiskt modellval.[^m1-7]
+:::tip[Auto-läge sparar automatiskt]
+Håll modellväljaren på "Auto" när möjligt. Copilot skickar enkla frågor till billigare modeller och reserverar premium för komplexa uppgifter. Betalda planer får 10 % rabatt på modellkostnader vid automatiskt modellval.[^m1-7]
 :::
 
 ---
@@ -203,16 +161,8 @@ Om du har Business eller Enterprise:
 ### Vad detta innebär för teamledare
 
 Det finansiella incitamentet sammanfaller med god ingenjörspraxis:
-1. Skapa `.github/copilot-instructions.md` med regler som minimerar output
-2. Utbilda teamet om modellval (använd inte Opus för en strängdelning)
-3. Övervaka credithförbrukning via GitHub admin-dashboard
-4. Skapa `.copilotignore` för byggartefakter och testfixturer
-
----
-
-:::tip[Fortsätt lära dig]
-Nu när du förstår kostnadsmodellen kan du läsa om [hur Copilot bygger kontext](/vibe-on-budget/sv/02-context-model) — den förklarar varför varje förfrågan kostar som den gör. Hoppa sedan till [Snabba vinster](/vibe-on-budget/sv/04-quick-wins) för omedelbara besparingar.
-:::
+1. Utbilda teamet om modellval (använd inte Opus för en strängdelning)
+2. Övervaka credithförbrukning via GitHub admin-dashboard
 
 ---
 
@@ -230,7 +180,33 @@ Nu när du förstår kostnadsmodellen kan du läsa om [hur Copilot bygger kontex
 - Företagscredits är **poolade** — en persons slöseri skadar hela teamet
 - Auto-läge ger dig **automatiska rabatter** på enkla frågor
 
+:::note[Fördjupning: Effective Tokens-formeln]
+GitHub använder **Effective Tokens (ET)** för att normalisera kostnader över tokentyper:[^m1-5]
+
+$$
+ET = m \times (1.0 \times I + 0.1 \times C + 4.0 \times O)
+$$
+
+Där:
+- **m** — modellmultiplikator (använd 1,0 för en enkelmodellsbaslinje)
+- **I** — nya input-tokens (vikt 1,0×)
+- **C** — cachade input-tokens (vikt 0,1× — upp till 90 % billigare)
+- **O** — output-tokens (vikt 4,0× — den verkliga kostnadsdrivaren)
+
+Output-tokens kostar ungefär **4–8× mer** än input-tokens per miljon. I kombination med 4,0× ET-vikten bränner ett utförligt modellsvar credits långt snabbare än en lång prompt.
+
+GitHub rapporterade en **62 % minskning** av effektiva tokens över 109 körningscykler genom att strukturera om kontexten. Den här formeln och hur du maximerar cache-återanvändning går vi igenom i Modul 2.
+
+[^m1-5]: GitHub, [Improving token efficiency in GitHub Agentic Workflows](https://github.blog/news-insights/product-news/improving-token-efficiency-in-github-agentic-workflows/) — publicerad 7 maj 2026 och uppdaterad 13 maj 2026.
+:::
+
+:::tip[Fortsätt lära dig]
+Nu när du förstår kostnadsmodellen kan du läsa om [hur Copilot bygger kontext](/vibe-on-budget/sv/02-context-model) — den förklarar varför varje förfrågan kostar som den gör.
+:::
+
 *Beräknad lästid: 10 minuter*
+
+---
 
 [^m1-6]: [Usage-based billing for organizations and enterprises](https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises/usage-based-billing) — GitHub Docs. Den anger att Copilots kodkompletteringar och förslag på nästa redigering inte faktureras i AI credits och förblir obegränsade för betalda planer.
 [^m1-7]: [About Copilot auto model selection](https://docs.github.com/en/copilot/concepts/models/auto-model-selection) — GitHub Docs. Betalda Copilot-planer får 10 % rabatt på modellkostnader vid användning av automatiskt modellval.

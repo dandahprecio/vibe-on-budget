@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Agenter, verktyg och MCP-hygien
 
-Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och de kan öka förbrukningen eftersom agenter kan använda verktyg och iterera genom en uppgift.[^m7-1]
+I Modul 6 konfigurerade du AGENTS.md och lärde dig hålla instruktionsfiler smala. När du nu använder agentläge avgör de filerna hur mycket tokens varje agentsteg förbrukar. Agentläge och MCP-servrar är Copilots mest kraftfulla funktioner — och de kan öka förbrukningen eftersom agenter kan använda verktyg och iterera genom en uppgift.[^m7-1]
 
 Denna modul lär dig när du ska använda agenter, hur du avgränsar dem och hur du hindrar MCP-servrar från att tyst dränera din budget.
 
@@ -71,20 +71,12 @@ flowchart LR
 | **[Edit Mode](https://code.visualstudio.com/docs/agents/overview)** | Enkelfilsändringar, refaktorering | ~1-2K input + ~500 output | Låg — inga verktygsslingor |
 | **[Agent Mode](https://code.visualstudio.com/docs/agents/overview)** | Flertalsändringar, komplexa uppgifter | ~5-50K per uppgift | **Hög** — verktygsslingor förstärker kostnaden |
 
-:::caution[Agentläge har högre baslinjeomkostnad]
-Även med verktygssökning laddar agentläge systeminstruktioner, verktygsregistret och filkontext före det första svaret. Baslinjen är högre än i Ask- eller Edit-läge — men verktygssökning hindrar oanvända verktygsscheman från att läggas till.
+:::tip[Tänk på thinking effort]
+Thinking effort styr hur mycket resonemang modellen använder. Högre effort = fler thinking tokens = högre creditförbrukning. Behåll standardvärdet för rutinuppgifter. Öka endast för arkitekturplanering och komplex felsökning.
 :::
 
----
-
-## 🟡 [Thinking Effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort)[^m7-3]
-
-Thinking effort styr hur mycket resonemang (thinking tokens) modellen använder för varje förfrågan. Högre effort innebär fler thinking tokens, vilket ökar latensen och förbrukningen av credits.
-
-VS Code sätter standardvärden baserat på utvärderingar och har adaptivt resonemang aktiverat. Modellen avgör dynamiskt hur mycket den ska tänka utifrån uppgiftens komplexitet. För de flesta uppgifter räcker standardvärdena.
-
-:::caution[Öka thinking effort bara när det ger verklig nytta]
-Öka thinking effort endast för genuint komplexa problem, till exempel arkitekturplanering eller felsökning i flera steg. Att höja nivån för rutinuppgifter ökar latensen och förbrukar fler credits utan att resultatet nödvändigtvis blir bättre. Se [Konfigurera thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort).
+:::caution[Agentläge har högre baslinjeomkostnad]
+Även med verktygssökning laddar agentläge systeminstruktioner, verktygsregistret och filkontext före det första svaret. Baslinjen är högre än i Ask- eller Edit-läge — men verktygssökning hindrar oanvända verktygsscheman från att läggas till.
 :::
 
 ---
@@ -134,22 +126,16 @@ En MCP-verktygsdefinition innehåller strukturerade metadata, bland annat namn, 
 Harnessen har ett register över tillgängliga verktyg med korta beskrivningar och inbäddningsvektorer. I stället för att placera varje fullständigt schema i kontextfönstret använder den registret för att identifiera sannolika kandidater för den aktuella uppgiften. När modellen behöver ett verktyg hämtar harnessen verktygets fullständiga schema vid behov; verktyg som inte begärs förblir utanför kontexten.[^m7-5]
 
 ```mermaid
-flowchart TD
-    subgraph Before["Before Tool Search"]
-        A1[Turn 1] --> B1["All 30 tool schemas<br/>loaded into context"]
-        B1 --> C1["Model processes<br/>unused schemas"]
-        C1 --> A1
-    end
-
-    subgraph After["After Tool Search"]
-        A2[Turn 1] --> B2["Only tool names +<br/>descriptions in context"]
-        B2 --> C2{"Model requests<br/>a tool?"}
-        C2 -->|Yes| D2["Full schema loaded<br/>for that tool only"]
-        C2 -->|No| E2["No tool overhead<br/>in this turn"]
-    end
-
-    style Before stroke:#ff5555,stroke-width:2px
-    style After stroke:#50fa7b,stroke-width:2px
+flowchart LR
+    A[Din prompt] --> B[Inbäddningssökning]
+    A --> C[BM25 nyckelordssökning]
+    B --> D[Rankade verktygskandidater]
+    C --> D
+    D --> E[Verktygsurval<br/>i kontextfönstret]
+    
+    style B stroke:#bd93f9,stroke-width:2px
+    style C stroke:#ffb86c,stroke-width:2px
+    style E stroke:#50fa7b,stroke-width:2px
 ```
 
 Verktygssökning är mest användbar när många verktyg är tillgängliga, eftersom relevansfiltrering kan minska irrelevant verktygskontext. Omvandla inte den kvalitativa nyttan till en fast besparingsprocent utan att mäta den egna arbetsbelastningen.[^m7-5]
@@ -219,19 +205,19 @@ Gå igenom dina VS Code-inställningar och inaktivera MCP-servrar du inte aktivt
 
 **Konfigurera verktyg för den aktuella förfrågan:** Använd knappen **Configure Tools** i chattens inmatningsfält för att välja enskilda verktyg eller MCP-servrar. Sök i verktygsväljaren och lägg till ett annat verktyg när uppgiften behöver det. Detta kompletterar anpassade agenter och VS Code-profiler genom att ge dig en snabb justering per förfrågan utan att byta profil eller konfiguration. Se [Verktyg](https://code.visualstudio.com/docs/agents/run/tools).
 
----
+### 5. Batcha upprepade operationer
 
-## Batcha upprepade operationer
+Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i kontextfönstret. För deterministiska flöden: kör loopen utanför agentkonversationen och returnera bara slutresultatet.
 
-Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i modellens kontextfönster. För deterministiska flöden eller masskörningar: använd ett script eller kommandoradsverktyg för att köra loopen utanför agentkonversationen och returnera bara slutresultatet till agenten.[^m7-12]
+### Så väljer du modell — beslutsordning
 
-:::tip[Flytta upprepade operationer utanför konversationen]
-I stället för att be agenten köra och inspektera många liknande databasfrågor en i taget, skriv ett granskat script som kör frågebatchen och producerar en koncis sammanfattning. Kör scriptet via terminalverktyget och ge sedan sammanfattningen till modellen för analys. Benchmarka den scriptade och den interaktiva versionen av arbetsflödet först — besparingen beror på verktygen, resultaten och uppgiften.
-:::
+1. **Börja med Auto.** Det är underhållsfritt, ger 10 % rabatt på betalda planer, och dirigerar enkla förfrågningar till billigare modeller automatiskt.
+2. **För repeterbara arbetsflöden**, skapa en anpassad agent med en fast modell (t.ex. Haiku för testgenerering).
+3. **För komplexa fleragentsarbetsflöden**, använd subagentmönster från Anthropic.
 
----
+Gå inte direkt till steg 3. Auto löser ~80 % av modellvalsproblemet.
 
-### 5. Bygg en modellrouterstrategi
+### Bygg en modellrouterstrategi
 
 Alla uppgifter kräver inte samma modell. En router bör matcha uppgiftens komplexitet mot modellens kapacitet och pris. Det finns ingen auktoritativ källa för specifika besparingssiffror som 73 % eller 15 till 4 dollar, så de presenteras inte som generella resultat här.[^m7-8]
 
@@ -266,7 +252,7 @@ Automatiskt modellval klassificerar varje förfrågan med hjälp av uppgiftsinb�
 
 Eftersom Auto tar hänsyn till uppgiftens komplexitet och tillgänglighet kan funktionen reservera dyrare modeller för uppgifter som behöver dem. Besparingen beror på arbetsbelastningen och vilka modeller som ingår i planen.[^m7-8]
 
-### 6. Fem subagentmönster som sparar tokens
+### Fem subagentmönster som sparar tokens
 
 Forskning från Anthropic identifierar fem organisatoriska mönster för att strukturera agentarbete. Varje mönster har olika tokenkonsekvenser.[^m7-10]
 
@@ -286,7 +272,7 @@ Forskning från Anthropic identifierar fem organisatoriska mönster för att str
 
 ---
 
-### 7. Fällan med cache vid modellbyte
+### Fällan med cache vid modellbyte
 
 Att byta modell mitt i sessionen låter smart — använd Opus för arkitektur och byt sedan till Haiku för enkla följdfrågor. Men promptcacher är **modellspecifika**.
 
@@ -298,36 +284,7 @@ Att byta modell mitt i sessionen låter smart — använd Opus för arkitektur o
 - I början av en session (innan mycket historik har samlats)
 - När kostnaden för fel modell × återstående turer överstiger kostnaden för cache-ombyggnaden
 
-Se [Modul 2 — Cachebrytande misstag](/vibe-on-budget/sv/02-context-model#vanliga-cachebrytande-misstag) för fler mönster som bryter cachen.
-
----
-
-## 🔴 [Verktygssökning](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer): Vad som händer internt
-
-VS Code Copilot använder en dubbl sökstrategi för att avgöra vilka verktyg som ska presenteras för modellen:[^m7-5]
-
-```mermaid
-flowchart LR
-    A[Din prompt] --> B[Inbäddningssökning]
-    A --> C[BM25 nyckelordssökning]
-    B --> D[Rankade verktygskandidater]
-    C --> D
-    D --> E[Verktygsurval<br/>i kontextfönstret]
-    
-    style B stroke:#bd93f9,stroke-width:2px
-    style C stroke:#ffb86c,stroke-width:2px
-    style E stroke:#50fa7b,stroke-width:2px
-```
-
-- **Inbäddningsstyrd sökning** — konverterar din prompt till en semantisk vektor och hittar verktyg med liknande beskrivningar (OpenAI Ada + Anthropic inbäddningsmodeller)
-- **BM25 nyckelordssökning** — klassisk textmatchning för exakta verktygsnamn och nyckelord
-- Båda resultaten slås samman och de mest relevanta verktygen injiceras i kontextfönstret
-
-Detta betyder: **välbenämnda verktyg med tydliga beskrivningar hittas; vaga gör det inte**. Döp om dina MCP-verktyg med beskrivande namn och nyckelord för att förbättra sökträffarna utan att blåsa upp kontexten.
-
-:::note[Verktygssökning körs varje steg]
-Varje agentsteg kör om verktygssökningen mot din prompt. Om uppgiften ändras mitt i sessionen ändras även verktygsuppsättningen — vilket **ogiltigförklarar promptprefixcachen**.
-:::
+Se [Modul 2 — Cachebrytande misstag](/vibe-on-budget/sv/02-context-model#vanliga-misstag-som-bryter-cachen) för fler mönster som bryter cachen.
 
 ---
 
@@ -348,6 +305,8 @@ Fortsätt med [Vibe coding utan skuld](/vibe-on-budget/sv/08-vibe-coding-guardra
 ---
 
 ## Övning
+
+Använd din representativa uppgift och baslinje från Modul 3. Efter varje övning, jämför credit-förbrukning mot baslinjen.
 
 1. Kontrollera dina anslutna MCP-servrar (VS Code-inställningar → `github.copilot.chat.agent.mcpServers`). Räkna dem. Inaktivera alla som du inte har använt den senaste veckan.
 2. Nästa gång du behöver ett enkelt svar, använd Ask-läge i stället för Agent-läge. Jämför credit-visningen mellan lägena för en liknande fråga.

@@ -9,6 +9,8 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 Varje gång du trycker på Enter i Copilot Chat lämnar en förvånansvärt stor datamängd din maskin. Att förstå vad som finns i den datamängden — och hur Copilot bestämmer vad som ska inkluderas — är nyckeln till att kontrollera din tokenförbrukning.
 
+I Modul 1 såg du att cacheade tokens väger 0,1× i GitHubs Effective Tokens-formel — 90% billigare än nya input-tokens. Den här modulen lär dig vad som faktiskt skickas i varje förfrågan och hur du maximerar cache-träffar.
+
 ---
 
 ## Anatomi av en Copilot-förfrågan 🟢
@@ -41,6 +43,13 @@ flowchart LR
 
 :::note[Ingen fast storlek per komponent]
 Klienten och leverantören bestämmer den slutliga renderade förfrågan; behandla därför inte raderna som universella tokenbudgetar.[^m2-2]
+:::
+
+:::note[Typexempel: En vanlig Copilot-fråga]
+En typisk session med 3 öppna filer (~2 000 tokens),
+5 MCP-verktyg i registret (~1 000 tokens i beskrivningar),
+och 5 tidigare meddelanden i historiken (~3 000 tokens)
+skickar ~6 500 tokens input overhead innan din prompt ens räknas.
 :::
 
 :::tip[Det återkommande prefixet]
@@ -140,15 +149,40 @@ Cachade tokens är dramatiskt billigare än nya tokens. En användbar tumregel �
 Varje ändring av promptprefixet ogiltigförklarar cachen: byte av modell, ändring av anpassade instruktioner, öppning/stängning av en fil, eller till och med att konversationshistoriken växer förbi cachegränsen.[^m2-1][^m2-3]
 :::
 
-:::tip[När ska du rensa chatten och när ska du stanna kvar?]
+:::note[Fördjupning: Cache-mekanik hos olika leverantörer]
 
-| Situation | Åtgärd | Varför |
-|-----------|--------|--------|
-| Samma uppgift, flera steg | Stanna i sessionen | Cachningen byggs på mellan stegen |
-| Uppgiften klar, ny orelaterad uppgift | Börja om | Gammal kontext förorenar svaren |
-| Lång session (10+ steg), samma uppgift | Komprimera och fortsätt | Sammanfatta och klistra in i en ny tråd |
-| Modellbyte behövs | Använd en subagent, byt inte huvudmodell | Ett byte bryter cachen helt |
+| Leverantör | Cachningstyp | Explicit kontroll? | Skrivkostnad | Träffkostnad | Standard-TTL |
+|----------|-------------|--------------------|--------------|--------------|--------------|
+| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | Ej offentligt specificerad | Konfigurerbar[^m2-1] |
+| Anthropic (Claude) | Manuell | Ja — `cache_control` | 1,25x–2,0x | 0,1x (90 % rabatt) | 5 min[^m2-9] |
+| DeepSeek (V4 Pro) | Diskbaserad | Nej (implicit) | Ingen | 0,5x (50 % rabatt) | Ej tillämpligt[^m2-10] |
+| Google (Gemini 3.5) | Kontextbaserad | Nej (implicit) | Ingen | Varierar | Session[^m2-11] |
 
+:::caution[Kontroversen kring Anthropic TTL]
+Anthropics postmortem från 23 april 2026 beskriver en cache-relaterad regression i Claude Code.[^m2-13] Particula Tech rapporterar separat om en ändring i mars 2026 som minskade en implicit promptcache-TTL från **1 timme till 5 minuter** för vissa förfrågningar; det är tredjepartsrapportering och ingen garanti för Anthropics prissättning.[^m2-14]
+
+Om du använder Anthropic-baserade modeller, ange dokumenterad TTL uttryckligen där integrationen tillåter det och följ cacheläsningarna. Långa pauser kan överstiga en kort TTL; leverantörernas retentionkontroller skiljer sig åt.[^m2-9][^m2-12]
+:::
+
+:::
+
+---
+
+## Vanliga misstag som bryter cachen 🟡
+
+Det smärtsamma med prefix-cachning är att ändringar i det gemensamma serialiserade prefixet kan hindra en cachematchning. Här är vanliga riskmönster från leverantörernas vägledning:[^m2-1][^m2-3]
+
+| Misstag | Vad händer | Varför det spelar roll | Så åtgärdar du det |
+|---------|------------|-----------------------|--------------------|
+| **Tidsstämplar i systemprompter** | Varje förfrågan får en annan prefixhash, så cachen missar vid varje anrop. | Du betalar fullt pris upprepade gånger för instruktioner som skulle återanvändas. | Flytta den ändrade detaljen till ett senare meddelande — till exempel ett `<system-reminder>`-block — i stället för att skriva om systempromptens översta nivå. |
+| **Byta modell under sessionen** | Den nya modellen kan inte återanvända den gamla modellens cachade KV-tillstånd. | Modellbyten tvingar fram en full ombyggnad när konversationen är som störst. | Håll huvudtråden på en modell; använd en subagent för enstaka billigare uppgifter i stället för att byta huvudmodell. |
+| **Ändra verktyg under sessionen** | Att lägga till eller ta bort MCP-servrar ändrar verktygsprefixet och ogiltigförklarar efterföljande cachesegment. | Verktygsscheman är ofta stora, så en verktygsändring kan bli en dyr cacheåterställning. | Konfigurera verktygen innan sessionen börjar och håll dem stabila medan du arbetar. |
+| **Icke-deterministisk verktygsordning** | Samma verktyg i en annan ordning ger ett annat serialiserat prefix. | Leverantören ser bara byte och hash, inte din avsikt. Samma betydelse, annan ordning, samma miss. | Använd en stabil, deterministisk ordning för verktygsdefinitioner varje gång. |
+| **Randomisering av JSON-nycklar** | Språk som Go och Swift kan skriva objektets nycklar i en annan ordning, vilket ändrar det cachade prefixet. | Semantiskt identiska nyttolaster kan ändå missa cachen om deras serialiserade form ändras. | Använd ordnad serialisering eller normalisera nyckelordningen innan verktygsnyttolaster skickas. |
+| **Ändra instruktioner under sessionen** | Redigering av `copilot-instructions.md` eller `AGENTS.md` ändrar det alltid aktiva instruktionslagret för nästa steg. | Det bryter cachen för system/anpassade instruktioner och tvingar fram en full ombyggnad av prefixet. | Uppdatera instruktioner mellan uppgifter och starta sedan medvetet en ny session så att ombyggnaden sker en gång, avsiktligt. |
+
+:::note[Tumregel]
+Om en ändring påverkar **verktyg**, **instruktioner på översta nivån** eller den **tidiga gemensamma historiken**, bör du anta att cachen just exploderade och budgetera därefter.
 :::
 
 ---
@@ -180,35 +214,20 @@ Använd felsökningsvyn och leverantörens användningsdata i stället för att 
 
 ---
 
-## Vanliga misstag som bryter cachen 🟡
+### När ska du rensa chatten? 🟡
 
-Det smärtsamma med prefix-cachning är att ändringar i det gemensamma serialiserade prefixet kan hindra en cachematchning. Här är vanliga riskmönster från leverantörernas vägledning:[^m2-1][^m2-3]
+| Situation | Åtgärd | Varför |
+|-----------|--------|--------|
+| Samma uppgift, flera steg | Stanna i sessionen | Cachningen byggs på mellan stegen |
+| Uppgiften klar, ny orelaterad uppgift | Börja om | Gammal kontext förorenar svaren |
+| Lång session (10+ steg), samma uppgift | Komprimera och fortsätt | Använd `/compact` för att sammanfatta och återta kontextfönsterutrymme |
+| Modellbyte behövs | Använd en subagent, byt inte huvudmodell | Ett byte bryter cachen helt |
 
-| Misstag | Vad händer | Varför det spelar roll | Så åtgärdar du det |
-|---------|------------|-----------------------|--------------------|
-| **Tidsstämplar i systemprompter** | Varje förfrågan får en annan prefixhash, så cachen missar vid varje anrop. | Du betalar fullt pris upprepade gånger för instruktioner som skulle återanvändas. | Flytta den ändrade detaljen till ett senare meddelande — till exempel ett `<system-reminder>`-block — i stället för att skriva om systempromptens översta nivå. |
-| **Byta modell under sessionen** | Den nya modellen kan inte återanvända den gamla modellens cachade KV-tillstånd. | Modellbyten tvingar fram en full ombyggnad när konversationen är som störst. | Håll huvudtråden på en modell; använd en subagent för enstaka billigare uppgifter i stället för att byta huvudmodell. |
-| **Ändra verktyg under sessionen** | Att lägga till eller ta bort MCP-servrar ändrar verktygsprefixet och ogiltigförklarar efterföljande cachesegment. | Verktygsscheman är ofta stora, så en verktygsändring kan bli en dyr cacheåterställning. | Konfigurera verktygen innan sessionen börjar och håll dem stabila medan du arbetar. |
-| **Icke-deterministisk verktygsordning** | Samma verktyg i en annan ordning ger ett annat serialiserat prefix. | Leverantören ser bara byte och hash, inte din avsikt. Samma betydelse, annan ordning, samma miss. | Använd en stabil, deterministisk ordning för verktygsdefinitioner varje gång. |
-| **Randomisering av JSON-nycklar** | Språk som Go och Swift kan skriva objektets nycklar i en annan ordning, vilket ändrar det cachade prefixet. | Semantiskt identiska nyttolaster kan ändå missa cachen om deras serialiserade form ändras. | Använd ordnad serialisering eller normalisera nyckelordningen innan verktygsnyttolaster skickas. |
-| **Ändra instruktioner under sessionen** | Redigering av `copilot-instructions.md` eller `AGENTS.md` ändrar det alltid aktiva instruktionslagret för nästa steg. | Det bryter cachen för system/anpassade instruktioner och tvingar fram en full ombyggnad av prefixet. | Uppdatera instruktioner mellan uppgifter och starta sedan medvetet en ny session så att ombyggnaden sker en gång, avsiktligt. |
-
-:::note[Tumregel]
-Om en ändring påverkar **verktyg**, **instruktioner på översta nivån** eller den **tidiga gemensamma historiken**, bör du anta att cachen just exploderade och budgetera därefter.
-:::
-
----
-
-## Förgrena konversationer 🟡
-
-Skriv `/fork` i chattinmatningen för att skapa en ny session som **ärver hela konversationshistoriken**. Du kan också hovra över ett tidigare meddelande och välja **Fork Conversation** för att förgrena från just den kontrollpunkten.
-
-Använd förgrening när du vill utforska en alternativ lösning eller ställa en sidofråga utan att betala prefixkostnaden igen. Till skillnad från `/clear` och [/compact](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) är förgrening till för divergerande utforskning — parallella spår — inte för att fortsätta samma uppgift i en mindre kontext.
-
-Se [Fork a chat session](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_fork-a-chat-session) i VS Code-dokumentationen. Kommandot [/compact](https://code.visualstudio.com/docs/agents/run/sessions/manage-sessions#_compact-conversation-context) hanterar konversationskontexten.[^m2-15]
-
-:::tip[Praktisk slutsats]
-Förgrena innan du testar en riskfylld lösning: behåll originaltråden intakt och utforska alternativet i en gren som redan har den relevanta kontexten.
+:::tip[Förgrena för att utforska alternativ]
+Skriv `/fork` för att skapa en ny session som ärver hela konversationshistoriken.
+Användbart när du vill testa en alternativ lösning utan att betala prefixkostnaden igen.
+Till skillnad från `/clear` och `/compact` är förgrening för parallella spår, inte för
+att fortsätta samma uppgift.
 :::
 
 ---
@@ -226,43 +245,8 @@ Mät effekten i den egna arbetsytan: den användbara baslinjen är den förfråg
 
 ---
 
-## Så fungerar promptcachning
-
-Promptcachning är den enskilt största drivkraften bakom tokenbesparingar i Copilot. När det gemensamma promptprefixet förblir stabilt kan leverantörer återanvända modellens redan beräknade tillstånd för systeminstruktioner, verktyg, repository-kontext och konversationshistorik i stället för att behandla dessa tokens från början varje gång.[^m2-1]
-
-### Cachemekanik hos olika leverantörer
-
-Olika modellleverantörer implementerar cachning på olika sätt — och skillnaderna påverkar dina kostnader.
-
-| Leverantör | Cachningstyp | Explicit kontroll? | Skrivkostnad | Träffkostnad | Standard-TTL |
-|----------|-------------|--------------------|--------------|--------------|--------------|
-| OpenAI (GPT-5.x) | Automatisk + manuell | Ja — `prompt_cache_breakpoint` | 1,25x | Ej offentligt specificerad | Konfigurerbar[^m2-1] |
-| Anthropic (Claude) | Manuell | Ja — `cache_control` | 1,25x–2,0x | 0,1x (90 % rabatt) | 5 min[^m2-9] |
-| DeepSeek (V4 Pro) | Diskbaserad | Nej (implicit) | Ingen | 0,5x (50 % rabatt) | Ej tillämpligt[^m2-10] |
-| Google (Gemini 3.5) | Kontextbaserad | Nej (implicit) | Ingen | Varierar | Session[^m2-11] |
-
-För de dagliga misstagen som bryter cachen, se avsnittet Vanliga misstag som bryter cachen ovan.
-
-OpenAI dokumenterar kontroller för cacheretention, inklusive förlängd retention på upp till 24 timmar i distributioner som stöder det; tillgänglighet och standardvärden beror på modell, organisation och policy för datalagring. Cacheåteranvändning är inte garanterad, så följ träffdata i stället för att budgetera som om varje förfrågan träffar.[^m2-1][^m2-12]
-
-:::caution[Kontroversen kring Anthropic TTL]
-Anthropics postmortem från 23 april 2026 beskriver en cache-relaterad regression i Claude Code.[^m2-13] Particula Tech rapporterar separat om en ändring i mars 2026 som minskade en implicit promptcache-TTL från **1 timme till 5 minuter** för vissa förfrågningar; det är tredjepartsrapportering och ingen garanti för Anthropics prissättning.[^m2-14]
-
-Om du använder Anthropic-baserade modeller, ange dokumenterad TTL uttryckligen där integrationen tillåter det och följ cacheläsningarna. Långa pauser kan överstiga en kort TTL; leverantörernas retentionkontroller skiljer sig åt.[^m2-9][^m2-12]
-:::
-
-### Vad det innebär för dig
-
-- **Ändra inte systeminstruktioner under sessionen.** Om du måste göra det, acceptera cachemissen som sker en gång och fortsätt.
-- **Övervaka tysta cachefel.** Använd Copilots felsökningsloggning (`github.copilot.chat.agentDebugLog.fileLogging.enabled`) för att kontrollera faktiska tokenantal.
-- **Välj leverantör utifrån asynkrona arbetsflöden.** OpenAI:s konfigurerbara cacheretention (GPT-5.x-serien) ger mycket asynkrona arbetsflöden mer kontroll än Anthropics fasta femminutersfönster — men cachning sker efter bästa förmåga och är inte garanterad.[^m2-9][^m2-12]
-
-För en genomgång av de dagliga misstagen som bryter cachen, se tabellen [Vanliga misstag som bryter cachen](#vanliga-misstag-som-bryter-cachen) ovan.
-
----
-
 :::tip[Fortsätt lära dig]
-Att förstå kontextmodellen gör siffrorna i [Den dolda skatten](/vibe-on-budget/sv/01-hidden-tax) konkreta. Tillämpa kunskapen med [Snabba vinster](/vibe-on-budget/sv/04-quick-wins).
+Nu när du förstår vad som skickas i varje förfrågan är det dags att [mäta din faktiska förbrukning](/vibe-on-budget/sv/03-measure-before-you-cut). Utan mätning är optimering gissningar.
 :::
 
 ---

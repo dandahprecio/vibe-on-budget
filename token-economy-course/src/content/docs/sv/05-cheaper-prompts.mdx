@@ -12,6 +12,7 @@ Modul 4 gav dig engångskonfiguration — instruktioner och inställningar som d
 *(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av tokenizer, metaprompt och grottmännisko-språk.)*
 
 Promptengineering undervisas vanligtvis för *kvalitet*. Den här modulen lär ut det för *kostnad*: behåll avsikten och begränsningarna som förbättrar resultatet, men ta bort ord som inte gör det.
+Precis som i Modul 4, testa varje teknik mot din baslinje från Modul 3 — mät före och efter.
 
 ---
 
@@ -88,9 +89,42 @@ Grottmännisko-språk tar bort artiklar, prepositioner, artighet och grammatik �
 | "What's the best way to handle errors in this async function?" | "Best error handling pattern for #file:fetch.ts async." | ~10% |
 | "Could you review my code and tell me if there are any security issues?" | "Security audit #file:auth.ts. OWASP Top 10. Critical only." | ~14% |
 
-:::note[Oberoende benchmark]
-Oberoende tester av [JetBrains (juli 2026)](https://blog.jetbrains.com/ai/2026/07/speak-to-ai-agents-like-cavemen-tosave-tokens/) mätte ~8,5% besparing av output-tokens över 82 parade uppgifter.[^m5-1] Det är mindre än marknadsförda påståenden men genuint och säkert — avrunda till ~10% som en praktisk tumregel.
-:::
+Oberoende tester av JetBrains (juli 2026) mätte ~8,5% besparing av output-tokens över 82 parade uppgifter.[^m5-1] Det är mindre än marknadsförda påståenden men genuint och säkert — avrunda till ~10% som en praktisk tumregel.
+
+## När komprimering slår tillbaka 🟡
+
+Alla promptar bör inte komprimeras. Här är när utförlighet är värt kostnaden:
+
+| Situation | Varför vara utförlig | Rekommendation |
+|---|---|---|
+| Komplex arkitektur | Full kontext behövs för korrekt design | Komprimera inte |
+| Säkerhetsgranskning | Missad nyans = missad sårbarhet | Skriv kompletta promptar |
+| Första interaktion med ny kodbas | Modellen behöver grundlig orientering | Inkludera alla relevanta filer |
+| Refaktorering över flera filer | Glesa instruktioner → fel implementation | Var tydlig med omfattning |
+
+Regeln: **komprimera output, inte avsikt**. Behåll namn, begränsningar, edge cases och framgångskriterier. Ta bort hälsningar, upprepad kontext och förklaringar av kod som modellen kan inspektera direkt.
+
+Jämför avvägningen:
+
+**För komprimerat:**
+```
+- Fixa auth
+- Gör säkert
+- Kod endast
+```
+
+**Komprimerat utan att förlora avsikten:**
+```
+- Inspektera #file:auth.ts och #file:auth.test.ts
+- Åtgärda session fixation efter inloggning
+- Behåll rotation av refresh-token
+- Lägg till regressionstest för återanvänt sessions-ID
+- Returnera endast ändrade rader
+```
+
+Den första prompten är kort men tvingar fram upptäckt, förtydliganden eller en riskfylld gissning. Den andra tar bort utfyllnad men behåller säkerhetsgränsen och verifieringsmålet. Några extra input-tokens är billigare än en misslyckad implementation och dess uppföljning.
+
+---
 
 ## Metapromptar för outputkontroll 🟡
 
@@ -107,7 +141,7 @@ Styr output-utförlighet med explicita begränsningar:
 
 ---
 
-## Verktyg som inte levererar: [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk)-fallstudien 🟡
+## Validera alltid oberoende: RTK-fallstudien 🟡
 
 [RTK (Rust Token Killer)](https://github.com/rtk-ai/rtk) är en CLI-proxy som komprimerar skalutdata innan modellen läser den. Leverantören marknadsför 60–90% tokenreduktion.[^m5-3]
 
@@ -151,43 +185,8 @@ flowchart LR
 ```
 
 :::note[Det ackumuleras]
-För ett team som skickar 10 000 promptar/månad kan skillnaden engelska-vs-svenska ensam spara ~30 000 tokens. Vid $5/M output-tokens motsvarar 30 000 tokens $0,15. De verkliga besparingarna från språkval kommer av att effekten ackumuleras över tusentals förfrågningar.
+För ett team på 5 utvecklare som skickar 500 promptar i veckan, sparar engelska framför svenska ~$190 per år i input-tokens — och betydligt mer i output eftersom kortare input ofta ger kortare svar.
 :::
-
----
-
-## När komprimering slår tillbaka 🟡
-
-Alla promptar bör inte komprimeras. Här är när utförlighet är värt kostnaden:
-
-| Situation | Varför vara utförlig | Rekommendation |
-|---|---|---|
-| Komplex arkitektur | Full kontext behövs för korrekt design | Komprimera inte |
-| Säkerhetsgranskning | Missad nyans = missad sårbarhet | Skriv kompletta promptar |
-| Första interaktion med ny kodbas | Modellen behöver grundlig orientering | Inkludera alla relevanta filer |
-| Refaktorering över flera filer | Glesa instruktioner → fel implementation | Var tydlig med omfattning |
-
-Regeln: **komprimera output, inte avsikt**. Behåll namn, begränsningar, edge cases och framgångskriterier. Ta bort hälsningar, upprepad kontext och förklaringar av kod som modellen kan inspektera direkt.
-
-Jämför avvägningen:
-
-**För komprimerat:**
-```
-- Fixa auth
-- Gör säkert
-- Kod endast
-```
-
-**Komprimerat utan att förlora avsikten:**
-```
-- Inspektera #file:auth.ts och #file:auth.test.ts
-- Åtgärda session fixation efter inloggning
-- Behåll rotation av refresh-token
-- Lägg till regressionstest för återanvänt sessions-ID
-- Returnera endast ändrade rader
-```
-
-Den första prompten är kort men tvingar fram upptäckt, förtydliganden eller en riskfylld gissning. Den andra tar bort utfyllnad men behåller säkerhetsgränsen och verifieringsmålet. Några extra input-tokens är billigare än en misslyckad implementation och dess uppföljning.
 
 ---
 
@@ -198,6 +197,8 @@ Kombinera prompttekniker med [Projektinställningar](/vibe-on-budget/sv/06-proje
 ---
 
 ## Övning
+
+Använd din representativa uppgift och baslinje från Modul 3. Efter varje teknik, kör om uppgiften och jämför credits, tokens och kvalitet.
 
 1. Ta dina tre senaste Copilot-promptar. Skriv om var och en i punktformat. Räkna den ungefärliga tokenskillnaden (1 token ≈ 4 tecken på engelska).
 2. Lägg till en `// AI:`-kommentar i en funktion som du ofta frågar Copilot om. Nästa gång, referera till filen med `#file:` i stället för att beskriva den.

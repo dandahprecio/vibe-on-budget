@@ -7,7 +7,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Mät innan du kapar
 
-Optimering utan mätning är gissningar. Du kan råka ta bort ett verktyg som sparade tid, korta en prompt som förhindrade omkörningar eller byta modell utan att veta om ändringen hjälpte.
+I Modul 2 såg du exakt vad som skickas i varje Copilot-förfrågan — systemprompt, öppna filer, verktygsdefinitioner och konversationshistorik. Nu är det dags att mäta din faktiska förbrukning. Optimering utan mätning är gissningar. Du kan råka ta bort ett verktyg som sparade tid, korta en prompt som förhindrade omkörningar eller byta modell utan att veta om ändringen hjälpte.
 
 Det här kapitlet ger dig en liten verktygslåda för mätning i VS Code. Använd den för att besvara fyra frågor:
 
@@ -19,6 +19,38 @@ Det här kapitlet ger dig en liten verktygslåda för mätning i VS Code. Använ
 *(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av optimeringsloop och kvalitetsgräns.)*
 
 ---
+
+## Välj din representativa uppgift 🟢
+
+En representativ uppgift är en återkommande kodningsuppgift som tar 5–15 minuter. Den ska involvera minst en filändring — inte bara en fråga.
+
+**Bra kandidater:**
+- Lägga till ett valideringsfält i ett formulär
+- Skriva ett enhetstest för en funktion
+- Lägga till paginering på en list-endpoint
+- Åtgärda en enkel bugg med känd orsak
+
+**Dåliga kandidater:**
+- "Förklara hur useEffect fungerar" (ingen kodändring, bara output)
+- "Bygg om hela autentiseringssystemet" (för stort, tar timmar)
+- "Vad är klockan?" (trivialt, mäter inget användbart)
+
+**Action:** Välj din uppgift nu. Skriv ner den. Du kommer använda samma uppgift genom hela kursen för att jämföra före och efter varje optimering.
+
+## Sätt din kvalitetsgräns 🟢
+
+En kvalitetsgräns är ditt "tillräckligt bra"-kontrakt. Utan den kan kostnadsoptimering i smyg bli kvalitetsminskning.
+
+Din kvalitetsgräns måste vara mätbar:
+
+| Kriterium | Så mäter du |
+|---|---|
+| Testerna går igenom | `npm test` — 0 fail |
+| Rätt filer ändrades | `git diff --name-only` — bara förväntade filer |
+| Inga kritiska fel | Manuell kontroll — appen startar, API:et svarar |
+| Max 1 mindre korrigering | Räkna antalet uppföljningsprompter |
+
+**Action:** Skriv ner din kvalitetsgräns. Exempel: "Alla befintliga tester gröna, endast `src/utils/formatDate.ts` ändrad, max 1 korrigering."
 
 ## Credit hover per förfrågan 🟢
 
@@ -83,23 +115,11 @@ Leta efter mönster som:
 Färre credits är inte automatiskt bättre. Ett billigt arbetsflöde som ger felaktig kod, missar tester eller kräver manuell reparation kan kosta mer totalt.
 :::
 
-**Action:** Kontrollera statusdashboarden en gång i veckan och notera procenten som använts, dina vanligaste uppgiftstyper och tydliga förändringar från föregående vecka.
-
----
-
-## [`/chronicle:cost-tips`](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle) 🟢
-
-Du kan be VS Code om personliga rekommendationer baserade på din senaste aktivitet. Kör `/chronicle:cost-tips` i valfri chatt. Den analyserar aktuell sessionshistorik och ger praktiska förslag på hur du kan minska användningen.
-
-Det är användbart när du vet att förbrukningen har ökat men inte direkt ser varför. Rekommendationerna kan peka på dyra mönster som upprepade omkörningar, överdimensionerad kontext eller ineffektiva sessionsgränser.
-
-:::note[Integritet och tolkning]
-Se rekommendationerna som hypoteser att testa. Kontrollera dem mot uppgiftskvaliteten och creditinformationen i VS Code innan du ändrar arbetsflödet.
+:::tip[Få personliga rekommendationer]
+Kör `/chronicle:cost-tips` i valfri chatt. Den analyserar din sessionshistorik och föreslår besparingar baserat på dina faktiska mönster. Användbart när du ser att förbrukningen ökat men inte vet varför. Behandla rekommendationerna som hypoteser — verifiera mot din baslinje innan du ändrar arbetsflödet.
 :::
 
-Läs mer om att fråga sessionshistoriken med Chronicle i [VS Code-dokumentationen](https://code.visualstudio.com/docs/agents/run/sessions/session-history#_query-session-history-with-chronicle).[^m3-1]
-
-**Action:** Kör `/chronicle:cost-tips` efter en vecka av normalt arbete och välj en rekommendation att testa — inte alla på en gång.
+**Action:** Kontrollera statusdashboarden en gång i veckan och notera procenten som använts, dina vanligaste uppgiftstyper och tydliga förändringar från föregående vecka.
 
 ---
 
@@ -188,35 +208,45 @@ flowchart TD
 
 Ändra till exempel inte modell, ta bort hälften av verktygen och skriv om instruktionerna i samma experiment. Om resultatet blir bättre vet du inte vilken ändring som hjälpte. Om det blir sämre vet du inte vad du ska återställa.
 
-Den här loopen återkommer genom resten av kursen. Varje teknik kan valideras med samma evidens: resultatet är tillräckligt bra och arbetet kostar mindre eller tar kortare tid.
+Använd den här loopen för att testa teknikerna i resten av kursen. Varje modul från och med Modul 4 har övningar där du kan tillämpa loopen: mät baseline → ändra en variabel → jämför → behåll den bättre konfigurationen.
 
-:::tip[Definiera kvalitetsgränsen]
-Bestäm vad “tillräckligt bra” betyder innan du jämför kostnader: testerna går igenom, rätt filer ändras, inga kritiska fel uppstår och resultatet kräver högst en mindre korrigering. Utan en gräns kan kostnadsoptimering i smyg bli kvalitetsminskning.
+:::caution[Innan du går vidare till Modul 4]
+Stanna här. Du behöver en **nedskriven baslinje** för att resten av kursen ska fungera. Utan den vet du inte om dina optimeringar faktiskt hjälper.
+
+Gör detta nu — det tar 15 minuter:
+
+1. Öppna din representativa uppgift
+2. Kör uppgiften i Copilot och notera:
+    - **Credits:** Hovra över svaret
+    - **Tokens:** Öppna Agent Debug Logs → Summary (input + output)
+    - **Tid:** Hur lång tid tog uppgiften?
+    - **Kvalitet:** Uppfylldes din kvalitetsgräns?
+3. Skriv ner resultatet. Detta är din **baslinje**.
+
+I Modul 4 kommer du jämföra varje snabb vinst mot den här baslinjen.
 :::
 
-**Action:** Skapa en experimentlogg med fyra rader för nästa uppgift: baseline, en ändring, upprepning och beslut.
+:::tip[Fortsätt lära dig]
+Med din baslinje i hand, gå till [Snabba vinster](/vibe-on-budget/sv/04-quick-wins) för sex saker du kan göra imorgon bitti. Varje snabb vinst kan valideras mot baslinjen du just mätte upp.
+:::
 
 ---
 
 ## Övning
 
-1. Välj en uppgift du gör regelbundet (till exempel "lägg till en valideringsfunktion"). Notera prompten du använde, modellen, förbrukade credits (hovra) och om resultatet krävde en omkörning. Detta är din baslinje.
+1. Jämför credit-förbrukningen mellan två olika modeller på samma uppgift. Kör din representativa uppgift med Haiku, sedan med Sonnet. Hur stor är prisskillnaden enligt hover-visningen? Var kvaliteten likvärdig?
 2. Öppna Agent Debug Logs → Summary för din senaste session. Skriv ner totala tokens, verktygsanrop, fel och tidsåtgång. Vilken siffra överraskade dig mest?
 3. Kör `/chronicle:cost-tips` i valfri chatt. Välj EN rekommendation och testa den på din nästa uppgift.
 
-## Viktiga slutsatser
+## Viktiga slutsatser 🟢
 
-- Hovra över ett svar för att se credit consumption för en enskild förfrågan.
-- Använd context window control för totala credits och tokenuppdelning för sessionen.
-- Använd Copilot status dashboard för att följa din månatliga allowance.
-- Kör `/chronicle:cost-tips` för personliga råd baserade på senaste aktiviteten.
-- Använd Agent Debug Logs Summary för tokens, verktygsanrop, fel och tidsåtgång.
-- Använd Cache Explorer för att förstå cacheträffar och återanvända input tokens.
-- Ändra en variabel i taget och behåll den billigaste konfigurationen som når kvalitetsgränsen.
-
-:::tip[Fortsätt lära dig]
-Omsätt din baslinje i handling med [Snabba vinster](/vibe-on-budget/sv/04-quick-wins), och förbättra sedan dina prompter med [Skriva promptar som kostar mindre](/vibe-on-budget/sv/05-cheaper-prompts).
-:::
+- **Hover över svaret** för att se credit-förbrukning per förfrågan — det snabbaste sättet att jämföra promptvarianter
+- **Context window control** visar sessionskostnad — använd den för att hitta dyra agentloopar
+- **Månadsdashboarden** är din budgetsignal — kontrollera den en gång i veckan
+- **Agent Debug Logs → Summary** ger tokenuppdelning, verktygsanrop och fel — använd när något är dyrt men du inte vet varför
+- **Cache Explorer** visar cacheträffar — men hög träfffrekvens är inte automatiskt bra om kontexten är irrelevant
+- **Optimeringsloopen** (baseline → ändra en variabel → jämför) är ditt verktyg genom resten av kursen
+- **Kvalitetsgränsen** är ditt skyddsnät — utan den riskerar du att optimera bort kvalitet
 
 *Beräknad lästid: 8 minuter*
 

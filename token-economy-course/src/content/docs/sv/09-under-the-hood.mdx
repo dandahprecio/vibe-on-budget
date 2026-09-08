@@ -7,7 +7,11 @@ import { Steps } from "@astrojs/starlight/components";
 
 # Helhetsbilden: Hur Copilot sparar tokens åt dig
 
-Tidigare moduler fokuserade på användarstyrda val som promptstruktur, kontexturval och verktygskonfiguration. Den här modulen fokuserar på kodningsharnesset: lagret som sammanställer kontext, exponerar verktyg, kör agentloopen, tolkar verktygsanrop och omvandlar modellens output till åtgärder i editorn. [^m9-1]
+I Modul 8 byggde du skyddsräcken mot teknisk skuld — specifikationer, TDD, granskning och säkerhetskontroller. Nu zoomar vi ut och tittar på lagret under: kodningsharnesset som sammanställer kontext, exponerar verktyg, kör agentloopen, tolkar verktygsanrop och omvandlar modellens output till åtgärder i editorn.[^m9-1]
+
+:::note[Det här är en fördjupningsmodul]
+Modul 1–8 har gett dig en verktygslåda för att spara tokens. Den här modulen är för dig som vill veta hur Copilot sparar tokens åt dig — under huven. Du kan läsa den nu eller återkomma senare som referens.
+:::
 
 VS Code-teamet beskriver arbetet med tokeneffektivitet som en pågående serie uppmätta förbättringar, inte som en enda optimering. För förändringar i harnesset uppger teamet att de använder A/B-experiment i produktion och offline-utvärderingar mot testsviter, och kontrollerar att uppgiftsframgången bibehålls eller förbättras medan tokenanvändningen minskar. [^m9-2]
 
@@ -16,6 +20,8 @@ VS Code-teamet beskriver arbetet med tokeneffektivitet som en pågående serie u
 Harnesset ligger mellan editorn och modellen. Det sammanställer prompten, hanterar verktygen som är tillgängliga för modellen, kör agentloopen och matar tillbaka verktygsresultat till senare turer. [^m9-1]
 
 *(Se [Ordlista](/vibe-on-budget/sv/glossary) för definitioner av outputkomprimering, bakgrundsbatchning, serverless och kontinuerlig batchning.)*
+
+Dessa optimeringar är små per förfrågan men ackumuleras över miljontals användare och miljarder tokens. Dina egna optimeringar från Modul 4–8 (code-only, unified diff, .copilotignore) ger betydligt större individuell effekt — Copilots harness-optimeringar är grädden på moset, inte huvudingrediensen.
 
 ```mermaid
 flowchart LR
@@ -69,11 +75,7 @@ GitHub-artikeln om kostnadseffektivitet beskriver på samma sätt effektivitet s
 - Håll promptar fokuserade och kontexten relevant. GitHubs vägledning rekommenderar att välja lämplig modell, strukturera promptar och lägga till skyddsräcken för att slutföra uppgifter effektivare och använda färre AI-credits. [^m9-4]
 - Bedöm en optimering utifrån slutförd uppgiftskvalitet och resursanvändning tillsammans, eftersom VS Code:s utvärderingsprocess uttryckligen kontrollerar uppgiftsframgång tillsammans med tokenanvändning. [^m9-2]
 
-### En varning: Fällan med lokala mätvärden
-
-Tokenantalet är inte ensamt ett komplett mått på effektivitet i kodningsuppgifter. GitHubs kostnadseffektivitetsdiskussion betonar att hela uppgiften ska utvärderas i stället för ett enda lokalt mått, eftersom arbete som sparas i ett steg kan kompenseras av extra arbete i ett annat. [^m9-3]
-
-## 🔴 5. Infrastrukturekonomi (för självhostade modeller)
+:::note[Fördjupning: Infrastrukturekonomi för självhostade modeller]
 
 Team som kör egna modeller måste jämföra pris per token med kostnaden för att hålla dedikerad hårdvara tillgänglig. Serverless-inferens debiteras efter förbrukning, medan dedikerad infrastruktur debiteras för provisionerad beräkningskapacitet. Avvägningen beror på genomströmning och utnyttjandegrad. [^m9-5]
 
@@ -101,6 +103,8 @@ Detta gäller den namngivna hårdvaran, modellen, ramverket, arbetsbelastningen 
 
 **Slutsats:** ryckig trafik kan gynna användningsbaserad inferens, medan dedikerad hårdvara med kontinuerligt hög belastning kan ge bättre styckekonomi. Rätt val kräver uppmätt genomströmning och utnyttjandegrad för arbetsbelastningen, inte bara ett hårdvarupris. [^m9-5] [^m9-6]
 
+:::
+
 ## 🟡 Så hänger det ihop: hela stacken
 
 Den källbaserade stacken är lagerindelad: harnesset sammanställer kontext och verktyg, transporten påverkar latensen, modellserveringens infrastruktur bestämmer beräkningskostnaden och utvärderingen kontrollerar att kvaliteten bevaras. [^m9-1] [^m9-2] [^m9-5]
@@ -115,10 +119,6 @@ flowchart TD
 ```
 
 Diagrammet är en syntes av ansvarsområdena och utvärderingsprocessen i de citerade VS Code- och GitHub-artiklarna. Det är inte en procentuell uppdelning av tokenbesparingar. [^m9-1] [^m9-2] [^m9-3]
-
-:::tip[Fortsätt lära dig]
-Gå tillbaka till [kontextmodellen](/vibe-on-budget/sv/02-context-model) och [Agenter, verktyg och MCP-hygien](/vibe-on-budget/sv/07-agents-mcp) för att tillämpa tekniker som kompletterar harnesset. [^m9-1] [^m9-4]
-:::
 
 :::note[På horisonten: Tokeneffektivitet på modellnivå]
 <details>
@@ -135,6 +135,10 @@ Dessa artiklar visar forskningsmetoder och uppmätta resultat i sina angivna exp
 </details>
 :::
 
+:::tip[Du har slutfört kursen]
+Gå tillbaka till [kursöversikten](/vibe-on-budget/sv) för att repetera valfri modul. Alla Viktiga slutsatser från Modul 1–9 finns samlade i respektive modul.
+:::
+
 ## Övning
 
 1. Öppna Cache Explorer i Agent Debug Logs för din senaste långa session. Hur hög var din cacheträff? Hur många inputtokens återanvändes?
@@ -148,6 +152,24 @@ Dessa artiklar visar forskningsmetoder och uppmätta resultat i sina angivna exp
 - VS Code validerar förändringar med A/B-experiment i produktion och offline-utvärderingar mot testsviter. [^m9-2]
 - Kostnaden för dedikerade GPU:er beror på genomströmning, batchning och utnyttjandegrad; den citerade H200-benchmarken rapporterar en brytpunkt på 72,2 procent mot det jämförda serverless-priset. [^m9-6] [^m9-7]
 - Kontextpruning, gles MoE-pruning och multi-token prediction stöds här av forskningsartiklar, inte av ett påstående om att de är driftsatta i Copilot. [^m9-8] [^m9-9] [^m9-10]
+
+---
+
+## Kursavslutning: Din tokenekonomi-verktygslåda
+
+Du har gått från att undra varför Copilot plötsligt kostar pengar till att ha en komplett verktygslåda för tokenekonomi. Här är vad du kan nu:
+
+- **Förstå kostnaden.** Du vet att output kostar 5× input, att cache är 90% billigare, och att företagspoolning gör varje utvecklares tokens till allas angelägenhet. (Modul 1)
+- **Se vad som skickas.** Du kan anatomien av en Copilot-förfrågan och vet att öppna flikar, verktygsdefinitioner och konversationshistorik konkurrerar om kontextfönstret. (Modul 2)
+- **Mäta innan du agerar.** Du har en representativ uppgift, en baslinje, och en kvalitetsgräns. Du använder hover, context window control, dashboard, Agent Debug Logs och Cache Explorer — inte gissningar. (Modul 3)
+- **Spara direkt.** Du har code-only-instruktioner, `.copilotignore`, unified diff, Auto modellval, och rena chattrådar — sex saker som tillsammans kan halvera din tokenförbrukning. (Modul 4)
+- **Skriva effektivt.** Du använder punktlistor, `#file:`-referenser, avsiktskommentarer och engelska promptar. Du vet när komprimering hjälper och när den stjälper. (Modul 5)
+- **Konfigurera rätt.** Du har en minimal `copilot-instructions.md` (~50 tokens), ett smalt `AGENTS.md`-kontrakt (~80 tokens), och lazy-loadade `.prompt.md`-filer för domänkunskap. (Modul 6)
+- **Använda agenter klokt.** Du väljer Ask/Edit före Agent, avgränsar anpassade agenter, rensar oanvända MCP-servrar, och låter Auto sköta modellvalet. (Modul 7)
+- **Vibe-coda utan skuld.** Du skriver en 10-raders spec före implementation, använder TDD, automatiserar granskning, och har säkerhet som hård spärr. (Modul 8)
+- **Se helheten.** Du förstår hur Copilots harness optimerar i bakgrunden och varför det inte ersätter dina egna optimeringar — det kompletterar dem. (Modul 9)
+
+Fortsätt mäta. Fortsätt iterera. Och kom ihåg: det billigaste LLM-anropet är det du inte gör.
 
 *Beräknad lästid: 7 minuter*
 
