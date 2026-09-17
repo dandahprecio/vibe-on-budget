@@ -71,8 +71,8 @@ flowchart LR
 | **[Edit Mode](https://github.blog/ai-and-ml/github-copilot/copilot-ask-edit-and-agent-modes-what-they-do-and-when-to-use-them/)** | Riktade kodändringar | Fokuserade redigeringar | Mer kontrollerat |
 | **[Agent Mode](https://code.visualstudio.com/docs/chat/chat-overview)** | Flerfilsändringar, komplexa uppgifter | Kan använda verktyg och iterera | **Högre kontext- och verktygspotential** |
 
-:::caution[Agent mode har högre baslinje]
-Även med Tool Search laddar Agent mode systeminstruktioner, verktygsregister och filkontext före första svaret. Baslinjen är därför högre än i Ask Mode och Edit Mode — även om oanvända verktygsscheman inte behöver följa med varje gång.
+:::caution[Agent mode has a higher baseline]
+Agent mode loads system instructions, tool registry, and file context before the first response. The baseline is therefore higher than Ask Mode and Edit Mode. VS Code uses prompt caching to reuse prefixes between turns — the first request is the most expensive, the rest are cheaper.
 :::
 
 ---
@@ -89,71 +89,48 @@ Höj thinking effort endast för verkligt komplexa problem, som arkitekturplaner
 
 ---
 
-## 🟡 Den dolda kostnaden för MCP-servrar
+## 🟡 The hidden cost of MCP servers
 
-MCP-servrar exponerar verktyg som värden kan upptäcka och anropa. VS Code kan hantera MCP-servrar och deras verktyg, medan nyare förbättringar i verktygsval minskar hur många verktyg som faktiskt presenteras för modellen samtidigt.[^m7-4]
+MCP servers expose tools the agent can discover and invoke. Every tool has a schema — name, description, parameters — that gets sent in context. More servers = more schemas = higher baseline per request.[^m7-4]
 
-```mermaid
-flowchart TD
-    subgraph Session[Agent Session]
-        Step1["Step 1: Plan<br/>System + Registry"] --> Step2["Step 2: Read file<br/>System + Registry"]
-        Step2 --> Step3["Step 3: Write file<br/>System + Registry + requested schema"]
-        Step3 --> Step4["Step 4: Run tests<br/>System + Registry + requested schema"]
-    end
-    
-    subgraph Overhead[Tool Search Overhead]
-        T[Names + short descriptions<br/>always present; full schemas on demand]
-    end
-    
-    Step1 -.-> T
-    Step2 -.-> T
-    Step3 -.-> T
-    Step4 -.-> T
-    
-    style T stroke:#ff5555,stroke-width:2px
-```
+VS Code's token efficiency blog post (June 2026) describes two built-in mechanisms already helping you:[^m7-5]
 
-:::note[Tool Search sänker omkostnaden]
-System med verktygssökning kan välja en mindre, relevant verktygsyta i stället för att mata modellen med allt samtidigt. Besparingen beror på arbetslasten; det finns inget universellt pris per verktyg. Men att rensa bort oanvända MCP-servrar håller ändå den tillgängliga verktygsytan mindre.[^m7-5]
-:::
-
-### 🟡 MCP-server-matematiken
-
-En MCP-verktygsdefinition innehåller strukturerade metadata som namn, beskrivning och indataschema. Den serialiserade storleken varierar med innehållet, så uppskatta utifrån verkliga definitioner i stället för att multiplicera med en magisk konstant.[^m7-6]
-
-| Scenario | Praktisk åtgärd |
-|----------|------------------|
-| Liten verktygsuppsättning | Behåll bara de servrar som behövs för uppgiften |
-| Större verktygsuppsättning | Använd verktygskonfiguration eller profiler för att smalna av den aktiva ytan |
-| Okänd verktygsuppsättning | Inspektera de faktiska schemana innan du uppskattar kontextkostnaden |
-
-### 🔴 Så fungerar [Tool Search](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) internt
-
-VS Codes arbete med tokeneffektivitet beskriver embedding-guided routing och en mindre kärnuppsättning verktyg så att modellen får färre irrelevanta verktyg. Se implementationsdetaljer som versionskänsliga och följ den aktuella dokumentationen.[^m7-5]
+1. **Prompt prefix caching** — system instructions, tool registries, and repeated context are reused across turns. The first request in a session is the most expensive; the rest benefit from the cache.
+2. **Tool filtering (Tool Search)** — instead of sending all tool schemas to the model every time, VS Code selects relevant tools based on your task via embedding-guided routing.
 
 ```mermaid
 flowchart TD
-    subgraph Before["Before Tool Search"]
-        A1[Turn 1] --> B1[All 30 tool schemas<br/>loaded into context]
+    subgraph Before["Without filtering"]
+        A1[Turn 1] --> B1[All tool schemas<br/>in context]
         B1 --> C1[Model processes<br/>unused schemas]
         C1 --> A1
     end
     
-    subgraph After["After Tool Search"]
+    subgraph After["With Tool Search"]
         A2[Turn 1] --> B2[Only tool names +<br/>descriptions in context]
         B2 --> C2{Model requests<br/>a tool?}
         C2 -->|Yes| D2[Full schema loaded<br/>for that tool only]
-        C2 -->|No| E2[No tool overhead<br/>in this turn]
+        C2 -->|No| E2[No tool overhead<br/>this turn]
     end
     
     style Before stroke:#ff5555,stroke-width:2px
     style After stroke:#50fa7b,stroke-width:2px
 ```
 
-Tool Search är mest användbar när många verktyg är tillgängliga, eftersom relevansfiltrering kan minska irrelevant verktygskontext. Gör inte om den kvalitativa nyttan till en fast besparingsprocent utan att mäta din egen arbetslast.[^m7-5]
+### 🟡 MCP server math
 
-:::tip[Kontrollera din kontext]
-VS Code kompakterar äldre konversationsinnehåll när du närmar dig kontextgränsen. Använd kontextdokumentationen och modellens aktuella priser och gränser i stället för en fast MCP-multiplikator.[^m7-2]
+An MCP tool definition contains structured metadata like name, description, and input schema. The serialized size varies with content, so estimate from real definitions rather than multiplying by a magic constant.[^m7-6]
+
+| Scenario | Action |
+|----------|--------|
+| Small tool set | Keep only the servers needed for the task |
+| Larger tool set | Use tool configuration or profiles to narrow the active surface |
+| Unknown tool set | Inspect actual schemas before estimating context cost |
+
+In practice: **tools with good names and clear descriptions get found; vague tools get overlooked**. Name your MCP tools so they describe the problem they solve without bloating the context.
+
+:::note[Tool selection is implementation-dependent]
+Exactly how filtering and caching work can change as VS Code and Copilot evolve. Rely on current product documentation rather than assuming a specific algorithm forever.[^m7-2][^m7-5]
 :::
 
 ---
@@ -360,43 +337,17 @@ Att byta modell mitt i en session låter smart — använd en dyr modell för ar
 - I början av en session, innan mycket historik samlats
 - När kostnaden för fel modell multiplicerat med återstående turer överstiger kostnaden för att bygga om cachen
 
-Se [Module 2 — Cache-Busting Mistakes](/vibe-on-budget/en/02-context-model#common-cache-busting-mistakes) för fler mönster som bryter cachen.
+Se [Modul 1 — Vad händer när du trycker Enter?](/vibe-on-budget/en/01-what-happens) för fler mönster som bryter cachen.
 
 ---
 
-## 🔴 [Tool Search](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer): vad som händer internt
+## Practical MCP hygiene checklist
 
-VS Code Copilots arbete med tokeneffektivitet beskriver embedding-guided routing för att avgöra vilka verktyg som är relevanta för en begäran:[^m7-5]
-
-```mermaid
-flowchart LR
-    A[Your Prompt] --> B[Embedding-guided Routing]
-    B --> D[Relevant Tool Candidates]
-    D --> E[Tool Subset<br/>in Context Window]
-    
-    style B stroke:#bd93f9,stroke-width:2px
-    style C stroke:#ffb86c,stroke-width:2px
-    style E stroke:#50fa7b,stroke-width:2px
-```
-
-- **Embedding-guided routing** — använder semantisk relevans för att välja användbara verktyg
-- **Smaller tool surface** — minskar irrelevanta verktyg som presenteras för modellen
-
-Det här betyder i praktiken: **verktyg med bra namn och tydliga beskrivningar blir hittade; vaga verktyg blir lätt förbisedda**. Namnge därför dina MCP-verktyg så att de beskriver problemet de löser utan att blåsa upp kontexten.
-
-:::note[Verktygsval är implementationsberoende]
-Exakt hur retrieval och caching fungerar kan förändras när VS Code och Copilot utvecklas. Luta dig mot aktuell produktdokumentation i stället för att anta en viss algoritm eller cache-regel för alltid.
-:::
-
----
-
-## Praktisk MCP-hygien-checklista
-
-1. **Granska regelbundet** — lista alla anslutna MCP-servrar och ta bort dem du inte behöver.
-2. **Profilera dina sessioner** — håll arbetsflödesspecifik MCP-konfiguration i rätt VS Code-profil eller workspace-konfiguration.[^m7-7]
-3. **Namnge verktyg väl** — använd beskrivande namn så att Tool Search hittar dem utan extra kontext.
-4. **Föredra deterministiska verktyg** — för terminaljobb är det ofta bättre att köra kommandot kontrollerat och återföra resultatet än att låta agenten loopa fritt.
-5. **Mät din MCP-skatt** — inspektera verkliga verktygsdefinitioner och behåll bara de verktyg som behövs för arbetsflödet; det finns ingen universell `tools × 200`-regel.[^m7-6]
+1. **Review regularly** — list all connected MCP servers and remove the ones you don't need.
+2. **Profile your sessions** — keep workflow-specific MCP config in the right VS Code profile or workspace config.[^m7-7]
+3. **Name tools well** — use descriptive names so the filtering finds them.
+4. **Prefer deterministic tools** — for terminal jobs, it's often better to run the command in a controlled way and feed back the result than to let the agent loop freely.
+5. **Measure your MCP tax** — inspect real tool definitions and keep only the tools needed for the workflow; there's no universal `tools × 200` rule.[^m7-6]
 
 ---
 

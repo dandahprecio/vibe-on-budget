@@ -3,13 +3,17 @@ title: 4. Bygg ett snålt projekt
 description: Konfigurera projektfiler och VS Code för permanent lägre tokenförbrukning
 ---
 
-import { Steps } from "@astrojs/starlight/components";
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 # Bygg ett snålt projekt
 
-Du skriver snåla prompts nu. Men här är något du inte ser: varje gång du trycker Enter skickas dina instruktionsfiler med — ALLA dina instruktionsfiler. Om din copilot-instructions.md är 1000 rader betalar du för 500+ tokens i VARJE request. Frågan är inte om du har råd — frågan är om dina instruktioner är VÄRDA det priset.
+In the last module you compressed your prompts. Now we turn to something that costs you tokens without you noticing: your instruction files.
 
-I den här modulen bygger du ett projekt som är snålt som standard: korta instruktioner, filer som laddas först när de behövs och en arbetsyta som inte matar agenten med brus.
+VS Code automatically includes `.github/copilot-instructions.md` (and any `AGENTS.md` files) in every chat request. That's smart — until the file grows. A 1000-line instruction file becomes 500+ tokens deducted from your account every time you press Enter.
+
+👉 _New to instruction files? [Read VS Code's guide](https://code.visualstudio.com/docs/agent-customization/custom-instructions)._
+
+In this module you'll build a project that's lean by default: short instructions, files that load only when needed, and a workspace that doesn't feed the agent noise.
 
 ---
 
@@ -28,17 +32,30 @@ De här filerna kan automatiskt användas som kontext eller bli tillgängliga f�
 | Fil eller källa | När den laddas | Roll |
 |---|---|---|
 | `.github/copilot-instructions.md` | Automatiskt när stöds | Gemensamma instruktioner för repot |
-| [`AGENTS.md`](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions) | I agentbaserade verktyg som stöder konventionen | Agentinstruktioner |
 | Öppna editorflikar | Kan läggas till som kontext | Aktiva arbetsfiler |
 | VS Code-inställningar | När funktionen läser dem | Beteende och gränser |
 
 *(Se [Glossary](/vibe-on-budget/en/glossary) för definitioner av alltid-på-skatt, lazy loading och AGENTS.md.)*
 
-Nyckeln är enkel: varje instruktion som är “bra att ha” men inte behövs just nu är en kostnad på varje request.
+The key is simple: every instruction that's "nice to have" but not needed right now is a cost on every request.
+
+:::tip[Want to know more?]
+VS Code has [detailed documentation on instruction files](https://code.visualstudio.com/docs/agent-customization/custom-instructions) — how they work, where to place them, and the difference between `.github/copilot-instructions.md`, `AGENTS.md`, and `CLAUDE.md`.
+:::
 
 ---
 
-## 1. Minimal `copilot-instructions.md`
+## 1. Always-on instruction files
+
+`.github/copilot-instructions.md` is VS Code's default. But there are two other filenames that do the same thing — they're loaded automatically in every request:
+
+| File | Tool | Role |
+|---|---|---|
+| `.github/copilot-instructions.md` | VS Code (Copilot) | Default — use this if you only run Copilot |
+| `AGENTS.md` | Copilot, Claude Code, Codex CLI | Cross-tool — works across multiple agents |
+| `CLAUDE.md` | Claude Code, Anthropic | Claude-specific instructions |
+
+**Pick one.** If you have all three you risk duplicates and paying for the same instructions multiple times. Only using Copilot? Go with `.github/copilot-instructions.md`. Does your team switch between agents? `AGENTS.md` covers more.
 
 De flesta team fyller filen med arkitektur, stilguider och allmänna principer. Allt kan skickas som systemkontext — även när frågan bara handlar om att byta namn på en variabel.
 
@@ -102,21 +119,53 @@ Instruktionsfiler växer nästan alltid. Chakrabarti et al. observerade **+226 %
 3. Behåll alltid-på-lagret så kort att en människa kan läsa om och rensa det i ett svep.
 </Steps>
 
-### Promptkommentarer: spara varför-regeln 🟡
+:::note[What are .prompt.md files and skills?]
+Both are ways to move rules *out* of `copilot-instructions.md` so they don't cost tokens on every request:
 
-Instruktioner växer eftersom det ursprungliga **varför** försvinner. När ingen längre minns vilket fel en regel skulle förhindra känns det riskabelt att ta bort den.
+- **[`.prompt.md`](https://code.visualstudio.com/docs/agent-customization/prompt-files)** — a file you `#`-mention in chat when you need it. You decide when it loads.
+- **[Skills](https://code.visualstudio.com/docs/agent-customization/agent-skills)** — instructions the agent recognizes and activates for the right task. Automatic, but only when it matches.
 
-Kommentera därför viktiga regler med latent reasoning — en kort anteckning om misslyckandet, hypotesen och utfallet:
+Choose `.prompt.md` for rules you want control over. Choose skills for patterns that repeat often.
+:::
+
+### Prompt comments: save the why 🟡
+
+Instructions grow because the original **why** disappears. When no one remembers what problem a rule was supposed to fix, removing it feels risky — even if the problem is long gone.
+
+**So how do we document why a rule exists?** Two ways — one quick, one robust.
+
+**Method 1: Comment in the file**
+
+Write a short note right after the rule explaining what happened, what you thought would help, and what the result was:
 
 ```markdown
+# .github/copilot-instructions.md
+
 # Output format
 - Code blocks only. Strip prose, greetings, explanations.
-<!-- FAILURE: 2026-06, verbose responses burned 3x budget on output tokens.
-  HYPOTHESIS: forcing code-only output cuts 50-70% output.
-  OUTCOME: 62% reduction in output tokens, no quality loss. Keep. -->
+<!-- 2026-06: Verbose responses burned 3x output budget.
+     Fix: code-only output. Result: 62% fewer tokens. Keep. -->
 ```
 
-Utgå inte från att HTML-kommentarer alltid tas bort före injection. Daniel Vaughan rapporterar kommentarfiltrering i [Codex CLI](https://github.com/openai/codex), medan ett [Claude Code-ärende](https://github.com/anthropics/claude-code/issues/83899) rapporterar att kommentarer kan skickas ordagrant.[^m4-4][^m4-6] Chakrabartis studie rapporterar att promptkommentarer minskade överdriven instruktionsökning med **99,3 %** i den utvärderade miljön.[^m4-3]
+The research backs this up: Chakrabarti et al. found that prompt comments reduced excessive instruction growth by **99.3%** in the evaluated environment.[^m4-3]
+
+A warning: HTML comments are handled differently by different tools. Daniel Vaughan reports that [Codex CLI](https://github.com/openai/codex) filters out comments before sending them to the model, while a [Claude Code issue](https://github.com/anthropics/claude-code/issues/83899) shows that comments can be sent verbatim.[^m4-4][^m4-6] In other words: don't assume the comment is invisible to the agent — keep it short and factual.
+
+**Method 2: Separate logbook (recommended)**
+
+For a more robust solution, keep an `instructions-log.md` that's only for humans:
+
+```markdown
+# instructions-log.md
+
+## 2026-06 — Code-only output
+- Problem: verbose responses burned 3x output budget
+- Rule: "Code blocks only. Strip prose, greetings, explanations."
+- Effect: 62% fewer output tokens
+- Status: keep
+```
+
+The logbook is never sent to the agent — unlike HTML comments, this is a file you fully own. Link to it from `copilot-instructions.md`. The risk: if you don't update the logbook when you change a rule, it falls out of sync. Make it a habit — update both in the same commit.
 
 ---
 
@@ -129,50 +178,101 @@ Lägg inte alla regler i det automatiska lagret. Skapa specialiserade filer som 
 | `frontend-style.prompt.md` | CSS-konventioner och komponentmönster | Du bygger UI |
 | `db-schema.prompt.md` | Tabeller och relationer | Du skriver queries |
 | `testing.prompt.md` | Testkonventioner och mockmönster | Du skriver tester |
-| `skills/frontend/SKILL.md` | Återanvändbar arbetsmetod | Du arbetar med frontend |
+| `.github/skills/frontend/SKILL.md` | Återanvändbar arbetsmetod | Du arbetar med frontend |
 
-I chatten:
+Here's how they might look in practice:
 
-```text
-Apply rules from #file:frontend-style.prompt.md to this component.
-```
-
-Promptfiler laddas inte automatiskt som custom instructions. Referera dem uttryckligen för just den request där de behövs.[^m4-7]
-
----
-
-## 3. `AGENTS.md`: ett kort beteendekontrakt 🟢
-
-`AGENTS.md` är en konvention för agentinstruktioner. Exakt upptäckt och laddning beror på verktyget, så verifiera dokumentationen innan du räknar filen som alltid-på.[^m4-2][^m4-4]
-
-Tänk så här:
-
-- `AGENTS.md` = beteendekontrakt: läge, omfattning och outputformat.
-- `.prompt.md` och skills = domänkunskap: arkitektur, konventioner och kända problem.
-- Ladda domänkunskap på begäran i stället för att skicka den på varje request.
-
-### Minimal mall
+<Tabs>
+<TabItem label=".prompt.md">
 
 ```markdown
-# .github/AGENTS.md
+---
+name: frontend-style
+description: >
+  Frontend component conventions, Tailwind
+  styling, responsive patterns, and common
+  pitfalls.
+---
 
-- Mode: Ask-first.
-- Lang: English.
-- Scope: Work only in files relevant to the request.
-- Output: Changed code only; omit untouched wrappers and setup.
+# .github/prompts/frontend-style.prompt.md
+
+## Component conventions
+- Use PascalCase for component names
+- One component per file
+- Props interface at top, exported
+
+## Styling
+- Tailwind utility classes only — no custom CSS
+- Responsive: mobile-first, breakpoint sm → lg → xl
+- Dark mode: use `dark:` prefix
+
+## Known pitfalls
+- Avoid nested ternary in JSX — extract to variable
+- Don't mix controlled/uncontrolled inputs
 ```
+
+</TabItem>
+<TabItem label="Skill">
+
+```markdown
+---
+name: frontend-ui
+description: >
+  Component design, Tailwind styling,
+  responsive layouts, and accessibility.
+---
+
+# .github/skills/frontend/SKILL.md
+
+## When to use
+- Building or refactoring UI components
+- Reviewing components for accessibility
+- Debugging layout or responsive issues
+
+## Conventions
+1. Prefer composition over inheritance
+2. Extract repeated patterns into shared components
+3. Every interactive element needs `aria-label` or visible text
+
+## Output format
+- Return the component code, no explanation
+- Include Tailwind classes inline
+```
+
+</TabItem>
+</Tabs>
+
+Reference a prompt file in chat like this:
+
+```text
+/frontend-style Review this signup form for accessibility gaps
+```
+
+Prompt files are loaded on demand via slash commands or `#`-mentions — unlike custom instructions they don't cost tokens on every request.[^m4-7]
+
+Skills work a bit differently. You can invoke them manually with a slash command:
+
+```text
+/frontend-ui Build a responsive card grid with hover states
+```
+
+But the real power is that the agent can also activate them automatically — when your task matches the skill's `description`, the agent loads it without you asking.
+
+:::tip[Want to know more?]
+Read VS Code's guides on [creating prompt files](https://code.visualstudio.com/docs/agent-customization/prompt-files) and [building skills](https://code.visualstudio.com/docs/agent-customization/agent-skills).
+:::
 
 ---
 
-## 4. Uteslut brus med native VS Code-inställningar 🟢
+## 3. Uteslut brus med native VS Code-inställningar 🟢
 
 VS Code-agenter kan använda workspace-filer som kontext. Uteslut sådant som aldrig hjälper uppgiften: byggartefakter, beroenden, mockdata, loggar och stora genererade filer.[^m4-8]
 
 Använd tre lager:
 
 - **`.gitignore`** — håll genererade filer och beroenden utanför Git. Det påverkar också workspace-sökning, men en fil som redan är öppen kan fortfarande kringgå detta lager.
-- **`files.exclude`** — dölj filer från Explorer och relaterade vyer.
-- **`search.exclude`** — ta bort filer från sökresultat utan att dölja dem i Explorer. Det är den rekommenderade vägen när målet är lägre tokenförbrukning från agentsökning.[^m4-8]
+- **[`files.exclude`](https://code.visualstudio.com/docs/configure/settings#:~:text=to%20set%20the-,files.exclude,-setting%20to%20exclude)** — dölj filer från Explorer och relaterade vyer.
+- **[`search.exclude`](https://code.visualstudio.com/docs/configure/settings#:~:text=files.exclude%20and-,search.exclude,-use%20glob%20patterns)** — ta bort filer från sökresultat utan att dölja dem i Explorer. Det är den rekommenderade vägen när målet är lägre tokenförbrukning från agentsökning.[^m4-8]
 
 Lägg till projektets relevanta mönster i `.vscode/settings.json`:
 
@@ -195,31 +295,13 @@ Exempel på lämpliga kandidater är byggmappar, `node_modules`, mockdata, logga
 Exkludering minskar kontext och brus. Lägg aldrig API-nycklar eller andra hemligheter i workspace-filer och behandla inte exkluderingsinställningar som en ersättning för riktig secret management.
 :::
 
----
-
-## 5. Stäng onödiga tabs 🟢
-
-Öppna editorflikar kan bli en del av arbetsytans kontext. Innan du frågar:
-
-1. Stäng filer som inte hör till den aktuella uppgiften.
-2. Behåll bara de filer du aktivt arbetar med.
-3. Använd en `#`-referens när du vill skicka med en specifik fil.
-
-Begränsa dessutom automatiskt öppnade tabs i `.vscode/settings.json`:
-
-```json
-{
-  "github.copilot.chat.experimental.context.autoOpenTabs.max": 5
-}
-```
-
-Inställningen är versions- och klientberoende. Kontrollera [AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings) i din VS Code-version.[^m4-9]
+For inline completions, keeping related files open in tabs helps — but in agent mode, the agent reads the files it needs on its own.
 
 ---
 
-## 6. Hantera sessioner som en snål arbetsyta 🟢
+## 4. Hantera sessioner som en snål arbetsyta 🟢
 
-En lång session innehåller prompts, svar och kontext från tidigare steg. Behåll historien när den fortfarande hjälper; kapa den när den blivit ballast.[^m4-1]
+The longer a session runs, the more context is sent with every request. Previous prompts, responses, and files eat into your token budget — even when they're no longer relevant. Here's how to keep your history lean.[^m4-1]
 
 | Situation | Gör så här | Varför |
 |---|---|---|
@@ -239,26 +321,37 @@ Använd `/compact` för att fortsätta samma arbete. Starta en ny session för e
 
 ---
 
-## 7. Sätt gränser för agentens aptit 🟡
+## 5. Set limits on the agent's appetite 🟡
 
-Begränsa hur länge en agent får arbeta och hur många verktygsanrop den får göra:
+Set a limit on how many requests the agent can make before VS Code stops and asks if you want to continue:
 
 ```json
 {
-  "github.copilot.chat.agent.experimental.maxRequests": 20,
-  "github.copilot.chat.agent.experimental.maxToolCallsPerStep": 10
+  "chat.agent.maxRequests": 25
 }
 ```
 
-Inställningarna är experimentella och kan ändras mellan VS Code-versioner. Kontrollera aktuell dokumentation innan du kopierar dem.[^m4-9]
+The default is 25. This is your guardrail against the agent going off track and burning tokens — when the limit is hit, you get to decide whether it's on the right path or should start over. Lower it if you often do small, simple changes. Raise it if you regularly work on larger refactorings.
+
+Another way to save tokens: enable output compression for terminal commands:
+
+```json
+{
+  "chat.tools.compressOutput.enabled": true
+}
+```
+
+Strips out install logs, unchanged diff hunks, and other noise from terminal output before it's sent to the model.
 
 ---
 
-## 8. Låt inte AI skriva dina instruktioner ⚠️
+## 6. Don't let AI write your instructions ⚠️
 
-Skriv och rensa dina instruktioner själv. AI:n känner inte ditt projekts verkliga smärtpunkter bättre än du gör. LLM-genererade instruktioner kan lägga till självklarheter, upprepa dokumentation och blåsa upp den alltid-på-kontext som du försöker minska.
+Write and trim your instructions yourself. AI doesn't know your project's real pain points better than you do. LLM-generated instructions can add obvious advice, repeat documentation, and bloat the always-on context you're trying to keep lean.
 
-Be gärna AI:n föreslå en kortare version, men kontrollera varje rad: vilket problem löser regeln, och är problemet fortfarande verkligt?
+GitHub themselves recommend avoiding "AI-generated guidance that doesn't reflect your actual system" and warn against instructions that make the context noisy.[^m4-10] Chakrabarti et al. observed +226% lifetime growth in instruction files — a trend that AI-generated additions only accelerate.[^m4-3]
+
+Feel free to ask AI to suggest a shorter version, but verify every line: what problem does the rule solve, and is the problem still real?
 
 ---
 
@@ -277,8 +370,7 @@ Fortsätt till [Agenter och MCP-servrar](/vibe-on-budget/en/05-agents-mcp). Vill
 1. Notera din dagsförbrukning i dashboarden innan du ändrar projektet.
 2. Korta ner `.github/copilot-instructions.md`. Flytta ämnesspecifika regler till `.prompt.md`-filer eller skills.
 3. Lägg `search.exclude` och `files.exclude` i `.vscode/settings.json` för byggmappar, beroenden och mockdata.
-4. Sätt `github.copilot.chat.experimental.context.autoOpenTabs.max` till ett lågt värde som passar ditt projekt.
-5. Kör samma arbetsflöde i en vecka och jämför dashboarden med din ursprungliga mätning.
+4. Kör samma arbetsflöde i en vecka och jämför dashboarden med din ursprungliga mätning.
 
 ## Key Takeaways 🟢
 
@@ -300,3 +392,4 @@ Fortsätt till [Agenter och MCP-servrar](/vibe-on-budget/en/05-agents-mcp). Vill
 [^m4-7]: [Use prompt files in VS Code](https://code.visualstudio.com/docs/agent-customization/prompt-files) — Visual Studio Code Documentation, accessed September 2026.
 [^m4-8]: [How Copilot understands your workspace](https://code.visualstudio.com/docs/agents/reference/workspace-context) — Visual Studio Code, accessed September 2026.
 [^m4-9]: [AI settings reference](https://code.visualstudio.com/docs/agents/reference/ai-settings) — Visual Studio Code, accessed September 2026.
+[^m4-10]: [Optimizing your AI usage to maximize efficiency and reduce cost](https://docs.github.com/en/copilot/tutorials/optimize-ai-usage) — GitHub Docs, accessed September 2026.

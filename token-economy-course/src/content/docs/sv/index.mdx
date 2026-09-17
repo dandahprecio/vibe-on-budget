@@ -8,64 +8,52 @@ import { CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 # Tokenekonomi för Vibe Coding
 
-Lär dig spara tokens och AI Credits när du kodar med GitHub Copilot. Kursen täcker allt från grunderna i användningsbaserad debitering till avancerade tekniker för promptoptimering, projektkonfiguration och agenthygien.
+En resa från första Enter-trycket till full kontroll över din token-budget. Lär dig förstå, mäta och minska din tokenförbrukning i GitHub Copilot — steg för steg.
 
 ## Vad du kommer lära dig
 
 <CardGrid>
   <LinkCard
-    title="1. Den dolda skatten"
-    href="/vibe-on-budget/sv/01-hidden-tax"
+    title="Vad händer när du trycker Enter?"
+    href="/vibe-on-budget/sv/01-what-happens"
   >
-    Förstå användningsbaserad debitering, AI Credits och den verkliga kostnaden för Copilot.
+    Vad tokens är, hur Copilot bygger context, och varför svenska kostar mer tokens än engelska.
   </LinkCard>
   <LinkCard
-    title="2. Hur Copilot bygger kontext"
-    href="/vibe-on-budget/sv/02-context-model"
+    title="Vad kostar ett Enter-tryck?"
+    href="/vibe-on-budget/sv/02-price-and-measurement"
   >
-    Vad ingår i varje förfrågan och hur kontextfönstret fylls.
+    UBB, AI Credits, ET-formeln — och verktygen för att se din egen förbrukning.
   </LinkCard>
   <LinkCard
-    title="3. Mät innan du kapar"
-    href="/vibe-on-budget/sv/03-measure-before-you-cut"
+    title="Skriv snålare prompts"
+    href="/vibe-on-budget/sv/03-cheaper-prompts"
   >
-    Använd VS Codes inbyggda verktyg för att se exakt vart dina credits tar vägen — per förfrågan, per session och per månad.
+    Bullets vs prosa, caveman-speak och code-only output.
   </LinkCard>
   <LinkCard
-    title="4. Snabba vinster"
-    href="/vibe-on-budget/sv/04-quick-wins"
+    title="Bygg ett snålt projekt"
+    href="/vibe-on-budget/sv/04-lean-project"
   >
-    Sex saker du kan göra imorgon för att börja spara tokens direkt — inklusive unified diff output.
+    Minimala instruktionsfiler, rätt exclusion-inställningar, och sessionshygien.
   </LinkCard>
   <LinkCard
-    title="5. Skriva promptar som kostar mindre"
-    href="/vibe-on-budget/sv/05-cheaper-prompts"
+    title="Kör agenter och MCP utan slöseri"
+    href="/vibe-on-budget/sv/05-agents-mcp"
   >
-    Skriv fokuserade promptar som ger bättre resultat med färre tokens.
+    Ask/Edit/Agent, scoped agents, modellval, och hålla MCP-ytan liten.
   </LinkCard>
   <LinkCard
-    title="6. Projektinställningar för tokeneffektivitet"
-    href="/vibe-on-budget/sv/06-project-setup"
+    title="Vibea utan skuld"
+    href="/vibe-on-budget/sv/06-vibe-coding"
   >
-    Konfigurera instruktionsfiler, AGENTS.md och VS Code för maximal effektivitet.
+    Vibe coding vs agentic workflow, Winchester Mystery House, och guardrails.
   </LinkCard>
   <LinkCard
-    title="7. Agenter, verktyg och MCP-hygien"
-    href="/vibe-on-budget/sv/07-agents-mcp"
+    title="Vad Copilot gör åt dig"
+    href="/vibe-on-budget/sv/07-under-the-hood"
   >
-    Använd agenter och MCP-servrar utan att slösa credits.
-  </LinkCard>
-  <LinkCard
-    title="8. Vibe coding utan teknisk skuld"
-    href="/vibe-on-budget/sv/08-vibe-coding-guardrails"
-  >
-    Behåll flowen utan att samla på dig teknisk skuld.
-  </LinkCard>
-  <LinkCard
-    title="9. Helhetsbilden"
-    href="/vibe-on-budget/sv/09-under-the-hood"
-  >
-    Hur Copilot sparar tokens internt — output-komprimering, batchning, WebSocket-förbättringar och infrastrukturekonomi.
+    Output compression, Tool Search, WebSocket — optimeringarna som sker automatiskt.
   </LinkCard>
 </CardGrid>
 
@@ -73,11 +61,11 @@ Lär dig spara tokens och AI Credits när du kodar med GitHub Copilot. Kursen t�
 
 - Ett GitHub Copilot-abonnemang (Free, Pro eller Enterprise)
 - VS Code med GitHub Copilot-tillägget installerat
-- Grundläggande kännedom om Copilot chatt-gränssnittet
+- Grundläggande kännedom om Copilot-chattgränssnittet
 
 ## Hur du använder kursen
 
-Varje modul är fristående och tar cirka 5–10 minuter att läsa. Modulerna bygger på varandra men kan även läsas oberoende. Håll utkik efter **fördjupningsavsnitt** om du vill ha alla tekniska detaljer.
+Varje modul är fristående och tar cirka 8–12 minuter att läsa. Modulerna bygger på varandra men kan också läsas oberoende. Håll utkik efter **fördjupningar** om du vill ha alla tekniska detaljer.
 
 ## Referens
 
@@ -85,5 +73,5 @@ Varje modul är fristående och tar cirka 5–10 minuter att läsa. Modulerna by
   title="Ordlista"
   href="/vibe-on-budget/sv/glossary"
 >
-  Här finns definitioner av viktiga termer och begrepp: tokens, kontextfönster, MCP, promptcachning och mer.
+  Viktiga termer och begrepp definierade: tokens, context windows, MCP, prompt caching och mer.
 </LinkCard>

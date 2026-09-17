@@ -8,64 +8,52 @@ import { CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 # Token Economy for Vibe Coding
 
-Learn how to save tokens and AI Credits when coding with GitHub Copilot. This course covers everything from the basics of usage-based billing to advanced techniques for prompt optimization, project setup, and agent hygiene.
+En resa från första Enter-trycket till full kontroll över din token-budget. Lär dig förstå, mäta och minska din tokenförbrukning i GitHub Copilot — steg för steg.
 
 ## What You'll Learn
 
 <CardGrid>
   <LinkCard
-    title="1. The Hidden Tax"
-    href="/vibe-on-budget/en/01-hidden-tax"
+    title="Vad händer när du trycker Enter?"
+    href="/vibe-on-budget/en/01-what-happens"
   >
-    Understand UBB, AI Credits, the Effective Tokens formula, and infrastructure cost trade-offs.
+    Vad tokens är, hur Copilot bygger context, och varför svenska kostar mer tokens än engelska.
   </LinkCard>
   <LinkCard
-    title="2. How Copilot Builds Context"
-    href="/vibe-on-budget/en/02-context-model"
+    title="Vad kostar ett Enter-tryck?"
+    href="/vibe-on-budget/en/02-price-and-measurement"
   >
-    What goes into every request and how the context window fills up.
+    UBB, AI Credits, ET-formeln — och verktygen för att se din egen förbrukning.
   </LinkCard>
   <LinkCard
-    title="3. Measure Before You Cut"
-    href="/vibe-on-budget/en/03-measure-before-you-cut"
+    title="Skriv snålare prompts"
+    href="/vibe-on-budget/en/03-cheaper-prompts"
   >
-    Use built-in VS Code tools to see exactly where your credits go — per request, per session, and per month.
+    Bullets vs prose, caveman-speak och code-only output.
   </LinkCard>
   <LinkCard
-    title="4. Quick Wins"
-    href="/vibe-on-budget/en/04-quick-wins"
+    title="Bygg ett snålt projekt"
+    href="/vibe-on-budget/en/04-lean-project"
   >
-    Six things you can do tomorrow to start saving tokens — including unified diff output.
+    Minimala instruktionsfiler, rätt exclusion-inställningar, och sessionshygien.
   </LinkCard>
   <LinkCard
-    title="5. Writing Prompts That Cost Less"
-    href="/vibe-on-budget/en/05-cheaper-prompts"
+    title="Kör agenter och MCP utan slöseri"
+    href="/vibe-on-budget/en/05-agents-mcp"
   >
-    Write focused prompts that get better results with fewer tokens — and which popular tools actually deliver.
+    Ask/Edit/Agent, scoped agents, modellval, och MCP-hygien.
   </LinkCard>
   <LinkCard
-    title="6. Project Setup for Token Efficiency"
-    href="/vibe-on-budget/en/06-project-setup"
+    title="Vibea utan skuld"
+    href="/vibe-on-budget/en/06-vibe-coding"
   >
-    Configure lean instruction files, the AGENTS.md behavioral contract, and VS Code for maximum efficiency.
+    Vibe coding vs agentic workflow, Winchester Mystery House, och guardrails.
   </LinkCard>
   <LinkCard
-    title="7. Agents, Tools & MCP Hygiene"
-    href="/vibe-on-budget/en/07-agents-mcp"
+    title="Vad Copilot gör åt dig"
+    href="/vibe-on-budget/en/07-under-the-hood"
   >
-    Use agents, MCP servers, model routing, and sub-agent patterns without wasting credits. Includes the model-switching cache trap.
-  </LinkCard>
-  <LinkCard
-    title="8. Vibe Coding Without the Debt"
-    href="/vibe-on-budget/en/08-vibe-coding-guardrails"
-  >
-    Apply the decision framework, prevent Winchester Mystery House architecture, and keep the flow.
-  </LinkCard>
-  <LinkCard
-    title="9. The Big Picture"
-    href="/vibe-on-budget/en/09-under-the-hood"
-  >
-    How Copilot saves tokens internally — output compression, batching, WebSocket improvements, and infrastructure economics.
+    Output compression, Tool Search, WebSocket — optimeringarna som sker automatiskt.
   </LinkCard>
 </CardGrid>
 

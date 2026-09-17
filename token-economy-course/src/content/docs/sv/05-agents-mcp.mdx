@@ -9,7 +9,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 Du har byggt en snål motor. Nu ska vi prata om gaspedalen. Agenter kan göra otroliga saker — men de kan också loopa, testa, iterera, och bränna krediter i en loop du inte ser. Det här är inte "använd inte agenter". Det är "använd agenter MED avsikt".
 
-I [Modul 4 — Bygg ett snålt projekt](/vibe-on-budget/en/04-lean-project) gjorde du projektet snålt som standard. Här gör du själva körningen snål: rätt läge, rätt modell, rätt agentomfång och rätt MCP-yta för uppgiften.[^m7-1]
+I [Modul 4 — Bygg ett snålt projekt](/vibe-on-budget/sv/04-lean-project) gjorde du projektet snålt som standard. Här gör du själva körningen snål: rätt läge, rätt modell och rätt agentomfång för uppgiften.
 
 ---
 
@@ -17,7 +17,7 @@ I [Modul 4 — Bygg ett snålt projekt](/vibe-on-budget/en/04-lean-project) gjor
 
 Varje agentuppgift är i praktiken en återkopplingsloop med fem steg:
 
-*(Se [Glossary](/vibe-on-budget/en/glossary) för definitioner av agentic loop, harness, tool registry och embedding vector.)*
+*(Se [Glossary](/vibe-on-budget/sv/glossary) för definitioner av agentic loop, harness, tool registry och embedding vector.)*
 
 ```mermaid
 flowchart LR
@@ -72,7 +72,7 @@ flowchart LR
 | **[Agent Mode](https://code.visualstudio.com/docs/chat/chat-overview)** | Flerfilsändringar, komplexa uppgifter | Kan använda verktyg och iterera | **Högre kontext- och verktygspotential** |
 
 :::caution[Agent mode har högre baslinje]
-Även med Tool Search laddar Agent mode systeminstruktioner, verktygsregister och filkontext före första svaret. Baslinjen är därför högre än i Ask Mode och Edit Mode — även om oanvända verktygsscheman inte behöver följa med varje gång.
+Agent mode laddar systeminstruktioner, verktygsregister och filkontext före första svaret. Baslinjen är därför högre än i Ask Mode och Edit Mode. VS Code använder prompt-caching för att återanvända prefix mellan turer — första requesten är dyrast, resten billigare.
 :::
 
 ---
@@ -89,71 +89,79 @@ Höj thinking effort endast för verkligt komplexa problem, som arkitekturplaner
 
 ---
 
-## 🟡 Den dolda kostnaden för MCP-servrar
+## 🟡 MCP-servrar — håll verktygslådan liten
 
-MCP-servrar exponerar verktyg som värden kan upptäcka och anropa. VS Code kan hantera MCP-servrar och deras verktyg, medan nyare förbättringar i verktygsval minskar hur många verktyg som faktiskt presenteras för modellen samtidigt.[^m7-4]
+MCP-servrar (Model Context Protocol) låter Copilot använda externa verktyg — databaser, GitHub, Azure, filsystem. Varje server registrerar verktyg med namn, beskrivning och parameterschema. **Fler servrar = fler verktygsdefinitioner i kontexten.**[^m7-4]
 
-```mermaid
-flowchart TD
-    subgraph Session[Agent Session]
-        Step1["Step 1: Plan<br/>System + Registry"] --> Step2["Step 2: Read file<br/>System + Registry"]
-        Step2 --> Step3["Step 3: Write file<br/>System + Registry + requested schema"]
-        Step3 --> Step4["Step 4: Run tests<br/>System + Registry + requested schema"]
-    end
-    
-    subgraph Overhead[Tool Search Overhead]
-        T[Names + short descriptions<br/>always present; full schemas on demand]
-    end
-    
-    Step1 -.-> T
-    Step2 -.-> T
-    Step3 -.-> T
-    Step4 -.-> T
-    
-    style T stroke:#ff5555,stroke-width:2px
-```
+### För många verktyg gör agenten långsammare
 
-:::note[Tool Search sänker omkostnaden]
-System med verktygssökning kan välja en mindre, relevant verktygsyta i stället för att mata modellen med allt samtidigt. Besparingen beror på arbetslasten; det finns inget universellt pris per verktyg. Men att rensa bort oanvända MCP-servrar håller ändå den tillgängliga verktygsytan mindre.[^m7-5]
-:::
+Copilots standardverktygslåda har runt 40 inbyggda verktyg. Med MCP-servrar kan det växa till hundratals — ibland fler än vad vissa modellers API-gränser tillåter. GitHub visade i november 2025 att ett överdimensionerat verktygsutbud kan sänka prestandan med 2–5 procentenheter.[^m7-13] Lösningen: trimma till 13 kärnverktyg och gruppera resten så att de bara laddas vid behov.
 
-### 🟡 MCP-server-matematiken
+### Vad Copilot redan gör åt dig
 
-En MCP-verktygsdefinition innehåller strukturerade metadata som namn, beskrivning och indataschema. Den serialiserade storleken varierar med innehållet, så uppskatta utifrån verkliga definitioner i stället för att multiplicera med en magisk konstant.[^m7-6]
+Två inbyggda optimeringar minskar verktygsoverhead utan att du behöver göra något:[^m7-5]
 
-| Scenario | Praktisk åtgärd |
-|----------|------------------|
-| Liten verktygsuppsättning | Behåll bara de servrar som behövs för uppgiften |
-| Större verktygsuppsättning | Använd verktygskonfiguration eller profiler för att smalna av den aktiva ytan |
-| Okänd verktygsuppsättning | Inspektera de faktiska schemana innan du uppskattar kontextkostnaden |
-
-### 🔴 Så fungerar [Tool Search](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer) internt
-
-VS Codes arbete med tokeneffektivitet beskriver embedding-guided routing och en mindre kärnuppsättning verktyg så att modellen får färre irrelevanta verktyg. Se implementationsdetaljer som versionskänsliga och följ den aktuella dokumentationen.[^m7-5]
+1. **Tool Search** — skickar bara verktygsnamn och korta beskrivningar i kontexten. Fullständiga scheman laddas först när modellen faktiskt anropar verktyget. Minskar overhead med ~60–75%.
+2. **Embedding-guided routing** — jämför din fråga mot alla verktygsbeskrivningar och plockar fram de mest relevanta. 94,5% träffsäkerhet i benchmark.
 
 ```mermaid
 flowchart TD
-    subgraph Before["Before Tool Search"]
-        A1[Turn 1] --> B1[All 30 tool schemas<br/>loaded into context]
-        B1 --> C1[Model processes<br/>unused schemas]
+    subgraph Before["Utan Tool Search"]
+        A1[Varje tur] --> B1[Alla verktygsscheman<br/>i kontexten]
+        B1 --> C1[Modellen processar<br/>oanvända scheman]
         C1 --> A1
     end
     
-    subgraph After["After Tool Search"]
-        A2[Turn 1] --> B2[Only tool names +<br/>descriptions in context]
-        B2 --> C2{Model requests<br/>a tool?}
-        C2 -->|Yes| D2[Full schema loaded<br/>for that tool only]
-        C2 -->|No| E2[No tool overhead<br/>in this turn]
+    subgraph After["Med Tool Search"]
+        A2[Varje tur] --> B2[Endast verktygsnamn +<br/>beskrivningar]
+        B2 --> C2{Modellen anropar<br/>ett verktyg?}
+        C2 -->|Ja| D2[Fullt schema laddas<br/>endast för det verktyget]
+        C2 -->|Nej| E2[Ingen extra overhead]
     end
     
     style Before stroke:#ff5555,stroke-width:2px
     style After stroke:#50fa7b,stroke-width:2px
 ```
 
-Tool Search är mest användbar när många verktyg är tillgängliga, eftersom relevansfiltrering kan minska irrelevant verktygskontext. Gör inte om den kvalitativa nyttan till en fast besparingsprocent utan att mäta din egen arbetslast.[^m7-5]
+### Vad du kan göra
 
-:::tip[Kontrollera din kontext]
-VS Code kompakterar äldre konversationsinnehåll när du närmar dig kontextgränsen. Använd kontextdokumentationen och modellens aktuella priser och gränser i stället för en fast MCP-multiplikator.[^m7-2]
+**1. Ha bara servrar du använder**
+
+Gå igenom dina MCP-servrar och stäng av det du inte behöver:
+
+```json
+// settings.json — bara det du faktiskt använder
+{
+  "github.copilot.chat.agent.mcpServers": {
+    "filesystem": true,
+    "terminal": true
+    // github, database etc: false
+  }
+}
+```
+
+**2. Använd VS Code-profiler**
+
+Varje profil har sin egen MCP-uppsättning. Skapa profiler för olika arbetsflöden:
+
+- **Kodprofil**: filsystem + terminal
+- **DevOps-profil**: GitHub CLI + deploy
+- **Databasprofil**: databas-MCP
+
+**3. Justera per förfrågan**
+
+Använd **Configure Tools**-knappen i chattens inmatningsfält för att välja vilka verktyg eller MCP-servrar som ska vara aktiva för just den här uppgiften — utan att ändra global konfiguration.
+
+**4. Namnge verktyg så att de hittas**
+
+Copilots embedding-routing hittar verktyg baserat på deras beskrivningar. Ett verktyg som heter `create_branch` med beskrivningen "Create a new Git branch" hittas direkt. Ett verktyg med vaga namn och beskrivningar blir osynligt.[^m7-6]
+
+:::tip[Tumregel]
+Färre verktyg = snabbare svar = färre tokens. Gå igenom dina MCP-servrar en gång i månaden och stäng av det du inte använt.
+:::
+
+:::note[Verktygsval är implementationsberoende]
+Exakt hur filtrering och caching fungerar kan förändras när VS Code och Copilot utvecklas. Luta dig mot aktuell produktdokumentation i stället för att anta en viss algoritm för alltid.[^m7-2][^m7-5]
 :::
 
 ---
@@ -265,31 +273,6 @@ Maximum 3 tool calls. After edits, stop for review.
 
 ---
 
-## 🟡 Rensa bort oanvända MCP-servrar
-
-Gå igenom dina VS Code-inställningar och inaktivera MCP-servrar du inte använder aktivt:
-
-```json
-// settings.json — only keep what you need for current task
-{
-  "github.copilot.chat.agent.mcpServers": {
-    "filesystem": true,
-    "terminal": true,
-    "github": false,  // not needed for frontend work
-    "database": false // not needed for this task
-  }
-}
-```
-
-Ännu bättre: skapa **VS Code-profiler** med olika MCP-uppsättningar:
-- **Coding profile**: filsystem + terminal
-- **DevOps profile**: GitHub CLI + deployverktyg
-- **Database profile**: database MCP + schema tools
-
-**Konfigurera verktyg för just den här förfrågan:** Använd knappen **Configure Tools** i chattens inmatningsfält för att välja enskilda verktyg eller MCP-servrar. Det kompletterar både custom agents och profiler genom att ge dig en snabb per-request-justering utan att du behöver ändra global konfiguration.
-
----
-
 ## Batcha repetitiva operationer
 
 Upprepade submit-, poll- och retrieve-anrop lägger till mellanresultat i modellens kontextfönster. För deterministiska eller bulkiga arbetsflöden är det ofta bättre att köra loopen utanför agentkonversationen och bara återföra slutresultatet till modellen.[^m7-12]
@@ -360,43 +343,16 @@ Att byta modell mitt i en session låter smart — använd en dyr modell för ar
 - I början av en session, innan mycket historik samlats
 - När kostnaden för fel modell multiplicerat med återstående turer överstiger kostnaden för att bygga om cachen
 
-Se [Module 2 — Cache-Busting Mistakes](/vibe-on-budget/en/02-context-model#common-cache-busting-mistakes) för fler mönster som bryter cachen.
+Se [Modul 1 — Vad händer när du trycker Enter?](/vibe-on-budget/sv/01-what-happens) för fler mönster som bryter cachen.
 
 ---
 
-## 🔴 [Tool Search](https://code.visualstudio.com/docs/agents/agent-troubleshooting/cache-explorer): vad som händer internt
+## MCP-checklista
 
-VS Code Copilots arbete med tokeneffektivitet beskriver embedding-guided routing för att avgöra vilka verktyg som är relevanta för en begäran:[^m7-5]
-
-```mermaid
-flowchart LR
-    A[Your Prompt] --> B[Embedding-guided Routing]
-    B --> D[Relevant Tool Candidates]
-    D --> E[Tool Subset<br/>in Context Window]
-    
-    style B stroke:#bd93f9,stroke-width:2px
-    style C stroke:#ffb86c,stroke-width:2px
-    style E stroke:#50fa7b,stroke-width:2px
-```
-
-- **Embedding-guided routing** — använder semantisk relevans för att välja användbara verktyg
-- **Smaller tool surface** — minskar irrelevanta verktyg som presenteras för modellen
-
-Det här betyder i praktiken: **verktyg med bra namn och tydliga beskrivningar blir hittade; vaga verktyg blir lätt förbisedda**. Namnge därför dina MCP-verktyg så att de beskriver problemet de löser utan att blåsa upp kontexten.
-
-:::note[Verktygsval är implementationsberoende]
-Exakt hur retrieval och caching fungerar kan förändras när VS Code och Copilot utvecklas. Luta dig mot aktuell produktdokumentation i stället för att anta en viss algoritm eller cache-regel för alltid.
-:::
-
----
-
-## Praktisk MCP-hygien-checklista
-
-1. **Granska regelbundet** — lista alla anslutna MCP-servrar och ta bort dem du inte behöver.
-2. **Profilera dina sessioner** — håll arbetsflödesspecifik MCP-konfiguration i rätt VS Code-profil eller workspace-konfiguration.[^m7-7]
-3. **Namnge verktyg väl** — använd beskrivande namn så att Tool Search hittar dem utan extra kontext.
-4. **Föredra deterministiska verktyg** — för terminaljobb är det ofta bättre att köra kommandot kontrollerat och återföra resultatet än att låta agenten loopa fritt.
-5. **Mät din MCP-skatt** — inspektera verkliga verktygsdefinitioner och behåll bara de verktyg som behövs för arbetsflödet; det finns ingen universell `tools × 200`-regel.[^m7-6]
+1. **Gå igenom dina MCP-servrar minst en gång i månaden** — stäng av de du inte använt.
+2. **Använd VS Code-profiler** för att separera verktygsuppsättningar per arbetsflöde.
+3. **Använd Configure Tools per förfrågan** för finjustering utan att byta profil.
+4. **Låt Tool Search och embedding-routing göra jobbet** — de väljer redan rätt verktyg åt dig.
 
 ---
 
@@ -404,14 +360,15 @@ Exakt hur retrieval och caching fungerar kan förändras när VS Code och Copilo
 
 - Börja med **Ask Mode** eller **Edit Mode** och eskalera först när uppgiften kräver Agent Mode.
 - Välj **lätt modell för lätt jobb** och spara premiumkapacitet till arkitektur, felsökning och flerfilsändringar.
-- Håll **agenter scoped** och **MCP-ytan liten** så att mindre brus skickas med varje tur.
+- Håll **agenter scoped** så att mindre brus skickas med varje tur.
 - Sätt **stoppvillkor** så att agenten inte fortsätter bränna krediter efter att målet redan är uppnått.
+- **Håll MCP-ytan liten** — färre verktyg ger snabbare svar.
 
 ---
 
 ## Nästa
 
-Fortsätt till [Modul 6 — Vibe coding utan skuld](/vibe-on-budget/en/06-vibe-coding).
+Fortsätt till [Modul 6 — Vibe coding utan skuld](/vibe-on-budget/sv/06-vibe-coding).
 
 Du kan tekniken nu. Du skriver snålt, ditt projekt är snålt, dina agenter är scoped. Men den svåraste frågan återstår: hur gör du allt detta UTAN att tappa flow? Hur vibear du utan att samla på dig teknisk skuld som sen kostar tokens att städa upp?
 
@@ -419,22 +376,20 @@ Du kan tekniken nu. Du skriver snålt, ditt projekt är snålt, dina agenter är
 
 ## Practice
 
-1. Kontrollera dina anslutna MCP-servrar i VS Code. Inaktivera dem du inte behöver för det aktuella arbetsflödet.
+1. Gå igenom dina anslutna MCP-servrar. Stäng av de du inte använder just nu.
 2. Nästa gång du behöver ett enkelt svar: använd Ask Mode med en lätt modell i stället för Agent Mode med en tyngre modell. Jämför kreditvisningen för en liknande fråga.
-3. Skapa en scoped custom agent (med **Configure Tools** i chatten) för ett tydligt domänområde och jämför den mot `@workspace` på samma typ av uppgift.
+3. Skapa en scoped custom agent för ett tydligt domänområde och jämför den mot `@workspace` på samma typ av uppgift.
 
 ## Key Takeaways
 
 - Agent Mode kan använda verktyg och iterera — använd Ask Mode/Edit Mode för enklare arbete
 - Välj **lätt modell för rutinuppgifter** och spara premiumkapacitet till arkitektur, felsökning och flerfilsändringar
-- MCP-verktygsdefinitioner varierar i storlek; håll den aktiva verktygsytan relevant och mät verklig användning
 - Skapa **scoped custom agents** i stället för en enda monolitisk `@workspace`-agent
 - Sätt **stoppvillkor** för att förhindra skenande agentloopar
-- VS Code-profiler kan separera arbetsflödesspecifik MCP-konfiguration
+- Håll **MCP-ytan liten** — VS Code-profiler och Configure Tools gör det enkelt
 
 *Estimated reading time: 10 minutes*
 
-[^m7-1]: [Use chat in VS Code](https://code.visualstudio.com/docs/chat/chat-overview) — Microsoft, n.d.; [Context](https://code.visualstudio.com/docs/agents/concepts/context) — Microsoft, n.d.
 [^m7-2]: [Context](https://code.visualstudio.com/docs/agents/concepts/context) — Microsoft, n.d.
 [^m7-3]: [Configure thinking effort](https://code.visualstudio.com/docs/agent-customization/language-models#_configure-thinking-effort) — Microsoft, n.d.
 [^m7-4]: [Add and manage MCP servers in VS Code](https://code.visualstudio.com/docs/agent-customization/mcp-servers) — Microsoft, n.d.; [Tools](https://modelcontextprotocol.io/specification/draft/server/tools) — Model Context Protocol, n.d.
@@ -446,3 +401,4 @@ Du kan tekniken nu. Du skriver snålt, ditt projekt är snålt, dina agenter är
 [^m7-10]: [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) — Anthropic, December 19, 2024.
 [^m7-11]: [Chat modes](https://code.visualstudio.com/docs/agents/chat/modes) — Microsoft, n.d.; [Use chat in VS Code](https://code.visualstudio.com/docs/chat/chat-overview) — Microsoft, n.d.
 [^m7-12]: [Optimizing your AI usage to maximize efficiency and reduce cost](https://docs.github.com/en/copilot/tutorials/optimize-ai-usage) — GitHub, n.d.
+[^m7-13]: [How we're making GitHub Copilot smarter with fewer tools](https://github.blog/ai-and-ml/github-copilot/how-were-making-github-copilot-smarter-with-fewer-tools/) — GitHub Blog, November 19, 2025.
